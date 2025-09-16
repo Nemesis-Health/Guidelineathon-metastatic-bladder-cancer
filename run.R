@@ -33,6 +33,7 @@ create_cohorts <- TRUE
 
 executionSettings <- list(
   databaseName = "", ## This should be a unique identifier for your database. It is not used for database connectivity, only to identify results.
+  dbms = "",
   server = "",
   port = "",
   user = "",
