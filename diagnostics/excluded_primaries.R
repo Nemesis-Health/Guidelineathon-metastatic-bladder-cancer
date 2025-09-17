@@ -49,7 +49,7 @@ sql <- SqlRender::render(
 sql <- SqlRender::translate(sql, connectionDetails$dbms)
 
 
-## Running this will leave a temp table, 
+## Running this will leave a temp table. DO NOT CLOSE THE CONNECTION UNTIL YOU HAVE RUN THE QUERY BELOW.
 DatabaseConnector::executeSql(connection = con, sql)
 
 
