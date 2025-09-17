@@ -12,12 +12,7 @@ executionSettings <- list(
   user = "",
   password = "",
   cdmDatabaseSchema = "",
-  vocabDatabaseSchema = "",
-  workDatabaseSchema = "",
-  cohortTable = "",
-  ARTEMISCohortTable = "",
-  ARTEMISEpisodeTableName = "" , 
-  regimen_classification_table = "bc_regimen_classifcations"
+  vocabDatabaseSchema = ""
 )
 
 #####
@@ -63,7 +58,7 @@ SELECT  condition_concept_id, concept_name, count(distinct P.person_id) as count
 FROM #final_cohort CO
 JOIN @cdm_database_schema.condition_occurrence P ON CO.person_id = P.person_id
 JOIN #Codesets cs on (P.condition_concept_id = cs.concept_id and cs.codeset_id = 3)
-JOIN @cdm_database_schema.concept C ON P.condition_concept_id = C.concept_id
+JOIN @vocabulary_database_schema.concept C ON P.condition_concept_id = C.concept_id
 WHERE P.condition_start_date >= DATEADD(day,-365,CO.start_date)
 AND P.condition_start_date <= DATEADD(day,30,CO.start_date)
 GROUP BY P.condition_concept_id, C.concept_name
