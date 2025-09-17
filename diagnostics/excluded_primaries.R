@@ -2,7 +2,45 @@ library(tidyverse)
 library(DatabaseConnector)
 library(SqlRender)
 
+censor <- 5
+
 ### USE SETUP FROM RUN.R HERE
+executionSettings <- list(
+  databaseName = "", ## This should be a unique identifier for your database. It is not used for database connectivity, only to identify results.
+  server = "",
+  port = "",
+  user = "",
+  password = "",
+  cdmDatabaseSchema = "",
+  vocabDatabaseSchema = "",
+  workDatabaseSchema = "",
+  cohortTable = "",
+  ARTEMISCohortTable = "",
+  ARTEMISEpisodeTableName = "" , 
+  regimen_classification_table = "bc_regimen_classifcations"
+)
+
+#####
+## NOTE: If you require a DBI database connection, use edit the below example. Please contact the study team for assistance.
+# connectionDetails <- DatabaseConnector::createDbiConnectionDetails(
+#   dbms = "sql server",
+#   drv = odbc::odbc(),
+#   Driver = "ODBC Driver 18 for SQL Server",
+#   Server = "server.database.windows.net",
+#   Database = "dsfsd8980sddfsd",
+#   Authentication = "ActiveDirectoryPassword", 
+#   UID = "",
+#   PWD = rstudioapi::askForPassword("Database password")
+# )
+#####
+
+connectionDetails <- DatabaseConnector::createConnectionDetails(
+  dbms = executionSettings$dbms,
+  server = executionSettings$server,
+  user= executionSettings$user,
+  port = executionSettings$port,
+  password = executionSettings$password,
+)
 con <- DatabaseConnector::connect(connectionDetails)
 
 base_cohort <- read_file("sql/base_cohort.sql")
@@ -43,3 +81,7 @@ sql <- SqlRender::translate(sql, connectionDetails$dbms)
 result <- DatabaseConnector::querySql(connection = con, sql)
 
 head(result)
+
+result %>%
+   mutate(COUNT = case_when(COUNT < censor ~ censor, TRUE ~ COUNT)) %>%
+   write_csv("excluded_concepts.csv")
