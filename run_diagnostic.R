@@ -61,7 +61,7 @@ preparedCohortManifest <- prepManifestForCohortGenerator(getCohortManifest()) %>
   filter(str_detect(cohortName, "^Target|ARTEMIS"))
 
 ################################  
-## 4. BUILD COHORTS
+## 3. BUILD COHORTS AND WRITE COUNTS TO FILE
 ################################ 
 # Create all study cohorts and write censored counts to file.
 con <- DatabaseConnector::connect(connectionDetails)
@@ -81,7 +81,9 @@ cohortCounts <-  mutate(cohortCounts, across(c(cohortEntries,cohortSubjects), ~c
 write_csv(cohortCounts, file.path(outputFolder, "main_cohort_counts.csv"))
   
 
-#### GET ATTRITION
+################################ 
+## 4. GET ATTRITION AND WRITE TO FILE
+################################ 
 sql <- "select * from @work_database_schema.@cohort_table_inclusion_result;"
 sql <- SqlRender::render(sql, work_database_schema = executionSettings$workDatabaseSchema, cohort_table = executionSettings$cohortTable)
 sql <- SqlRender::translate(sql, connectionDetails$dbms)
@@ -109,6 +111,9 @@ attrition <- attrition %>%
 
 write_csv(attrition, file.path(outputFolder, "attrition.csv"))
 
+################################ 
+## 5. RUN DIAGNOSTIC QUERY 1: FINDS OUT WHICH CONCEPTS ARE EXCLUDING PATIENTS FOR HAVING OTHER PRIOR CANCER
+################################ 
 sql <- SqlRender::readSql("sql/diagnostic_query_1.sql")
 
 cohortId <- preparedCohortManifest %>%
