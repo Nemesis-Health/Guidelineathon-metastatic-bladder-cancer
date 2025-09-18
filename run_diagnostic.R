@@ -88,7 +88,7 @@ write_csv(cohortCounts, file.path(outputFolder, "main_cohort_counts.csv"))
   
 
 #### GET ATTRITION
-sql <- "select * from {work_database_schema}.{cohort_table}_inclusion_result;"
+sql <- "select * from @work_database_schema.@cohort_table_inclusion_result;"
 sql <- SqlRender::render(sql, work_database_schema = executionSettings$workDatabaseSchema, cohort_table = executionSettings$cohortTable)
 sql <- SqlRender::translate(sql, connectionDetails$dbms)
 
