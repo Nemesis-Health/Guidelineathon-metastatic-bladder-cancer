@@ -155,10 +155,10 @@ generateCohorts <- function(executionSettings,
       cohortId, cohortName, cohortEntries, cohortSubjects
     )
 
-  savePath <- fs::path(outputFolder, "cohortManifest.csv")
-  readr::write_csv(x = tb, file = savePath)
-  cli::cat_bullet("Saving Generated Cohorts to ", crayon::cyan(savePath),
-                  bullet = "tick", bullet_col = "green")
+  #savePath <- fs::path(outputFolder, "cohortManifest.csv")
+  #readr::write_csv(x = tb, file = savePath)
+  #cli::cat_bullet("Saving Generated Cohorts to ", crayon::cyan(savePath),
+  #                bullet = "tick", bullet_col = "green")
 
   return(cohortCounts)
 }
