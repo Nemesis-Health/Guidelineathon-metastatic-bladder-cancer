@@ -24,13 +24,13 @@ select c.concept_id
 WHERE E.concept_id is null
 ) C 
 )
-SELECT  condition_concept_id, concept_name, count(distinct P.person_id) as count
+SELECT  condition_concept_id, concept_name, count(distinct CO.subject_id) as count
 FROM @work_database_schema.@cohort_table CO
-JOIN @cdm_database_schema.condition_occurrence P ON CO.person_id = P.person_id
+JOIN @cdm_database_schema.condition_occurrence P ON CO.subject_id = P.person_id
 JOIN other_primaries cs on (P.condition_concept_id = cs.concept_id and cs.codeset_id = 3)
 JOIN @vocabulary_database_schema.concept C ON P.condition_concept_id = C.concept_id
-WHERE P.condition_start_date >= DATEADD(day,-365,CO.start_date)
-AND P.condition_start_date <= DATEADD(day,30,CO.start_date)
+WHERE P.condition_start_date >= DATEADD(day,-365,CO.cohort_start_date)
+AND P.condition_start_date <= DATEADD(day,30,CO.cohort_start_date)
 AND CO.cohort_definition_id = @cohort_definition_id
 GROUP BY P.condition_concept_id, C.concept_name
 ORDER BY count DESC
