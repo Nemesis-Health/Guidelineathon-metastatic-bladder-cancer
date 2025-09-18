@@ -1,5 +1,7 @@
 library(tidyverse)
 library(CohortGenerator)
+library(DatabaseConnector)
+library(SqlRender)
 
 source("analysis/_createCohorts.R")
 source("analysis/_cohortAttritionFns.R")
