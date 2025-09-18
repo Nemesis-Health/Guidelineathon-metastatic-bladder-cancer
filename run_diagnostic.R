@@ -27,7 +27,7 @@ executionSettings <- list(
   cdmDatabaseSchema = "",
   vocabDatabaseSchema = "",
   workDatabaseSchema = "",
-  cohortTable = "",
+  cohortTable = ""
 )
 
 
