@@ -33,6 +33,7 @@ create_cohorts <- TRUE
 
 executionSettings <- list(
   databaseName = "", ## This should be a unique identifier for your database. It is not used for database connectivity, only to identify results.
+  dbms = "",
   server = "",
   port = "",
   user = "",
@@ -43,7 +44,7 @@ executionSettings <- list(
   cohortTable = "",
   ARTEMISCohortTable = "",
   ARTEMISEpisodeTableName = "" , 
-  regimen_classification_table = "bc_regimen_classifcations"
+  regimen_classification_table = "bc_regimen_classifications"
 )
 
 
