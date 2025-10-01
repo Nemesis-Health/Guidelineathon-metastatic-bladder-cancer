@@ -17,7 +17,7 @@ source("analysis/_cohortAttritionFns.R")
 outputFolder <- "results_preliminary"
 dir.create(outputFolder)
 
-minCellCount <- 5
+censor <- 5
 
 executionSettings <- list(
   server = "",
