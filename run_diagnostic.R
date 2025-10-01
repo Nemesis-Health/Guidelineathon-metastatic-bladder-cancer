@@ -17,7 +17,7 @@ source("analysis/_cohortAttritionFns.R")
 outputFolder <- "results_preliminary"
 dir.create(outputFolder)
 
-censor <- 5
+minCellCount <- 5
 
 executionSettings <- list(
   server = "",
@@ -129,5 +129,6 @@ result <- DatabaseConnector::querySql(connection = con, sql)
 head(result)
 
 result %>%
-   mutate(COUNT = case_when(COUNT < censor ~ censor, TRUE ~ COUNT)) %>%
+   rename_all(tolower) %>%
+   mutate(count = case_when(count < minCellCount ~ -minCellCount, TRUE ~ count)) %>%
    write_csv(file.path(outputFolder, "excluded_concepts.csv"))
