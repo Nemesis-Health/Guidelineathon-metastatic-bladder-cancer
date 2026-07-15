@@ -1,16 +1,31 @@
 /* ============================================================================
    lab_cohorts.sql
    1st-line metastatic bladder cancer  --  lab-eligibility cohorts (Tests #1-23)
-   OMOP CDM on SQL Server.  Generated from "Lab input.xlsx" on 2026-06-28.
+   OMOP CDM.  Generated from "Lab input.xlsx" on 2026-06-28.
+   Rendered with SqlRender (parameters below) and translated per dialect.
 
-   PORTABILITY: logic is ANSI SQL (window fns, PERCENTILE_CONT, CASE).
-     Dialect-specific bits, flagged inline, are: #temp tables, LOG10(),
-     OBJECT_ID() drops, and the GREATEST-via-VALUES trick (SQL Server <2022).
+   SqlRender PARAMETERS (all rendered before execution):
+     @cdm_database_schema   -- OMOP CDM tables (measurement, person, ...)
+     @work_database_schema  -- schema that holds every table written below
+     @raw_lab_results_table -- persisted normalised evaluations (was @work_database_schema.@raw_lab_results_table);
+                               feeds Section 5 lab-value distributions
+     @lab_cohort_table      -- persisted pass/fail rows (cohort_definition_id =
+                               test_id) consumed by eligibility_2*.sql
+     -- scratch/reference tables (persisted, not #temp — survive across the
+     --   statement batches DatabaseConnector runs, and stay inspectable):
+     @cat_concept_table  @unit_factor_table  @normals_table  @criteria_table
+     @grp_table  @scales_table  @scored_table  @resolved_table  @debug_table
+
+   All work tables are DROP TABLE IF EXISTS'd first, so the script is
+   re-runnable. The scratch/reference tables are left in @work_database_schema
+   for auditing; drop them manually once results are validated.
+
+   PORTABILITY: logic is otherwise ANSI SQL (window fns, CASE); percentiles
+     use a ROW_NUMBER/COUNT/FLOOR interpolation (see step 1) because SqlRender
+     does not translate PERCENTILE_CONT.
+     Remaining dialect-specific bits, flagged inline: LOG10() and the
+     GREATEST-via-VALUES trick (SQL Server <2022).
      NB: column name "offset" is reserved in Postgres -- quote/rename when porting.
-
-   SCHEMAS: replace the placeholders below before running.
-     cdm.       = OMOP CDM tables (measurement, person, ...)
-     results.   = where the COHORT table lives
    ============================================================================ */
 
 /* ---------------------------------------------------------------------------
@@ -18,9 +33,9 @@
    --------------------------------------------------------------------------- */
 
 -- Table for test concepts in each category
-IF OBJECT_ID('tempdb..#cat_concept') IS NOT NULL DROP TABLE #cat_concept;
-CREATE TABLE #cat_concept (cat varchar(40), measurement_concept_id int);
-INSERT INTO #cat_concept (cat, measurement_concept_id) VALUES
+DROP TABLE IF EXISTS @work_database_schema.@cat_concept_table;
+CREATE TABLE @work_database_schema.@cat_concept_table (cat varchar(40), measurement_concept_id int);
+INSERT INTO @work_database_schema.@cat_concept_table (cat, measurement_concept_id) VALUES
  ('ALT',3955919),
  ('ALT',35814378),
  ('ALT',40782579),
@@ -793,10 +808,10 @@ INSERT INTO #cat_concept (cat, measurement_concept_id) VALUES
  ('Total bilirubin',37208618);
 
 -- table for unit conversion, including non-UCUM units
-IF OBJECT_ID('tempdb..#unit_factor') IS NOT NULL DROP TABLE #unit_factor;
+DROP TABLE IF EXISTS @work_database_schema.@unit_factor_table;
 -- standard_value = value_as_number * factor + offset   (offset<>0 only for HbA1c mmol/mol, which is affine)
-CREATE TABLE #unit_factor (cat varchar(40), unit_concept_id int, factor float, offset float, is_std bit);
-INSERT INTO #unit_factor (cat, unit_concept_id, factor, offset, is_std) VALUES
+CREATE TABLE @work_database_schema.@unit_factor_table (cat varchar(40), unit_concept_id int, factor float, offset float, is_std bit);
+INSERT INTO @work_database_schema.@unit_factor_table (cat, unit_concept_id, factor, offset, is_std) VALUES
  ('ALT',8645,1.0,0.0,1),
  ('ALT',8923,1.0,0.0,0),
  ('ALT',4118000,1.0,0.0,0),
@@ -879,10 +894,10 @@ INSERT INTO #unit_factor (cat, unit_concept_id, factor, offset, is_std) VALUES
  ('Total bilirubin',8837,0.001,0.0,0);
 
 -- lab normals table in the standard (used mostly) unit
-IF OBJECT_ID('tempdb..#normals') IS NOT NULL DROP TABLE #normals;
--- std_unit_concept_id = the unit_concept_id of the standard unit (the #unit_factor row where is_std=1)
-CREATE TABLE #normals (cat varchar(40), std_unit_concept_id int, range_low float, range_high float, matching varchar(10));
-INSERT INTO #normals (cat, std_unit_concept_id, range_low, range_high, matching) VALUES
+DROP TABLE IF EXISTS @work_database_schema.@normals_table;
+-- std_unit_concept_id = the unit_concept_id of the standard unit (the @work_database_schema.@unit_factor_table row where is_std=1)
+CREATE TABLE @work_database_schema.@normals_table (cat varchar(40), std_unit_concept_id int, range_low float, range_high float, matching varchar(10));
+INSERT INTO @work_database_schema.@normals_table (cat, std_unit_concept_id, range_low, range_high, matching) VALUES
  ('ANC',             8848, 2.5,  8.0,  'both'),
  ('Hb',              8713, 12.0, 17.5, 'both'),
  ('Platelets',       8961, 150,  450,  'both'),
@@ -899,11 +914,22 @@ INSERT INTO #normals (cat, std_unit_concept_id, range_low, range_high, matching)
  ('Total bilirubin', 8840, 0.3,  1.2,  'both');
 
 
-IF OBJECT_ID('tempdb..#criteria') IS NOT NULL DROP TABLE #criteria;
+DROP TABLE IF EXISTS @work_database_schema.@criteria_table;
 -- basis: 'ULN' => bound = mult * upper-normal ;  'ABS' => bound is a fixed value already in standard units
-CREATE TABLE #criteria (test_id int, cat varchar(40), basis char(3),
+--
+-- TEST-ID ALLOCATION (keep this in sync when adding tests — see below):
+--   1-23   original eligibility panel (unit-normalised thresholds).
+--   24-43  RESERVED for clinical / biomarker tests not yet encoded:
+--          24-27 ECOG 0/1/2/>=3, 28 liver metastasis, 29 Gilbert's,
+--          30 Hb mmol/L (redundant — normalisation handles it, do not add),
+--          31 anticoag exception, 32/33 neuropathy, 34 skin, 35 polyuria,
+--          36 polydipsia, 37/38 NYHA, 39/40 hearing, 41 comorbidity grade,
+--          42 PD-L1 CPS, 43 PD-L1 TIC.
+--   44-48  Diagnostic-strata thresholds added 2026-07-09 (this file, below).
+--   ->     Allocate NEW tests at 49+ to avoid collisions.
+CREATE TABLE @work_database_schema.@criteria_table (test_id int, cat varchar(40), basis char(3),
    min_op varchar(2), min_val float, max_op varchar(2), max_val float, note varchar(120));
-INSERT INTO #criteria (test_id, cat, basis, min_op, min_val, max_op, max_val, note) VALUES
+INSERT INTO @work_database_schema.@criteria_table (test_id, cat, basis, min_op, min_val, max_op, max_val, note) VALUES
  (1,  'aPTT',            'ULN', NULL, NULL, '<=', 1.5,  'aPTT <= 1.5 ULN'),
  (2,  'ALT',             'ULN', NULL, NULL, '<=', 2.5,  'ALT <= 2.5 ULN'),
  (3,  'ALT',             'ULN', NULL, NULL, '<=', 5.0,  'ALT <= 5 ULN'),
@@ -926,7 +952,16 @@ INSERT INTO #criteria (test_id, cat, basis, min_op, min_val, max_op, max_val, no
  (20, 'PT',              'ULN', NULL, NULL, '<=', 1.5,  'PT <= 1.5 ULN'),
  (21, 'Total bilirubin', 'ULN', NULL, NULL, '<=', 3.0,  'TBil <= 3 ULN'),
  (22, 'Total bilirubin', 'ULN', NULL, NULL, '<=', 1.5,  'TBil <= 1.5 ULN'),
- (23, 'Total bilirubin', 'ULN', '>',  1.5,  NULL, NULL, 'TBil > 1.5 ULN');
+ (23, 'Total bilirubin', 'ULN', '>',  1.5,  NULL, NULL, 'TBil > 1.5 ULN'),
+ -- Diagnostic-strata thresholds (ids 44+; ids 24-43 reserved for ECOG / liver
+ -- mets / neuropathy / NYHA / hearing / PD-L1 etc.). Values in standard units.
+ -- The mmol/L Hb path needs no separate test: Hb is normalised to g/dL, so
+ -- Hb >= 5.6 mmol/L == test 15 (>= 9 g/dL) post-conversion.
+ (44, 'ANC',             'ABS', NULL, NULL, '<',  1.5,  'ANC < 1500/uL'),
+ (45, 'Platelets',       'ABS', NULL, NULL, '<',  100,  'PLT < 100k/uL'),
+ (46, 'HbA1c',           'ABS', '>=', 8.0,  NULL, NULL, 'HbA1c >= 8%'),
+ (47, 'Hb',              'ABS', NULL, NULL, '<',  9.0,  'Hb < 9.0 g/dL'),
+ (48, 'GFR',             'ABS', '>',  30,   '<',  60,   'GFR 30-60 (exclusive)');
 
 /* ---------------------------------------------------------------------------
    1.  AGGREGATE measurements per (measurement_concept_id, unit_concept_id,
@@ -934,33 +969,62 @@ INSERT INTO #criteria (test_id, cat, basis, min_op, min_val, max_op, max_val, no
        The provided range is the lab/device reference -- a different range set
        usually means a different lab/device (maybe a different unit), so each is
        scored on its own.  No averaging.  Positive values only.
+
+       Percentiles use ROW_NUMBER()/COUNT(*)/FLOOR instead of
+       PERCENTILE_CONT ... WITHIN GROUP ... OVER, which SqlRender leaves
+       untranslated (breaks PostgreSQL/BigQuery/SQLite/Spark/Hive/Impala).
+       Interpolation reproduces PERCENTILE_CONT exactly (R quantile type 7):
+         pos = p * (n - 1)  (zero-based), k = FLOOR(pos), frac = pos - k
+         percentile = v[k] * (1 - frac) + v[k+1] * frac
+       so ranked rows rn = k+1 and rn = k+2 contribute weights (1-frac), frac.
+       (cat is 1:1 with measurement_concept_id in @cat_concept_table, so adding
+       it to the partition/grouping changes nothing.)
    --------------------------------------------------------------------------- */
-IF OBJECT_ID('tempdb..#grp') IS NOT NULL DROP TABLE #grp;
-SELECT DISTINCT
-   cc.cat,
-   m.measurement_concept_id                          AS m_id,
-   m.unit_concept_id                                 AS u_id,
-   CASE WHEN m.range_low  > 0 THEN m.range_low  END  AS rlo,
-   CASE WHEN m.range_high > 0 THEN m.range_high END  AS rhi,
-   COUNT(*)              OVER (PARTITION BY m.measurement_concept_id, m.unit_concept_id,
-                CASE WHEN m.range_low>0 THEN m.range_low END,
-                CASE WHEN m.range_high>0 THEN m.range_high END) AS records,
-   PERCENTILE_CONT(0.03) WITHIN GROUP (ORDER BY m.value_as_number) OVER (PARTITION BY m.measurement_concept_id, m.unit_concept_id,
-                CASE WHEN m.range_low>0 THEN m.range_low END,
-                CASE WHEN m.range_high>0 THEN m.range_high END) AS p03,
-   PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY m.value_as_number) OVER (PARTITION BY m.measurement_concept_id, m.unit_concept_id,
-                CASE WHEN m.range_low>0 THEN m.range_low END,
-                CASE WHEN m.range_high>0 THEN m.range_high END) AS p25,
-   PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY m.value_as_number) OVER (PARTITION BY m.measurement_concept_id, m.unit_concept_id,
-                CASE WHEN m.range_low>0 THEN m.range_low END,
-                CASE WHEN m.range_high>0 THEN m.range_high END) AS p75,
-   PERCENTILE_CONT(0.97) WITHIN GROUP (ORDER BY m.value_as_number) OVER (PARTITION BY m.measurement_concept_id, m.unit_concept_id,
-                CASE WHEN m.range_low>0 THEN m.range_low END,
-                CASE WHEN m.range_high>0 THEN m.range_high END) AS p97
-INTO #grp
-FROM cdm.measurement m
-JOIN #cat_concept cc ON cc.measurement_concept_id = m.measurement_concept_id
-WHERE m.value_as_number > 0;
+DROP TABLE IF EXISTS @work_database_schema.@grp_table;
+
+WITH grp_base AS (
+  SELECT cc.cat,
+         m.measurement_concept_id                         AS m_id,
+         m.unit_concept_id                                AS u_id,
+         CASE WHEN m.range_low  > 0 THEN m.range_low  END AS rlo,
+         CASE WHEN m.range_high > 0 THEN m.range_high END AS rhi,
+         m.value_as_number                                AS val
+    FROM @cdm_database_schema.measurement m
+    JOIN @work_database_schema.@cat_concept_table cc
+      ON cc.measurement_concept_id = m.measurement_concept_id
+   WHERE m.value_as_number > 0
+),
+grp_ranked AS (
+  SELECT cat, m_id, u_id, rlo, rhi, val,
+         ROW_NUMBER() OVER (PARTITION BY cat, m_id, u_id, rlo, rhi ORDER BY val) AS rn,
+         COUNT(*)     OVER (PARTITION BY cat, m_id, u_id, rlo, rhi)              AS n
+    FROM grp_base
+)
+SELECT cat, m_id, u_id, rlo, rhi,
+       COUNT(*) AS records,
+       SUM(CASE WHEN rn = FLOOR(0.03 * (n - 1)) + 1
+                THEN val * (1.0 - (0.03 * (n - 1) - FLOOR(0.03 * (n - 1))))
+                WHEN rn = FLOOR(0.03 * (n - 1)) + 2
+                THEN val * (0.03 * (n - 1) - FLOOR(0.03 * (n - 1)))
+                ELSE 0 END) AS p03,
+       SUM(CASE WHEN rn = FLOOR(0.25 * (n - 1)) + 1
+                THEN val * (1.0 - (0.25 * (n - 1) - FLOOR(0.25 * (n - 1))))
+                WHEN rn = FLOOR(0.25 * (n - 1)) + 2
+                THEN val * (0.25 * (n - 1) - FLOOR(0.25 * (n - 1)))
+                ELSE 0 END) AS p25,
+       SUM(CASE WHEN rn = FLOOR(0.75 * (n - 1)) + 1
+                THEN val * (1.0 - (0.75 * (n - 1) - FLOOR(0.75 * (n - 1))))
+                WHEN rn = FLOOR(0.75 * (n - 1)) + 2
+                THEN val * (0.75 * (n - 1) - FLOOR(0.75 * (n - 1)))
+                ELSE 0 END) AS p75,
+       SUM(CASE WHEN rn = FLOOR(0.97 * (n - 1)) + 1
+                THEN val * (1.0 - (0.97 * (n - 1) - FLOOR(0.97 * (n - 1))))
+                WHEN rn = FLOOR(0.97 * (n - 1)) + 2
+                THEN val * (0.97 * (n - 1) - FLOOR(0.97 * (n - 1)))
+                ELSE 0 END) AS p97
+  INTO @work_database_schema.@grp_table
+  FROM grp_ranked
+ GROUP BY cat, m_id, u_id, rlo, rhi;
 
 /* ---------------------------------------------------------------------------
    2.  SCORE every candidate scale (distinct factor+offset for the cat).
@@ -971,14 +1035,14 @@ WHERE m.value_as_number > 0;
                      (mixed healthy/sick population, bimodal, skewed), so it is
                      only a fallback when the group has no provided range.
    --------------------------------------------------------------------------- */
--- #scales = the DISTINCT factor+offset per cat. NOT a copy of #unit_factor: many
+-- @work_database_schema.@scales_table = the DISTINCT factor+offset per cat. NOT a copy of @work_database_schema.@unit_factor_table: many
 -- unit_concept_ids share one factor (e.g. ALT has 4 units but 1 factor), so this
 -- collapses synonyms to one scale each -- otherwise that scale would be scored N
 -- times, inflating grp_npass (is_ambiguous) and giving ROW_NUMBER duplicate winners.
-IF OBJECT_ID('tempdb..#scales') IS NOT NULL DROP TABLE #scales;
-SELECT DISTINCT cat, factor, offset INTO #scales FROM #unit_factor;
+DROP TABLE IF EXISTS @work_database_schema.@scales_table;
+SELECT DISTINCT cat, factor, offset INTO @work_database_schema.@scales_table FROM @work_database_schema.@unit_factor_table;
 
-IF OBJECT_ID('tempdb..#scored') IS NOT NULL DROP TABLE #scored;
+DROP TABLE IF EXISTS @work_database_schema.@scored_table;
 SELECT
   g.m_id, g.u_id, g.rlo, g.rhi, g.cat, g.records, s.factor, s.offset,
   -- range_decade: bound-to-bound vs the standard normal, gated on the normal's matching.
@@ -1011,10 +1075,10 @@ SELECT
                    (LOG10(g.p03*s.factor+s.offset) - LOG10(n.range_low)) ) t(v)) END
     END
   END AS dist_decade
-INTO #scored
-FROM #grp g
-JOIN #scales  s ON s.cat = g.cat
-JOIN #normals n ON n.cat = g.cat;
+INTO @work_database_schema.@scored_table
+FROM @work_database_schema.@grp_table g
+JOIN @work_database_schema.@scales_table  s ON s.cat = g.cat
+JOIN @work_database_schema.@normals_table n ON n.cat = g.cat;
 
 /* ---------------------------------------------------------------------------
    3.  RESOLVE the unit/factor per group.
@@ -1024,7 +1088,7 @@ JOIN #normals n ON n.cat = g.cat;
                else unresolved.  is_ambiguous = more than one scale cleared 0.7
                (e.g. Hb g/dL vs mmol/L are ~0.21 decades apart).
    --------------------------------------------------------------------------- */
-IF OBJECT_ID('tempdb..#resolved') IS NOT NULL DROP TABLE #resolved;
+DROP TABLE IF EXISTS @work_database_schema.@resolved_table;
 SELECT m_id, u_id, rlo, rhi, cat,
 -- conversion factor for best match
    CASE WHEN prov_score < 0.7 THEN prov_factor
@@ -1045,7 +1109,7 @@ SELECT m_id, u_id, rlo, rhi, cat,
         ELSE 'unresolved' END AS status,
    CASE WHEN grp_npass > 1 THEN 1 ELSE 0 END AS is_ambiguous,
    grp_best AS best_score, prov_score
-INTO #resolved
+INTO @work_database_schema.@resolved_table
 FROM (
    SELECT i.*,
       MIN(score)                                   OVER (PARTITION BY m_id, u_id, rlo, rhi) AS grp_best,
@@ -1058,8 +1122,8 @@ FROM (
       SELECT sc.m_id, sc.u_id, sc.rlo, sc.rhi, sc.cat, sc.factor, sc.offset,
              COALESCE(sc.range_decade, sc.dist_decade) AS score,   -- range first, distribution only as fallback
              CASE WHEN uf.unit_concept_id IS NOT NULL THEN 1 ELSE 0 END AS is_provided
-      FROM #scored sc
-      LEFT JOIN #unit_factor uf
+      FROM @work_database_schema.@scored_table sc
+      LEFT JOIN @work_database_schema.@unit_factor_table uf
              ON uf.cat = sc.cat AND uf.unit_concept_id = sc.u_id
             AND uf.factor = sc.factor AND uf.offset = sc.offset
    ) i
@@ -1069,7 +1133,7 @@ WHERE rn = 1;
 /* ---------------------------------------------------------------------------
    4.  EVALUATE thresholds  ->  standardized value, ULN, and the test bounds
    --------------------------------------------------------------------------- */
-IF OBJECT_ID('tempdb..#eval') IS NOT NULL DROP TABLE #eval;
+DROP TABLE IF EXISTS @work_database_schema.@raw_lab_results_table;
 SELECT
    t.test_id, m.person_id, m.measurement_date, t.cat, m.measurement_concept_id, m.unit_concept_id,
    t.basis, t.min_op, t.max_op,
@@ -1082,23 +1146,30 @@ SELECT
         THEN t.max_val * COALESCE(NULLIF(m.range_high,0)*r.factor+r.offset, n.range_high)
         ELSE t.max_val END                                                      AS max_bound,
    r.status, r.is_ambiguous
-INTO #eval
-FROM cdm.measurement m
-JOIN #cat_concept cc ON cc.measurement_concept_id = m.measurement_concept_id
-JOIN #resolved    r  ON r.m_id = m.measurement_concept_id AND r.u_id = m.unit_concept_id
+INTO @work_database_schema.@raw_lab_results_table
+FROM @cdm_database_schema.measurement m
+JOIN @work_database_schema.@cat_concept_table cc ON cc.measurement_concept_id = m.measurement_concept_id
+JOIN @work_database_schema.@resolved_table    r  ON r.m_id = m.measurement_concept_id AND r.u_id = m.unit_concept_id
     AND COALESCE(r.rlo,-1) = COALESCE(CASE WHEN m.range_low>0  THEN m.range_low  END,-1)
     AND COALESCE(r.rhi,-1) = COALESCE(CASE WHEN m.range_high>0 THEN m.range_high END,-1)
-JOIN #criteria  t  ON t.cat = cc.cat
-JOIN #normals     n  ON n.cat = cc.cat
+JOIN @work_database_schema.@criteria_table  t  ON t.cat = cc.cat
+JOIN @work_database_schema.@normals_table     n  ON n.cat = cc.cat
 WHERE m.value_as_number > 0
   AND r.factor IS NOT NULL;          -- unit must be resolvable to convert
 
 /* ---------------------------------------------------------------------------
    5.  COHORT  (one row per qualifying measurement)
    --------------------------------------------------------------------------- */
-INSERT INTO results.cohort (cohort_definition_id, subject_id, cohort_start_date, cohort_end_date)
+DROP TABLE IF EXISTS @work_database_schema.@lab_cohort_table;
+CREATE TABLE @work_database_schema.@lab_cohort_table (
+   cohort_definition_id INT,
+   subject_id           BIGINT,
+   cohort_start_date    DATE,
+   cohort_end_date      DATE
+);
+INSERT INTO @work_database_schema.@lab_cohort_table (cohort_definition_id, subject_id, cohort_start_date, cohort_end_date)
 SELECT DISTINCT e.test_id, e.person_id, e.measurement_date, e.measurement_date
-FROM #eval e
+FROM @work_database_schema.@raw_lab_results_table e
 WHERE (e.basis = 'ABS' OR e.uln_std IS NOT NULL)            -- ULN tests need a usable ULN
   AND ( e.min_op IS NULL
         OR (e.min_op = '>=' AND e.std_value >= e.min_bound)
@@ -1110,21 +1181,21 @@ WHERE (e.basis = 'ABS' OR e.uln_std IS NOT NULL)            -- ULN tests need a 
 /* ---------------------------------------------------------------------------
    6.  DEBUG  -- combinations that could not be evaluated, with the reason
    --------------------------------------------------------------------------- */
-IF OBJECT_ID('tempdb..#debug') IS NOT NULL DROP TABLE #debug;
+DROP TABLE IF EXISTS @work_database_schema.@debug_table;
 SELECT test_id, cat, measurement_concept_id, unit_concept_id, reason, COUNT(*) AS record_count
-INTO #debug
+INTO @work_database_schema.@debug_table
 FROM (
    SELECT e.test_id, e.cat, e.measurement_concept_id, e.unit_concept_id,
           'ULN missing (no provided range_high, no normal high)' AS reason
-   FROM #eval e
+   FROM @work_database_schema.@raw_lab_results_table e
    WHERE e.basis = 'ULN' AND e.uln_std IS NULL
    UNION ALL
    SELECT t.test_id, cc.cat, m.measurement_concept_id, m.unit_concept_id,
           'unit unresolved (no scale within 0.7 decades)' AS reason
-   FROM cdm.measurement m
-   JOIN #cat_concept cc ON cc.measurement_concept_id = m.measurement_concept_id
-   JOIN #criteria  t  ON t.cat = cc.cat
-   LEFT JOIN #resolved r ON r.m_id = m.measurement_concept_id AND r.u_id = m.unit_concept_id
+   FROM @cdm_database_schema.measurement m
+   JOIN @work_database_schema.@cat_concept_table cc ON cc.measurement_concept_id = m.measurement_concept_id
+   JOIN @work_database_schema.@criteria_table  t  ON t.cat = cc.cat
+   LEFT JOIN @work_database_schema.@resolved_table r ON r.m_id = m.measurement_concept_id AND r.u_id = m.unit_concept_id
     AND COALESCE(r.rlo,-1) = COALESCE(CASE WHEN m.range_low>0  THEN m.range_low  END,-1)
     AND COALESCE(r.rhi,-1) = COALESCE(CASE WHEN m.range_high>0 THEN m.range_high END,-1)
    WHERE m.value_as_number > 0 AND r.factor IS NULL
@@ -1132,7 +1203,7 @@ FROM (
 GROUP BY test_id, cat, measurement_concept_id, unit_concept_id, reason;
 
 -- Audit helpers:
---   SELECT * FROM #resolved WHERE status IN ('overridden','unresolved','unverified') OR is_ambiguous = 1;
---   SELECT * FROM #debug ORDER BY record_count DESC;
+--   SELECT * FROM @work_database_schema.@resolved_table WHERE status IN ('overridden','unresolved','unverified') OR is_ambiguous = 1;
+--   SELECT * FROM @work_database_schema.@debug_table ORDER BY record_count DESC;
 
 
