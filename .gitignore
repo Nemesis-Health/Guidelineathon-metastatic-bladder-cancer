@@ -1,10 +1,39 @@
-.Rproj.user
+# === Claude / agent tooling (never commit) ===
+.claude/
+CLAUDE.md
+.cursor/
+.aider*
+
+# === Granular internal notes / working documentation ===
+DEVELOPMENT.md
+docs/reference/
+
+# === Source binaries (protocol drafts, reference PDFs) ===
+*.docx
+*.pdf
+
+# === Results (aggregate outputs — regenerated per run) ===
+results/
+!results/.gitkeep
+
+# === R session / RStudio ===
+.Rproj.user/
 .Rhistory
 .RData
 .Ruserdata
-errorReportSql.txt
-pyenv/
-results/
-data/add_eunomia.R
-runEunomia.R
-.Rprofile
+*.Rproj.user
+
+# === JDBC drivers / credentials ===
+*.jar
+.jdbc_drivers/
+
+# === renv — commit renv.lock only; the restored library is machine-local ===
+renv/library/
+renv/local/
+renv/cellar/
+renv/staging/
+renv/python/
+renv/sandbox/
+
+# === OS ===
+.DS_Store

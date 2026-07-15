@@ -1,243 +1,126 @@
-### Ensure renv is loaded and up to date with new version of ARTEMIS installed. 
-### If you cannot use renv because of environment restrictions, please install the below version of ARTEMIS along with other dependencies:
-### remotes::install_github("OHDSI/ARTEMIS@fe31707b5fe2aeda896ee5d2399852a6a8dd4def")
-### If you encounter issues installing ARTEMIS consider using a python virtual environment for the project. See setup.R for details or contact the study team.
-source("renv/activate.R") ## Choose to restore project from lockfile
-renv::restore()
+# ===========================================================================
+# run.R  —  Bladder eligibility study (standalone; no OncoStudyModules dep)
+# ===========================================================================
+# Stage: cohort creation.
+#   (a) ARTEMIS regimen alignment            -> R/01_artemis.R
+#   (b) eligibility labs + cohorts -> 1 table -> R/02_eligibility_inputs.R
+#   (c) main cohort tree                      -> R/03_main_cohorts.R
+#   (d) lab test ranges on main cohorts       -> R/04_lab_ranges.R
+#   (e) eligibility-input coverage            -> R/05_eligibility_coverage.R
+#   (f) ARTEMIS alignment assessment          -> R/06_artemis_assessment.R
+#   (g) per-cohort demographics               -> R/07_demographics.R
+#   (h) covariate overlap with 1A             -> R/08_covariates.R
+#
+# Usage: edit the CONFIG block below, then  source("run.R")
+# Requires: DatabaseConnector, SqlRender, CohortGenerator, CirceR, ARTEMIS,
+#           dplyr, tibble, readr  (installed; NOT OncoStudyModules).
+# ===========================================================================
 
-library(tidyverse)
-library(CohortGenerator)
-library(ARTEMIS)
+for (p in c("DatabaseConnector", "SqlRender", "CohortGenerator", "CirceR",
+            "ARTEMIS", "dplyr", "tibble", "readr")) {
+  if (!requireNamespace(p, quietly = TRUE))
+    stop("Required package not installed: ", p, call. = FALSE)
+}
 
-source("analysis/_createCohorts.R")
-source("analysis/_runARTEMIS.R")
-source("extras/source_without_messages.R")
+# ===========================================================================
+# CONFIG  [EDIT HERE]
+# ===========================================================================
 
-################################ 
-## 1. STUDY SETUP - PLEASE COMPELTE
-################################  
+# --- Database connection ----------------------------------------------------
+# Define `connectionDetails` however your site connects — this is left open on
+# purpose. Most JDBC setups use DatabaseConnector::createConnectionDetails(),
+# but some sites need a different constructor (e.g. createDbiConnectionDetails()
+# for Azure AD token auth). Any DatabaseConnector connectionDetails works; the
+# SQL dialect is read from the live connection, so nothing else depends on how
+# it is built.
+#
+# Example (JDBC):
+#   connectionDetails <- DatabaseConnector::createConnectionDetails(
+#     dbms = "sql server", server = "host/db", user = "...", password = "...",
+#     pathToDriver = path.expand("~/.jdbc_drivers"))
+#
+# Example (DBI / Azure token):
+#   connectionDetails <- DatabaseConnector::createDbiConnectionDetails(
+#     dbms = "sql server", drv = odbc::odbc(),
+#     Driver = "ODBC Driver 18 for SQL Server",
+#     Server = "...", Database = "...", Encrypt = "yes",
+#     TrustServerCertificate = "No",
+#     attributes = list("azure_token" = token$credentials$access_token))
 
-### If not already set, set file path to DB JAR FIles
-#Sys.getenv("DATABASECONNECTOR_JAR_FOLDER")
-#Sys.setenv(DATABASECONNECTOR_JAR_FOLDER = "∼/JDBC/")
+connectionDetails <- NULL   # <-- REPLACE with your connection
 
-outputFolder <- "results"
-dir.create(outputFolder)
-dir.create(file.path(outputFolder, "study_results"))
+# --- Site + OMOP CDM schemas ------------------------------------------------
+settings <- list(
+  databaseId          = "",   # short site id, e.g. "HUS"
+  cdmDatabaseSchema   = "",
+  vocabDatabaseSchema = "",    # defaults to cdmDatabaseSchema if blank
+  workDatabaseSchema  = "",    # where cohort + lab + episode tables are written
 
-minCellCount <- 5
-run_ARTEMIS <- TRUE
-run_cohort_diagnostics_for_target_cohorts <- TRUE
-run_cohort_diagnostics_for_all_cohorts <- FALSE
-create_cohorts <- TRUE
+  # --- Work tables ----------------------------------------------------------
+  cohortTable          = "bc_cohort",
+  labCohortTable       = "bc_lab_cohort",       # unified eligibility table (labs + cohorts)
+  rawLabResultsTable   = "bc_raw_lab_results",
+  covariateCohortTable = "bc_covariate_cohort", # descriptive covariates (comorbidities); NOT part of the main tree
+  artemisCohortName    = "ARTEMIS bladder cohort",
+  episodeTable         = "bc_artemis_episodes",
+  regimenClassTable    = "bc_regimen_classifications",
 
-executionSettings <- list(
-  databaseName = "", ## This should be a unique identifier for your database. It is not used for database connectivity, only to identify results.
-  server = "",
-  port = "",
-  user = "",
-  password = "",
-  cdmDatabaseSchema = "",
-  vocabDatabaseSchema = "",
-  workDatabaseSchema = "",
-  cohortTable = "",
-  ARTEMISCohortTable = "",
-  ARTEMISEpisodeTableName = "" , 
-  regimen_classification_table = "bc_regimen_classifcations"
+  # --- Run settings ---------------------------------------------------------
+  minCellCount        = 5L,
+  labIndexWindowDays  = 14L,
+  # Exclude endocrine-therapy regimens (tamoxifen, abiraterone, GnRH agonists,
+  # ...) from the ARTEMIS reference. Applied via the is_endocrine column of
+  # cohorts/extras/regimen_reference.csv. TRUE = drop hormone therapy (default);
+  # FALSE = count endocrine therapy as anticancer treatment.
+  stripEndocrineTherapy = TRUE,
+  # --- Which drugs ARTEMIS encodes into each patient's alignment string ------
+  # Non-regimen / supportive drugs in the string are gap noise that lowers
+  # alignment scores and shrinks eras (DEVELOPMENT.md §10.4). Two composable
+  # filters (both applied when both active). Regimens whose components are
+  # filtered out can no longer align and are dropped from the reference (logged).
+  #   validDrugsRegimenComponents  TRUE (default) = keep only drugs that appear
+  #                                in a kept regimen; FALSE = keep all. This keeps
+  #                                validDrugs and the regimen file consistent —
+  #                                every kept regimen's components stay encodable,
+  #                                so every regimen stays alignable.
+  #   validDrugsAtcClasses         ATC 2nd-level classes to keep. DEFAULT
+  #                                character(0) (off): setting c("L01".."L04")
+  #                                further drops steroids/rescue agents for a
+  #                                cleaner string, but ALSO false-drops anticancer
+  #                                drugs whose special-formulation / fixed-dose-
+  #                                combo RxNorm concept isn't ATC-mapped in the
+  #                                vocab (nab-paclitaxel, liposomal doxorubicin,
+  #                                ADCs, ...) and their regimens — so it is opt-in.
+  validDrugsRegimenComponents = TRUE,
+  validDrugsAtcClasses = character(0),
+  # ATC 2nd-level classes whose descendant ingredients are kept in the ARTEMIS
+  # exposure assessment (drug_exposures / uncaptured / coverage in step (f)).
+  # NULL (default) mirrors the regimen anticancer filter: L01/L03/L04, plus L02
+  # when stripEndocrineTherapy is FALSE. Set an explicit vector (e.g. c("L01"))
+  # to override, or character(0) to keep every recognised ingredient.
+  assessmentAtcClasses = NULL,
+  outputFolder        = file.path("results")
 )
 
+# ===========================================================================
+# Run  —  do not edit below
+# ===========================================================================
+source("R/vendor_utils.R")   # .getDbms, %||%
+source("R/artemis.R")        # vendored: runArtemis(), writeArtemisEpisodes(), ...
+source("R/artemis_uncaptured.R")  # uncapturedExposures(), plotUncapturedAlignment()
+source("R/helpers.R")        # cohort generation + SQL utilities
+source("R/setup.R")          # config checks + derived paths + executionSettings
 
-#####
-## NOTE: If you require a DBI database connection, use edit the below example. Please contact the study team for assistance.
-# connectionDetails <- DatabaseConnector::createDbiConnectionDetails(
-#   dbms = "sql server",
-#   drv = odbc::odbc(),
-#   Driver = "ODBC Driver 18 for SQL Server",
-#   Server = "server.database.windows.net",
-#   Database = "dsfsd8980sddfsd",
-#   Authentication = "ActiveDirectoryPassword", 
-#   UID = "",
-#   PWD = rstudioapi::askForPassword("Database password")
-# )
-#####
+connection <- DatabaseConnector::connect(connectionDetails)
+on.exit(try(DatabaseConnector::disconnect(connection), silent = TRUE), add = TRUE)
 
-connectionDetails <- DatabaseConnector::createConnectionDetails(
-  dbms = executionSettings$dbms,
-  server = executionSettings$server,
-  user= executionSettings$user,
-  port = executionSettings$port,
-  password = executionSettings$password,
-)
+source("R/01_artemis.R")            # (a)
+source("R/02_eligibility_inputs.R") # (b)
+source("R/03_main_cohorts.R")       # (c)
+source("R/04_lab_ranges.R")         # (d) lab test ranges on main cohorts
+source("R/05_eligibility_coverage.R") # eligibility-input counts + Target 1A coverage
+source("R/06_artemis_assessment.R") # ARTEMIS alignment assessment (uses artemisResult)
+source("R/07_demographics.R")       # per-cohort demographics (age / sex / index year)
+source("R/08_covariates.R")         # covariate overlap with 1A (comorbidities + PS)
 
-################################  
-## 2. PREPARE COHORTS
-################################  
-## This code prepares the cohort manifest file. SQL is written in SQL Server but will be translated before execution. No action is needed.
-## The SQL for Target Cohort 3B is substituted to make use of data written to the ARTEMISEpisodeTableName defined in the executionSettings object.
-
-preparedCohortManifest <- prepManifestForCohortGenerator(getCohortManifest())
-
-for(target_cohort in c("1A")){
-  sql_template <- readLines(str_c("sql/Target_",target_cohort,"_initiated_template.sql"))
-  sql_template <- paste(sql_template, collapse = "\n")  # Combine into one string
-  base_cohort_id <- max(preparedCohortManifest$cohortId) + 1
-
-  sql <- SqlRender::render(sql_template, regimen_episode_table = executionSettings$ARTEMISEpisodeTableName, regimen_classification_table = executionSettings$regimen_classification_table)
-  preparedCohortManifest <- add_row(
-    preparedCohortManifest,
-    cohortId = base_cohort_id,
-    cohortName = str_c("Target_",target_cohort,"_initiated_base"),
-    json = preparedCohortManifest$json[preparedCohortManifest$cohortName == str_c("Target_",target_cohort,"_initiated_L01")],
-    sql = sql
-  )
-
-  sql_template <- "
-  DELETE FROM @target_database_schema.@target_cohort_table where cohort_definition_id = @target_cohort_id;
-  INSERT INTO @target_database_schema.@target_cohort_table (cohort_definition_id, subject_id, cohort_start_date, cohort_end_date)
-  SELECT @target_cohort_id as cohort_definition_id, tc.subject_id, tc.cohort_start_date, tc.cohort_end_date
-  FROM @target_database_schema.@target_cohort_table tc
-  JOIN @target_database_schema.@regimen_episode_table re
-    ON tc.subject_id = re.person_id
-  JOIN @target_database_schema.@regimen_classification_table rc
-    ON re.episode_source_value = rc.regName
-    AND re.episode_start_date = tc.cohort_start_date
-  @classification_expression
-  AND cohort_definition_id = @base_cohort_id
-  "
-
-  for(cohort_set in c("4","5","6")){
-    for(classification in c("a","b","c","d","e","f")){
-      classification_expression <- str_c("WHERE cohort_T" ,cohort_set,"  = ", "'",classification,"'")
-      sql <- SqlRender::render(sql_template, regimen_episode_table = executionSettings$ARTEMISEpisodeTableName, regimen_classification_table = executionSettings$regimen_classification_table, classification_expression = classification_expression, base_cohort_id = base_cohort_id)
-      preparedCohortManifest <- add_row(
-        preparedCohortManifest,
-        cohortId = max(preparedCohortManifest$cohortId) + 1,
-        cohortName = str_c("Target_",target_cohort,"_",cohort_set,classification),
-        json = preparedCohortManifest$json[preparedCohortManifest$cohortName == str_c("Target_",target_cohort,"_initiated_L01")],
-        sql = sql
-      )
-    }
-  }
-}
-
-################################  
-## 3. RUN ARTEMIS AND WRITE EPISODES - SKIP IF ALREADY RUN
-################################ 
-
-if(run_ARTEMIS){
-
-  con <- DatabaseConnector::connect(connectionDetails)
-
-  l02 <- dbGetQuery(con, SqlRender::render("SELECT descendant_concept_id 
-              FROM @cdm_database_schema.concept_ancestor 
-              WHERE ancestor_concept_id = 21603812 ", cdm_database_schema = executionSettings$cdmDatabaseSchema))
-    
-  validDrugs_input <- ARTEMIS::loadDrugs(
-    #absolute = file.path(getwd(), "data", "validDrugs.rda")
-  ) %>%
-    mutate(valid_concept_id = case_when(name == "Methotrexate" ~ "1305058", 
-           TRUE ~ valid_concept_id)) %>% 
-    filter(!valid_concept_id %in% l02$descendant_concept_id)
- 
-  regimens_input <- ARTEMIS::loadRegimens(
-    condition = "all",
-    #absolute = file.path(getwd(), "data", "regimens.rda")
-  )
-  ARTEMIS_outputs <- runARTEMIS(
-    connectionDetails = connectionDetails ,
-    cdmSchema = executionSettings$cdmDatabaseSchema,
-    cohortTable = executionSettings$ARTEMISCohortTable,
-    cohortSchema = executionSettings$workDatabaseSchema,
-    cohortManifestRow = filter(preparedCohortManifest,cohortName=="ARTEMIS_bladder_cohort"),
-    regimens =  regimens_input,
-    validDrugs = validDrugs_input
-  )
-    
-  insertTable(connection = con, 
-              databaseSchema = executionSettings$workDatabaseSchema,
-              tableName = executionSettings$ARTEMISEpisodeTableName,
-              dropTableIfExists = TRUE,
-              data = mutate(ARTEMIS_outputs$episodes, person_id = as.integer(person_id))
-  )
-
-  regimen_classifications <- read_csv("extras/regimen_classifications.csv")
-
-  insertTable(connection = con, 
-              databaseSchema = executionSettings$workDatabaseSchema,
-              tableName = executionSettings$regimen_classification_table,
-              dropTableIfExists = TRUE,
-              data = regimen_classifications
-  )
-  
-  DatabaseConnector::disconnect(con)
-  
-}
-
-################################  
-## 4. BUILD COHORTS
-################################ 
-# Create all study cohorts and write censored counts to file.
-
-if(create_cohorts){
-  
-  con <- DatabaseConnector::connect(connectionDetails)
-  
-  initializeCohortTables(executionSettings = executionSettings, con = con, dropTables = TRUE)
-  
-  cohortCounts <- generateCohorts(
-    executionSettings = executionSettings ,
-    con = con,
-    cohortsToCreate = preparedCohortManifest,
-    outputFolder = outputFolder,
-    type = "analysis"
-  )
-  
-  cohortCounts <-  mutate(cohortCounts, across(c(cohortEntries,cohortSubjects), ~case_when(.x > 0 & .x < minCellCount ~ -minCellCount, TRUE ~ .x)))
-  
-  write_csv(cohortCounts, file.path(outputFolder, "study_results","main_cohort_counts.csv"))
-  
-  DatabaseConnector::disconnect(con)
-  
-}
-
-################################  
-## 5. RUN COHORT DIAGNOSTICS 
-################################      
-
-if(run_cohort_diagnostics_for_target_cohorts | run_cohort_diagnostics_for_all_cohorts){
-
-  con <- DatabaseConnector::connect(connectionDetails)
-
-  manifest_to_run <- preparedCohortManifest
-
-  if(!run_cohort_diagnostics_for_all_cohorts) manifest_to_run <-  filter(manifest_to_run, cohortName %in% c("Target_1A", "Target_1A_initiated_base", "Target_1A_initiated_L01", "ARTEMIS_bladder_cohort") | str_detect(cohortName, "Target_1A_"))
-
-  runCohortDiagnostics(
-    con = con,
-    executionSettings = executionSettings,
-    cohortsToRun = manifest_to_run,
-    outputFolder = outputFolder,
-    minCellCount = minCellCount
-  )
-
-  source("analysis/_cohortAttrition.R")
-
-  DatabaseConnector::disconnect(con)
-
-}
-
-################################  
-## 6. RUN MAIN STUDY
-################################   
-
-con <- DatabaseConnector::connect(connectionDetails)
-
-source_without_messages("analysis/_cohortDemographics.R")
-source_without_messages("analysis/_cohortComorbidities.R")
-source_without_messages("analysis/_rollupCounts.R")
-source_without_messages("analysis/_therapyAnalysis.R")
-source_without_messages("analysis/_timeToEvent.R")
-
-DatabaseConnector::disconnect(con)
-
-zip(file.path(outputFolder, "study_results.zip"), file.path(outputFolder, "study_results"))
+message("\n=== Done. Results under ", settings$outputFolder, "/csv/ ===")
