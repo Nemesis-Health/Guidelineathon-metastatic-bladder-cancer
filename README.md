@@ -15,7 +15,7 @@ Only aggregate results leave the site (`results/csv/`), censored at
    working directory).
 2. Edit the **CONFIG block at the top of `run.R`** — define `connectionDetails`
    (however your site connects) and fill in the schema names.
-3. Run:
+3. Run: step through `run.R`, or
 
    ```r
    source("run.R")
