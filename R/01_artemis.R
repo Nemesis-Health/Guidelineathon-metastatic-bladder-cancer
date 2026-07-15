@@ -130,6 +130,10 @@ artemisResult <- runArtemis(
 episodes <- artemisResult$episodes
 message("ARTEMIS produced ", nrow(episodes), " regimen episode(s).")
 
+# Persist the full ARTEMIS output object (all stages, not just episodes) so it
+# can be re-inspected offline without re-running the alignment.
+saveRDS(artemisResult, file.path(settings$outputFolder, "artemis_result.rds"))
+
 if (nrow(episodes) > 0L) {
   writeArtemisEpisodes(connection = connection,
                        executionSettings = executionSettings,
