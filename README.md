@@ -1,9 +1,8 @@
 # Bladder eligibility study (standalone)
 
 Cohort-creation stage for the **EAU 2024 metastatic bladder cancer** RWE study,
-as a self-contained R project. **No `OncoStudyModules` dependency** — the
-orchestration uses the OHDSI packages directly, and the ARTEMIS integration is
-vendored as source (`R/artemis.R`).
+as a self-contained R project. The orchestration uses the OHDSI packages
+directly, with the ARTEMIS integration in `R/artemis.R`.
 
 Only aggregate results leave the site (`results/csv/`), censored at
 `minCellCount` (default 5).
@@ -24,7 +23,7 @@ Only aggregate results leave the site (`results/csv/`), censored at
 
 `run.R` holds the **CONFIG block** (the only thing to edit — `connectionDetails`,
 schemas, table names, run settings; it builds the `executionSettings` object the
-vendored ARTEMIS code reads), then sources the numbered steps in order and writes
+ARTEMIS code reads), then sources the numbered steps in order and writes
 CSVs under `results/csv/`.
 
 ### Requirements
@@ -42,10 +41,7 @@ CSVs under `results/csv/`.
 | `tibble` | 3.3.0 | CRAN |
 | `readr` | 2.1.6 | CRAN |
 
-Everything except ARTEMIS comes from CRAN. `DatabaseConnector`, `CirceR`, and
-`CohortGenerator` are pinned to the tested versions above; 6.4.0 and 0.11.2 are
-older than the current CRAN release, so `renv` fetches them from the CRAN archive
-(built from source).
+Everything except ARTEMIS comes from CRAN.
 
 You also need a driver for your database: a **JDBC driver** if you connect with
 `createConnectionDetails()` (download once with
@@ -56,53 +52,17 @@ is up to you — `connectionDetails` is defined by you in `run.R` (see step 2 in
 
 > [!IMPORTANT]
 > **ARTEMIS must be the version this study was built against.** It is a
-> GitHub-only package (not on CRAN) and its API is called directly by the
-> vendored `R/artemis.R`. Use **`OHDSI/Artemis` at v1.6.0** (commit
-> `242b5a24864b85a44c62d95a98cbaa2d16c55539`) — the version pinned in
-> `renv.lock`. ARTEMIS also needs **Python ≥ 3.12** on the machine; follow the
-> Python setup (and the `ARTEMIS_PYTHON` environment variable to select an
-> interpreter) in the ARTEMIS README:
+> GitHub-only package (not on CRAN); use **`OHDSI/Artemis` at v1.6.0** (commit
+> `242b5a24864b85a44c62d95a98cbaa2d16c55539`), the version pinned in `renv.lock`.
+> ARTEMIS also needs **Python ≥ 3.12** on the machine — the ARTEMIS README has
+> good guidance for resolving the Python dependency:
 > <https://github.com/OHDSI/Artemis#installation>.
->
-> `DatabaseConnector` uses the **CRAN** release (6.4.0). A known one-line
-> temp-table fix lives in the `hms2/DatabaseConnector@studyathon` fork; it is
-> **not** applied here. If temp-table inserts misbehave on your DBMS, install
-> that fork (`remotes::install_github("hms2/DatabaseConnector@studyathon")`) or
-> patch the leading-`#` strip in `insertTable` locally.
 
 ### Installing the dependencies
 
-You do **not** need renv, and you do **not** need the exact pinned versions — the
-study only needs each package at **≥ the version in the table above**. Two ways,
-lowest-friction first.
+Two ways — renv first (reproducible), or a plain install if you prefer.
 
-**Option 1 — just make sure they're installed (lowest friction).** This is the
-simplest path and enough for most people: if you already run OHDSI studies you
-likely have these, and any version **≥ the table** works. Update anything older,
-and install ARTEMIS from GitHub:
-
-```r
-install.packages(c("DatabaseConnector", "CirceR", "CohortGenerator",
-                   "SqlRender", "dplyr", "tibble", "readr", "remotes"))
-remotes::install_github("OHDSI/Artemis@242b5a24864b85a44c62d95a98cbaa2d16c55539")
-```
-
-`install.packages()` gives the current CRAN release of each (all ≥ the pinned
-versions). To see what you already have first:
-
-```r
-for (p in c("DatabaseConnector", "CirceR", "CohortGenerator", "SqlRender",
-            "dplyr", "tibble", "readr", "ARTEMIS"))
-  cat(sprintf("%-18s %s\n", p,
-      tryCatch(as.character(packageVersion(p)), error = function(e) "MISSING")))
-```
-
-Nothing is version-pinned this way — fine as long as each row is ≥ the table.
-`run.R` checks all eight are present and stops with a clear message if any is
-missing. (ARTEMIS is the exception to "newer is fine": use the commit above,
-which is the tested one — see the ARTEMIS note.)
-
-**Option 2 — renv (exact versions, reproducible, isolated).** Restores the exact
+**Option 1 — renv (exact versions, reproducible, isolated).** Restores the exact
 pinned versions from `renv.lock` into a project-local library, leaving your system
 library untouched. renv is **not** auto-activated — nothing happens unless you opt
 in:
@@ -118,6 +78,30 @@ renv::restore()            # install every pinned package from renv.lock into it
 `renv.lock` is required to run the study (the recursive dependency closure of the
 eight packages — no dev/report extras); renv does not resolve unrecorded
 dependencies, which is why it lists ~110 packages rather than eight.
+
+**Option 2 — just make sure they're installed.** You don't strictly need renv or
+the exact pinned versions — the study only needs each package at **≥ the version
+in the table above**. If you already run OHDSI studies you likely have most of
+these; update anything older, and install ARTEMIS from GitHub:
+
+```r
+install.packages(c("DatabaseConnector", "CirceR", "CohortGenerator",
+                   "SqlRender", "dplyr", "tibble", "readr", "remotes"))
+remotes::install_github("OHDSI/Artemis@242b5a24864b85a44c62d95a98cbaa2d16c55539")
+```
+
+To see what you already have first:
+
+```r
+for (p in c("DatabaseConnector", "CirceR", "CohortGenerator", "SqlRender",
+            "dplyr", "tibble", "readr", "ARTEMIS"))
+  cat(sprintf("%-18s %s\n", p,
+      tryCatch(as.character(packageVersion(p)), error = function(e) "MISSING")))
+```
+
+`run.R` checks all eight are present and stops with a clear message if any is
+missing. (ARTEMIS is the exception to "newer is fine": use the commit above,
+which is the tested one — see the ARTEMIS note.)
 
 Either way, install a database driver (above) and set up Python ≥ 3.12 for
 ARTEMIS.
@@ -156,8 +140,8 @@ membership is *inserted* into the same table under reserved test-id slots. So
 | `05_eligibility_coverage.R` | eligibility-table counts and each input crossed with Target 1A (tested / passed). |
 | `06_artemis_assessment.R` | ARTEMIS assessment: alignment stats, patient/exposure coverage, per-drug and per-regimen frequencies, uncaptured exposures — all from the in-memory `artemisResult`. |
 | `helpers.R` | Self-contained cohort-generation + SQL helpers (thin wrappers over CirceR/CohortGenerator/SqlRender). |
-| `artemis.R` | **Vendored (trimmed)** from `OncoStudyModules` — the ARTEMIS pipeline wrapper only: `runArtemis()`, `buildEpisodeTable()`, `writeArtemisEpisodes()`. (Upstream's coverage/uncaptured analytics are reimplemented in `06_artemis_assessment.R`; see the note there.) |
-| `vendor_utils.R` | `.getDbms()` + `%||%` (deps of the vendored ARTEMIS code). |
+| `artemis.R` | The ARTEMIS pipeline wrapper: `runArtemis()`, `buildEpisodeTable()`, `writeArtemisEpisodes()`. (Coverage/uncaptured analytics are computed in `06_artemis_assessment.R`.) |
+| `vendor_utils.R` | `.getDbms()` + `%||%` (helpers used by the ARTEMIS code). |
 | `setup.R` | **Do not edit.** Validates the `run.R` CONFIG block and builds the derived paths + `executionSettings` object the steps read. |
 
 ### `sql/` — SqlRender templates
@@ -174,7 +158,7 @@ membership is *inserted* into the same table under reserved test-id slots. So
 | `eligibility_input_coverage.sql` | Each input × Target 1A: `n_tested` (measured) + `n_passed` (criterion met). |
 | `n_target1a.sql` | Target 1A denominator. |
 
-### `cohorts/` — vendored cohort artefacts
+### `cohorts/` — cohort artefacts
 `00_ARTEMIS/` scan cohort · `01_Target/` Target 1A + the L01 comparison cohort · `02_Covariate/`
 the ECOG cohorts (`ECOG_0`, `ECOG_1`, `ECOG_2`, `ECOG_3plus`) and condition cohorts
 (`Peripheral_Neuropathy`, `Significant_Skin_Disorders`, `Audiometric_Hearing_Loss`,
