@@ -1,8 +1,8 @@
-# Bladder eligibility study (standalone)
+# Bladder eligibility study
 
-Cohort-creation stage for the **EAU 2024 metastatic bladder cancer** RWE study,
-as a self-contained R project. The orchestration uses the OHDSI packages
-directly, with the ARTEMIS integration in `R/artemis.R`.
+Cohort-creation stage for the **EAU 2024 metastatic bladder cancer** RWE study.
+The orchestration uses the OHDSI packages directly, with the ARTEMIS integration
+in `R/artemis.R`.
 
 Only aggregate results leave the site (`results/csv/`), censored at
 `minCellCount` (default 5).
@@ -139,7 +139,7 @@ membership is *inserted* into the same table under reserved test-id slots. So
 | `04_lab_ranges.R` | (d) lab-value distribution + per-unit QC summary on the main cohorts. |
 | `05_eligibility_coverage.R` | eligibility-table counts and each input crossed with Target 1A (tested / passed). |
 | `06_artemis_assessment.R` | ARTEMIS assessment: alignment stats, patient/exposure coverage, per-drug and per-regimen frequencies, uncaptured exposures — all from the in-memory `artemisResult`. |
-| `helpers.R` | Self-contained cohort-generation + SQL helpers (thin wrappers over CirceR/CohortGenerator/SqlRender). |
+| `helpers.R` | Cohort-generation + SQL helpers (thin wrappers over CirceR/CohortGenerator/SqlRender). |
 | `artemis.R` | The ARTEMIS pipeline wrapper: `runArtemis()`, `buildEpisodeTable()`, `writeArtemisEpisodes()`. (Coverage/uncaptured analytics are computed in `06_artemis_assessment.R`.) |
 | `vendor_utils.R` | `.getDbms()` + `%||%` (helpers used by the ARTEMIS code). |
 | `setup.R` | **Do not edit.** Validates the `run.R` CONFIG block and builds the derived paths + `executionSettings` object the steps read. |
