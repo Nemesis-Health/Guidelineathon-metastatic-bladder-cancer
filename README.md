@@ -176,30 +176,39 @@ not run.
 
 ## Outputs (`results/csv/`)
 
-A full run writes **thirteen CSVs** to `results/csv/` (created on first write; the
+A full run writes **fourteen CSVs** to `results/csv/` (created on first write; the
 folder is git-ignored). These aggregate tables are the only artefacts that leave
 the site — no row-level data is exported. Every file is UTF-8, comma-separated,
 with a header row; missing/censored cells are written as **empty strings**
 (`readr::write_csv(..., na = "")`).
 
+**Which population each table describes matters** and varies by file. Some are
+*whole-population* — every person in the CDM with the relevant data, **not** the
+bladder-cancer study cohort — and exist purely as unit-resolution / data-quality
+checks (`lab_results_summary`, `lab_results_rollup`, `lab_cohort_counts`). Others
+are restricted to a study cohort: **Target 1A** (overall mBC), the **ARTEMIS scan
+cohort**, or reported **per generated cohort**. The **Population** column says
+which; read it before comparing counts across files (e.g. a whole-population lab
+count is not comparable to a Target 1A coverage count).
+
 Quick index (detailed schema for each below):
 
-| File | Written by | Grain (one row per…) |
-|---|---|---|
-| `cohort_counts.csv` | `03_main_cohorts.R` | generated cohort |
-| `lab_cohort_counts.csv` | `05_eligibility_coverage.R` | eligibility test-id (whole population) |
-| `eligibility_input_coverage.csv` | `05_eligibility_coverage.R` | eligibility test-id × Target 1A |
-| `lab_value_distribution.csv` | `04_lab_ranges.R` | cohort × lab (cat) |
-| `lab_results_summary.csv` | `04_lab_ranges.R` | cat × measurement concept × unit × status × ambiguity |
-| `lab_results_rollup.csv` | `04_lab_ranges.R` | cat × ambiguity (standard unit; QC columns) |
-| `artemis_summary.csv` | `06_artemis_assessment.R` | cohort × ARTEMIS pipeline stage |
-| `artemis_coverage.csv` | `06_artemis_assessment.R` | cohort × coverage level (patient / exposure) |
-| `artemis_drug_exposures.csv` | `06_artemis_assessment.R` | cohort × anticancer ingredient |
-| `artemis_regimens_aligned.csv` | `06_artemis_assessment.R` | cohort × aligned regimen |
-| `artemis_episodes_per_patient.csv` | `06_artemis_assessment.R` | cohort × episode-count value |
-| `artemis_uncaptured_drugs.csv` | `06_artemis_assessment.R` | cohort × anticancer ingredient (uncaptured) |
-| `demographics.csv` | `07_demographics.R` | cohort × characteristic × stratum |
-| `covariate_overlap.csv` | `08_covariates.R` | covariate (comorbidity / PS stratum) × cohort 1A |
+| File | Written by | Population | Grain (one row per…) |
+|---|---|---|---|
+| `cohort_counts.csv` | `03_main_cohorts.R` | Each cohort (the tree) | generated cohort |
+| `lab_cohort_counts.csv` | `05_eligibility_coverage.R` | **Whole population** | eligibility test-id |
+| `eligibility_input_coverage.csv` | `05_eligibility_coverage.R` | Target 1A | eligibility test-id × Target 1A |
+| `lab_value_distribution.csv` | `04_lab_ranges.R` | Per main cohort | cohort × lab (cat) |
+| `lab_results_summary.csv` | `04_lab_ranges.R` | **Whole population** | cat × measurement concept × unit × status × ambiguity |
+| `lab_results_rollup.csv` | `04_lab_ranges.R` | **Whole population** | cat × ambiguity (standard unit; QC columns) |
+| `artemis_summary.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A | cohort × ARTEMIS pipeline stage |
+| `artemis_coverage.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A | cohort × coverage level (patient / exposure) |
+| `artemis_drug_exposures.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A | cohort × anticancer ingredient |
+| `artemis_regimens_aligned.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A | cohort × aligned regimen |
+| `artemis_episodes_per_patient.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A | cohort × episode-count value |
+| `artemis_uncaptured_drugs.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A | cohort × anticancer ingredient (uncaptured) |
+| `demographics.csv` | `07_demographics.R` | Per cohort | cohort × characteristic × stratum |
+| `covariate_overlap.csv` | `08_covariates.R` | Target 1A | covariate (comorbidity / PS stratum) × cohort 1A |
 
 ### Privacy censoring (applies to every file)
 
@@ -272,6 +281,8 @@ per-criterion (`test_id`) fan-out is collapsed to distinct measurements first.
 ### `lab_results_summary.csv`
 QC / unit-resolution sanity check on the raw normalised table
 (`bc_raw_lab_results`), collapsed to one physical measurement before counting.
+**Whole population** — every person in the CDM with these measurements, not the
+bladder-cancer cohort.
 Row per (cat × measurement concept × unit × status × ambiguity). Every unit for
 a given lab should land in the same `std_value` range.
 
@@ -291,7 +302,8 @@ a given lab should land in the same `std_value` range.
 
 ### `lab_results_rollup.csv`
 Per-category headline of the same normalised table, the companion to
-`lab_results_summary.csv`. Because `std_value` is already in each category's
+`lab_results_summary.csv` (likewise **whole population**, not the study cohort).
+Because `std_value` is already in each category's
 standard unit, the distribution is pooled across every source concept/unit into
 one row per (cat × ambiguity). Ambiguous streams (`is_ambiguous = 1`) — where
 more than one scale cleared the resolver, so `std_value` may be mis-scaled — get
