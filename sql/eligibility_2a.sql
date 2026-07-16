@@ -61,8 +61,8 @@ SELECT @target_cohort_id AS cohort_definition_id,
            FROM @target_database_schema.@lab_cohort_table lab
           WHERE lab.cohort_definition_id IN (24, 25, 26)
             AND lab.subject_id = tc.subject_id
-            AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                        AND DATEADD(day,  14, tc.cohort_start_date)
+            AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                        AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
        )
 
    -- [14] GFR >= 30 mL/min
@@ -71,8 +71,8 @@ SELECT @target_cohort_id AS cohort_definition_id,
            FROM @target_database_schema.@lab_cohort_table lab
           WHERE lab.cohort_definition_id = 14
             AND lab.subject_id = tc.subject_id
-            AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                        AND DATEADD(day,  14, tc.cohort_start_date)
+            AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                        AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
        )
 
    -- [4] ANC >= 1500/uL
@@ -81,8 +81,8 @@ SELECT @target_cohort_id AS cohort_definition_id,
            FROM @target_database_schema.@lab_cohort_table lab
           WHERE lab.cohort_definition_id = 4
             AND lab.subject_id = tc.subject_id
-            AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                        AND DATEADD(day,  14, tc.cohort_start_date)
+            AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                        AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
        )
 
    -- [19] Platelets >= 100,000/uL
@@ -91,8 +91,8 @@ SELECT @target_cohort_id AS cohort_definition_id,
            FROM @target_database_schema.@lab_cohort_table lab
           WHERE lab.cohort_definition_id = 19
             AND lab.subject_id = tc.subject_id
-            AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                        AND DATEADD(day,  14, tc.cohort_start_date)
+            AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                        AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
        )
 
    -- [15] Hb >= 9.0 g/dL  (mmol/L folds in via unit normalisation)
@@ -101,8 +101,8 @@ SELECT @target_cohort_id AS cohort_definition_id,
            FROM @target_database_schema.@lab_cohort_table lab
           WHERE lab.cohort_definition_id = 15
             AND lab.subject_id = tc.subject_id
-            AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                        AND DATEADD(day,  14, tc.cohort_start_date)
+            AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                        AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
        )
 
    -- Creatinine: [8] Cr <= 1.5 ULN  OR  [7] CrCl >= 30
@@ -112,16 +112,16 @@ SELECT @target_cohort_id AS cohort_definition_id,
                  FROM @target_database_schema.@lab_cohort_table lab
                 WHERE lab.cohort_definition_id = 8
                   AND lab.subject_id = tc.subject_id
-                  AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                              AND DATEADD(day,  14, tc.cohort_start_date)
+                  AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                              AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
              )
          OR EXISTS (
                SELECT 1
                  FROM @target_database_schema.@lab_cohort_table lab
                 WHERE lab.cohort_definition_id = 7
                   AND lab.subject_id = tc.subject_id
-                  AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                              AND DATEADD(day,  14, tc.cohort_start_date)
+                  AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                              AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
              )
        )
 
@@ -134,8 +134,8 @@ SELECT @target_cohort_id AS cohort_definition_id,
                  FROM @target_database_schema.@lab_cohort_table lab
                 WHERE lab.cohort_definition_id = 22
                   AND lab.subject_id = tc.subject_id
-                  AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                              AND DATEADD(day,  14, tc.cohort_start_date)
+                  AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                              AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
              )
          OR (
                EXISTS (
@@ -143,16 +143,16 @@ SELECT @target_cohort_id AS cohort_definition_id,
                        FROM @target_database_schema.@lab_cohort_table lab
                       WHERE lab.cohort_definition_id = 23
                         AND lab.subject_id = tc.subject_id
-                        AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                                    AND DATEADD(day,  14, tc.cohort_start_date)
+                        AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                                    AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
                    )
                AND EXISTS (
                      SELECT 1
                        FROM @target_database_schema.@lab_cohort_table lab
                       WHERE lab.cohort_definition_id = 9
                         AND lab.subject_id = tc.subject_id
-                        AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                                    AND DATEADD(day,  14, tc.cohort_start_date)
+                        AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                                    AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
                    )
              )
          OR ( EXISTS (
@@ -160,14 +160,14 @@ SELECT @target_cohort_id AS cohort_definition_id,
                  FROM @target_database_schema.@lab_cohort_table lab
                 WHERE lab.cohort_definition_id = 21
                   AND lab.subject_id = tc.subject_id
-                  AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                              AND DATEADD(day,  14, tc.cohort_start_date)
+                  AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                              AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
              )
                AND EXISTS (   -- [29] Gilbert's syndrome gates the TBil <= 3x ULN branch
                      SELECT 1 FROM @target_database_schema.@lab_cohort_table lab
                       WHERE lab.cohort_definition_id = 29
                         AND lab.subject_id = tc.subject_id
-                        AND lab.cohort_start_date <= DATEADD(day, 14, tc.cohort_start_date)
+                        AND lab.cohort_start_date <= DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
                    )
              )
        )
@@ -179,8 +179,8 @@ SELECT @target_cohort_id AS cohort_definition_id,
                  FROM @target_database_schema.@lab_cohort_table lab
                 WHERE lab.cohort_definition_id = 5
                   AND lab.subject_id = tc.subject_id
-                  AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                              AND DATEADD(day,  14, tc.cohort_start_date)
+                  AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                              AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
              )
          OR (
                EXISTS (
@@ -188,15 +188,15 @@ SELECT @target_cohort_id AS cohort_definition_id,
                        FROM @target_database_schema.@lab_cohort_table lab
                       WHERE lab.cohort_definition_id = 6
                         AND lab.subject_id = tc.subject_id
-                        AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                                    AND DATEADD(day,  14, tc.cohort_start_date)
+                        AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                                    AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
                    )
                AND EXISTS (
                      SELECT 1
                        FROM @target_database_schema.@lab_cohort_table lab
                       WHERE lab.cohort_definition_id = 28
                         AND lab.subject_id = tc.subject_id
-                        AND lab.cohort_start_date <= DATEADD(day, 14, tc.cohort_start_date)
+                        AND lab.cohort_start_date <= DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
                    )
              )
        )
@@ -208,8 +208,8 @@ SELECT @target_cohort_id AS cohort_definition_id,
                  FROM @target_database_schema.@lab_cohort_table lab
                 WHERE lab.cohort_definition_id = 2
                   AND lab.subject_id = tc.subject_id
-                  AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                              AND DATEADD(day,  14, tc.cohort_start_date)
+                  AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                              AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
              )
          OR (
                EXISTS (
@@ -217,15 +217,15 @@ SELECT @target_cohort_id AS cohort_definition_id,
                        FROM @target_database_schema.@lab_cohort_table lab
                       WHERE lab.cohort_definition_id = 3
                         AND lab.subject_id = tc.subject_id
-                        AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                                    AND DATEADD(day,  14, tc.cohort_start_date)
+                        AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                                    AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
                    )
                AND EXISTS (
                      SELECT 1
                        FROM @target_database_schema.@lab_cohort_table lab
                       WHERE lab.cohort_definition_id = 28
                         AND lab.subject_id = tc.subject_id
-                        AND lab.cohort_start_date <= DATEADD(day, 14, tc.cohort_start_date)
+                        AND lab.cohort_start_date <= DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
                    )
              )
        )
@@ -241,15 +241,15 @@ SELECT @target_cohort_id AS cohort_definition_id,
            FROM @target_database_schema.@lab_cohort_table lab
           WHERE lab.cohort_definition_id = 18
             AND lab.subject_id = tc.subject_id
-            AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                        AND DATEADD(day,  14, tc.cohort_start_date)
+            AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                        AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
        )
       OR EXISTS (   -- [31] on anticoagulant therapy waives this coag criterion
                SELECT 1 FROM @target_database_schema.@lab_cohort_table lab
                 WHERE lab.cohort_definition_id = 31
                   AND lab.subject_id = tc.subject_id
-                  AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                              AND DATEADD(day,  14, tc.cohort_start_date)
+                  AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                              AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
              )
        )
       OR
@@ -259,15 +259,15 @@ SELECT @target_cohort_id AS cohort_definition_id,
            FROM @target_database_schema.@lab_cohort_table lab
           WHERE lab.cohort_definition_id = 20
             AND lab.subject_id = tc.subject_id
-            AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                        AND DATEADD(day,  14, tc.cohort_start_date)
+            AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                        AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
        )
       OR EXISTS (   -- [31] on anticoagulant therapy waives this coag criterion
                SELECT 1 FROM @target_database_schema.@lab_cohort_table lab
                 WHERE lab.cohort_definition_id = 31
                   AND lab.subject_id = tc.subject_id
-                  AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                              AND DATEADD(day,  14, tc.cohort_start_date)
+                  AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                              AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
              )
        )
    )
@@ -279,15 +279,15 @@ SELECT @target_cohort_id AS cohort_definition_id,
            FROM @target_database_schema.@lab_cohort_table lab
           WHERE lab.cohort_definition_id = 1
             AND lab.subject_id = tc.subject_id
-            AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                        AND DATEADD(day,  14, tc.cohort_start_date)
+            AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                        AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
        )
       OR EXISTS (   -- [31] on anticoagulant therapy waives this coag criterion
                SELECT 1 FROM @target_database_schema.@lab_cohort_table lab
                 WHERE lab.cohort_definition_id = 31
                   AND lab.subject_id = tc.subject_id
-                  AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                              AND DATEADD(day,  14, tc.cohort_start_date)
+                  AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                              AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
              )
    )
 
@@ -312,8 +312,8 @@ SELECT @target_cohort_id AS cohort_definition_id,
                  FROM @target_database_schema.@lab_cohort_table lab
                 WHERE lab.cohort_definition_id = 17
                   AND lab.subject_id = tc.subject_id
-                  AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                              AND DATEADD(day,  14, tc.cohort_start_date)
+                  AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                              AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
              )
          OR (
                EXISTS (
@@ -321,19 +321,19 @@ SELECT @target_cohort_id AS cohort_definition_id,
                        FROM @target_database_schema.@lab_cohort_table lab
                       WHERE lab.cohort_definition_id = 16
                         AND lab.subject_id = tc.subject_id
-                        AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                                    AND DATEADD(day,  14, tc.cohort_start_date)
+                        AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                                    AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date)
                    )
                -- (NO polyuria [35] OR NO polydipsia [36]) — literal PDF; see NOTE above
                AND (
                   NOT EXISTS (SELECT 1 FROM @target_database_schema.@lab_cohort_table lab
                       WHERE lab.cohort_definition_id = 35 AND lab.subject_id = tc.subject_id
-                        AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                                    AND DATEADD(day,  14, tc.cohort_start_date))
+                        AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                                    AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date))
                   OR NOT EXISTS (SELECT 1 FROM @target_database_schema.@lab_cohort_table lab
                       WHERE lab.cohort_definition_id = 36 AND lab.subject_id = tc.subject_id
-                        AND lab.cohort_start_date BETWEEN DATEADD(day, -14, tc.cohort_start_date)
-                                                    AND DATEADD(day,  14, tc.cohort_start_date))
+                        AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                                    AND DATEADD(day, @lab_window_after_days, tc.cohort_start_date))
                )
              )
        )
@@ -342,10 +342,10 @@ SELECT @target_cohort_id AS cohort_definition_id,
    -- = any record on/before index+14d.
    AND NOT EXISTS (SELECT 1 FROM @target_database_schema.@lab_cohort_table lab
           WHERE lab.cohort_definition_id = 33 AND lab.subject_id = tc.subject_id
-            AND lab.cohort_start_date <= DATEADD(day, 14, tc.cohort_start_date))
+            AND lab.cohort_start_date <= DATEADD(day, @lab_window_after_days, tc.cohort_start_date))
 
    -- Enfortumab: no pre-existing significant skin disorders (test 34).
    AND NOT EXISTS (SELECT 1 FROM @target_database_schema.@lab_cohort_table lab
           WHERE lab.cohort_definition_id = 34 AND lab.subject_id = tc.subject_id
-            AND lab.cohort_start_date <= DATEADD(day, 14, tc.cohort_start_date))
+            AND lab.cohort_start_date <= DATEADD(day, @lab_window_after_days, tc.cohort_start_date))
 ;

@@ -28,7 +28,8 @@ labDist <- querySqlFile(connection, "lab_value_distribution_portable.sql",
   target_cohort_table    = settings$cohortTable,
   raw_lab_results_table  = settings$rawLabResultsTable,
   cohort_definition_ids  = paste(targetIds, collapse = ", "),
-  lab_index_window_days  = settings$labIndexWindowDays,
+  lab_window_before_days = settings$labWindowBeforeDays,
+  lab_window_after_days  = settings$labWindowAfterDays,
   min_cell_count         = settings$minCellCount)
 names(labDist) <- tolower(names(labDist))
 writeResultCsv(labDist, "lab_value_distribution")

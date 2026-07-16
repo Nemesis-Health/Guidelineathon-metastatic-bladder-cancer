@@ -2,7 +2,7 @@
 -- (normalised rows: person_id, measurement_date, test_id, cat, std_value, …).
 --
 -- For each target cohort and lab (cat), among subjects with a measurement in
--- @raw_lab_results_table within +/- @lab_index_window_days of the cohort
+-- @raw_lab_results_table within @lab_window_before_days days before to @lab_window_after_days days after the cohort
 -- index (cohort_start_date), pick the measurement closest to index (one per
 -- subject × cat) and summarise std_value.
 --
@@ -23,7 +23,7 @@
 --   @target_cohort_table
 --   @raw_lab_results_table
 --   @cohort_definition_ids   comma-separated cohort_definition_id list
---   @lab_index_window_days   integer (default 14)
+--   @lab_window_before_days integer (default 14)  @lab_window_after_days integer (default 7)
 --   @min_cell_count          privacy floor for n_with_lab (e.g. 5)
 -- =============================================================================
 
@@ -60,8 +60,8 @@ lab_near_index AS (
     FROM target_cohorts tc
    INNER JOIN lab_measurements lab
       ON lab.person_id = tc.subject_id
-     AND lab.measurement_date BETWEEN DATEADD(day, -@lab_index_window_days, tc.cohort_start_date)
-                                  AND DATEADD(day,  @lab_index_window_days, tc.cohort_start_date)
+     AND lab.measurement_date BETWEEN DATEADD(day, -@lab_window_before_days, tc.cohort_start_date)
+                                  AND DATEADD(day,  @lab_window_after_days, tc.cohort_start_date)
 ),
 lab_one_per_subject AS (
   SELECT cohort_definition_id,

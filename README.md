@@ -251,7 +251,8 @@ labs; 24–27 ECOG; 28–40 conditions (test-id reference in the header of `sql/
 
 ### `eligibility_input_coverage.csv`
 Row per eligibility test-id **crossed with Target 1A** — how many mBC patients
-had each input measured vs. passed it, within ±`labIndexWindowDays` (default 14)
+had each input measured vs. passed it, within the index window
+(`labWindowBeforeDays` before / `labWindowAfterDays` after, default 14 / 7)
 of the Target 1A index date. ECOG/condition slots have no `n_tested` (blank —
 they are not lab measurements).
 
@@ -266,7 +267,8 @@ they are not lab measurements).
 ### `lab_value_distribution.csv`
 Row per **cohort × lab (cat)** — the distribution of the normalised lab
 value (`std_value`) among each main cohort's subjects, using the one
-measurement closest to index within ±`labIndexWindowDays`. One row per lab:
+measurement closest to index within the index window (`labWindowBeforeDays`
+before / `labWindowAfterDays` after). One row per lab:
 `std_value` does not depend on the eligibility threshold, so the raw table's
 per-criterion (`test_id`) fan-out is collapsed to distinct measurements first.
 
@@ -410,7 +412,8 @@ Descriptive covariates **not** used by the main cohort tree, reported as an
 overlap with cohort 1A (overall mBC). Comorbidities count 1A subjects with ≥1
 qualifying record **on/before their 1A index** (prevalent baseline comorbidity);
 performance-status strata count 1A subjects with an ECOG record (KPS folded in)
-in the stratum within ±`labIndexWindowDays` of index. PS strata **overlap** by
+in the stratum within the index window (`labWindowBeforeDays` before /
+`labWindowAfterDays` after). PS strata **overlap** by
 design (`PS 0-2` includes `PS1`/`PS2`). Comorbidity cohorts are generated into
 `bc_covariate_cohort` (never `bc_cohort`); to add one, drop its JSON into
 `cohorts/02_Covariate/` (see `R/08_covariates.R` `comorbMap`).

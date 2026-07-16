@@ -67,7 +67,10 @@ settings <- list(
 
   # --- Run settings ---------------------------------------------------------
   minCellCount        = 5L,
-  labIndexWindowDays  = 14L,
+  # Index window for near-index inputs (labs, ECOG, condition/diagnosis limbs):
+  # how many days BEFORE and AFTER the index date a record may fall. Asymmetric.
+  labWindowBeforeDays = 14L,
+  labWindowAfterDays  = 7L,
   # Exclude endocrine-therapy regimens (tamoxifen, abiraterone, GnRH agonists,
   # ...) from the ARTEMIS reference. Applied via the is_endocrine column of
   # cohorts/extras/regimen_reference.csv. TRUE = drop hormone therapy (default);

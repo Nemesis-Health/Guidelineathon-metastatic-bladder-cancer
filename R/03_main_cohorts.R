@@ -122,7 +122,9 @@ renderElig <- function(leaf, ...) {
 # Generated in priority order (2a before 2b before 2c) so 2b/2c can anti-join the
 # real 2a/2b membership for their "NOT enfortumab" / "NOT cisplatin" exclusions.
 labReg <- list(lab_cohort_table = settings$labCohortTable,
-               regimen_episode_table = settings$episodeTable, cohort1_id = cohort1Id)
+               regimen_episode_table = settings$episodeTable, cohort1_id = cohort1Id,
+               lab_window_before_days = settings$labWindowBeforeDays,
+               lab_window_after_days  = settings$labWindowAfterDays)
 elig2 <- list()
 elig2$a <- addCustom(cohortNames[["T2a"]], do.call(renderElig, c(list("a"), labReg)))
 elig2$b <- addCustom(cohortNames[["T2b"]], do.call(renderElig,

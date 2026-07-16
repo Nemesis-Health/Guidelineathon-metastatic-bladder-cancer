@@ -6,7 +6,8 @@
 #   * comorbidities  — 1A subjects with >=1 qualifying record ON/BEFORE their 1A
 #                      index (prevalent baseline comorbidity).
 #   * performance status strata — 1A subjects with an ECOG record in the stratum
-#                      within +/- labIndexWindowDays of index (KPS folded in).
+#                      within labWindowBeforeDays before / labWindowAfterDays
+#                      after index (KPS folded in).
 #
 # One output: covariate_overlap.csv (code, label, n_1a, n_overlap), small
 # cells censored to -minCellCount (same rule as step 05). No derived % column:
@@ -84,7 +85,8 @@ ps <- querySqlFile(connection, "ps_overlap.sql",
   cohort_table         = settings$cohortTable,
   lab_cohort_table     = settings$labCohortTable,
   cohort1_id           = cohort1Id,
-  window               = settings$labIndexWindowDays)
+  lab_window_before_days = settings$labWindowBeforeDays,
+  lab_window_after_days  = settings$labWindowAfterDays)
 names(ps) <- tolower(names(ps))
 psRows <- tibble::tibble(code = ps$code,
                          label = unname(psLabels[ps$code]),

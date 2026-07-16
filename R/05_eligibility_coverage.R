@@ -57,7 +57,8 @@ cov <- querySqlFile(connection, "eligibility_input_coverage.sql",
   lab_cohort_table      = settings$labCohortTable,
   raw_lab_results_table = settings$rawLabResultsTable,
   cohort1_id            = cohort1Id,
-  lab_index_window_days = settings$labIndexWindowDays)
+  lab_window_before_days = settings$labWindowBeforeDays,
+  lab_window_after_days  = settings$labWindowAfterDays)
 names(cov) <- tolower(names(cov))
 cov$label      <- label(cov$test_id)
 cov$n_target1a <- nT1a
