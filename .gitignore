@@ -1,3 +1,9 @@
+# === Local workaround / one-off repair scripts (kept local, not shipped) ===
+# The underlying issues are fixed in the pipeline itself; these only regenerate
+# or repair outputs from older runs.
+run_artemis_assessment.R
+fix_cohort_counts.R
+
 # === Claude / agent tooling (never commit) ===
 .claude/
 CLAUDE.md
