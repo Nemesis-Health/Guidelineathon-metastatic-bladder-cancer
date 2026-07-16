@@ -75,7 +75,12 @@ generateCohorts <- function(connection, cohortDefinitionSet, dropTables = TRUE,
   counts <- CohortGenerator::getCohortCounts(
     connection = connection, cohortDatabaseSchema = settings$workDatabaseSchema,
     cohortTable = tableNames$cohortTable, cohortDefinitionSet = cds)
-  dplyr::left_join(cds[c("cohortId", "cohortName")], counts, by = "cohortId")
+  # Select only the count columns: some CohortGenerator versions merge the whole
+  # cohortDefinitionSet (cohortName/sql/json) into getCohortCounts()'s result,
+  # which would duplicate cohortName (.x/.y) and drag sql/json into the join.
+  dplyr::left_join(cds[c("cohortId", "cohortName")],
+                   counts[c("cohortId", "cohortEntries", "cohortSubjects")],
+                   by = "cohortId")
 }
 
 # --- render + translate + execute a .sql file ------------------------------
