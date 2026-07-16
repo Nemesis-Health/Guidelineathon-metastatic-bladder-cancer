@@ -2,22 +2,20 @@
 # run_artemis_assessment.R — regenerate ONLY the stratified ARTEMIS assessment
 # ===========================================================================
 # Produces the six artemis_*.csv with both cohort strata (scan_cohort +
-# target_1a) by running just the steps that feed R/06_artemis_assessment.R:
+# target_1a) from R/06_artemis_assessment.R.
 #
-#   (a) R/01_artemis.R          -> artemisResult, artemisCounts, artemisCohortId
-#   (b) R/02_eligibility_inputs.R  populates bc_lab_cohort (so (c) can generate)
-#   (c) R/03_main_cohorts.R     -> mainManifest + bc_cohort (incl. T1 = target_1a)
-#   (f) R/06_artemis_assessment.R  writes the six artemis_*.csv, both strata
+# TWO MODES, chosen automatically by whether the saved RDS exists:
 #
-# Skips 04/05/07/08 (lab ranges, eligibility coverage, demographics, covariate
-# overlap) — none of them feed step 06.
+#   FAST (RDS present) — load a saved artemisResult and run ONLY step 06.
+#     No re-alignment, no 02/03. Requires that the bc_cohort table from your
+#     earlier run still holds the "T1 Metastatic bladder cancer" cohort (it is
+#     queried live for the target_1a subject set), and that you set
+#     target1aCohortId below to that cohort's id.
 #
-# Step (a) re-runs the ARTEMIS alignment (the slow part) UNLESS a saved
-# results/artemis_result.rds is present AND you set useSavedArtemis <- TRUE
-# below — see the note there for the prerequisites before trusting that path.
+#   FULL (no RDS) — run 01 -> 02 -> 03 -> 06 (re-aligns; the slow path).
 #
-# Usage: fill the CONFIG block (identical to run.R — copy your run.R values),
-#        then  source("run_artemis_assessment.R")
+# Usage: fill the CONFIG block (connection + schemas identical to run.R), point
+#        artemisResultPath at your saved RDS, then source this file.
 # ===========================================================================
 
 for (p in c("DatabaseConnector", "SqlRender", "CohortGenerator", "CirceR",
@@ -27,7 +25,7 @@ for (p in c("DatabaseConnector", "SqlRender", "CohortGenerator", "CirceR",
 }
 
 # ===========================================================================
-# CONFIG  [EDIT HERE — keep identical to your run.R]
+# CONFIG  [EDIT HERE — connection + schemas identical to your run.R]
 # ===========================================================================
 
 connectionDetails <- NULL   # <-- REPLACE with your connection (see run.R)
@@ -55,13 +53,16 @@ settings <- list(
   outputFolder        = file.path("results")
 )
 
-# Fast path: skip the ARTEMIS re-alignment and load a previously saved
-# results/artemis_result.rds instead. Only works if that file exists AND the
-# work schema still holds this study's bc_regimen_classifications table (needed
-# by step (c)'s 4/5/6 splits). With no RDS present, this run must re-align, so
-# leave this FALSE. When TRUE the scan_cohort summary's "scan cohort subjects"
-# count is unavailable (artemisCounts is not saved) and shows as blank/NA.
-useSavedArtemis <- FALSE
+# --- FAST-mode inputs ------------------------------------------------------
+# Path to your saved full artemisResult (the object returned by runArtemis()).
+# If this file exists, FAST mode is used; otherwise the script falls back to
+# the FULL re-alignment pipeline.
+artemisResultPath <- file.path(settings$outputFolder, "artemis_result.rds")
+
+# cohort_definition_id of "T1 Metastatic bladder cancer" in your bc_cohort
+# table (the target_1a stratum). Read it off your cohort_counts.csv — it was 2
+# in the bladder6 run. FAST mode queries bc_cohort for this id.
+target1aCohortId <- 2L
 
 # ===========================================================================
 # Run  —  do not edit below
@@ -75,18 +76,23 @@ source("R/setup.R")
 connection <- DatabaseConnector::connect(connectionDetails)
 on.exit(try(DatabaseConnector::disconnect(connection), silent = TRUE), add = TRUE)
 
-rdsPath <- file.path(settings$outputFolder, "artemis_result.rds")
-if (isTRUE(useSavedArtemis) && file.exists(rdsPath)) {
-  message("== (a) loading saved ARTEMIS result (skipping re-alignment) ==")
-  artemisResult <- readRDS(rdsPath)
+if (file.exists(artemisResultPath)) {
+  message("== FAST mode: loading ", artemisResultPath, " (step 06 only) ==")
+  artemisResult <- readRDS(artemisResultPath)
+  # Minimal manifest so 06 can resolve the target_1a cohort id by name; the
+  # subject set itself is queried live from the existing bc_cohort table.
+  mainManifest <- tibble::tibble(cohortId = as.integer(target1aCohortId),
+                                 cohortName = "T1 Metastatic bladder cancer")
+  # artemisCounts / artemisCohortId are intentionally absent here: 06 guards on
+  # exists() and simply reports the scan_cohort subject count as NA and derives
+  # target_1a's scan count from the T1 subject set. Everything else is exact.
 } else {
-  if (isTRUE(useSavedArtemis))
-    message("useSavedArtemis=TRUE but ", rdsPath, " not found — re-aligning.")
+  message("== FULL mode: no ", artemisResultPath, " — running 01->02->03 ==")
   source("R/01_artemis.R")            # (a) ARTEMIS alignment
+  source("R/02_eligibility_inputs.R") # (b) populate bc_lab_cohort
+  source("R/03_main_cohorts.R")       # (c) main tree incl. T1 -> mainManifest
 }
 
-source("R/02_eligibility_inputs.R")   # (b) populate bc_lab_cohort
-source("R/03_main_cohorts.R")         # (c) main tree incl. T1 -> mainManifest
 source("R/06_artemis_assessment.R")   # (f) stratified ARTEMIS assessment
 
 message("\n=== Done. artemis_*.csv (scan_cohort + target_1a) under ",
