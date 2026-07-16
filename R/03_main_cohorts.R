@@ -166,5 +166,13 @@ message("Full manifest: ", nrow(fullSet), " cohorts (",
 
 cohortCounts <- generateCohorts(connection, fullSet, dropTables = TRUE)
 mainManifest <<- fullSet
+
+# Censor small cells (same rule as steps 05/06): subject counts of 1..(minCell-1)
+# -> -minCell, and blank the paired entry count. A true 0 stays 0.
+.small <- cohortCounts$cohortSubjects > 0 &
+          cohortCounts$cohortSubjects < settings$minCellCount
+cohortCounts$cohortEntries[.small]  <- NA_integer_
+cohortCounts$cohortSubjects[.small] <- -settings$minCellCount
+
 writeResultCsv(cohortCounts, "cohort_counts")
 print(tibble::as_tibble(cohortCounts), n = Inf)
