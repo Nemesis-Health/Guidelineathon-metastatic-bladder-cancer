@@ -19,7 +19,10 @@ message("\n== (c) main cohorts ==")
 # them would just be a throwaway duplicate. Only Target 1A + the drug-comparison
 # leaves go into the final bc_cohort.
 jsonCohorts <- readJsonCohorts(file.path(cohortsDir, "01_Target"))
-jsonSet <- buildCohortSet(jsonCohorts = jsonCohorts, startId = 1L)
+# generateStats = TRUE: Target 1A's 3 named InclusionRules (age>18, prior
+# bladder cancer, no other cancer) get Circe's inclusion-rule-statistics SQL,
+# so the standard OHDSI attrition table can be pulled after generation below.
+jsonSet <- buildCohortSet(jsonCohorts = jsonCohorts, startId = 1L, generateStats = TRUE)
 
 cohort1Id <- cohortIdByName(jsonSet, "Target 1A")
 stopifnot(!is.na(cohort1Id))
@@ -178,3 +181,47 @@ cohortCounts$cohortSubjects[.small] <- -settings$minCellCount
 
 writeResultCsv(cohortCounts, "cohort_counts")
 print(tibble::as_tibble(cohortCounts), n = Inf)
+
+# --- standard OHDSI inclusion-rule attrition (01_Target JSON cohorts) -------
+# Every JSON cohort under cohorts/01_Target/ (Target 1A: age>18; prior bladder
+# cancer; no other cancer) was built with generateStats = TRUE above, so Circe
+# already computed cumulative person/gain counts per rule during generation —
+# just read them back. Cohorts with no InclusionRules simply produce no rows.
+tableNames <- CohortGenerator::getCohortTableNames(cohortTable = settings$cohortTable)
+CohortGenerator::insertInclusionRuleNames(
+  connection = connection, cohortDefinitionSet = jsonSet,
+  cohortDatabaseSchema = settings$workDatabaseSchema,
+  cohortInclusionTable = tableNames$cohortInclusionTable)
+
+stats <- CohortGenerator::getCohortStats(
+  connection = connection, cohortDatabaseSchema = settings$workDatabaseSchema,
+  cohortTableNames = tableNames)
+
+# Circe computes stats twice per rule: mode_id 0 = event-level (every
+# qualifying event, a person may contribute >1), mode_id 1 = person-level
+# (the single best-matching event per person, i.e. actual cohort entry).
+# cohort_counts.csv is person-level, so use mode 1 to match.
+rules <- dplyr::filter(stats$cohortInclusionStatsTable, modeId == 1) |>
+  dplyr::inner_join(stats$cohortInclusionTable,
+                    by = c("cohortDefinitionId", "ruleSequence")) |>
+  dplyr::transmute(cohortId = cohortDefinitionId, ruleSequence,
+                   ruleName = name, personCount, gainCount, personTotal)
+
+base <- dplyr::filter(stats$cohortSummaryStatsTable, modeId == 1) |>
+  dplyr::transmute(cohortId = cohortDefinitionId, ruleSequence = -1L,
+                   ruleName = "(qualifying event, before inclusion rules)",
+                   personCount = baseCount, gainCount = NA_integer_,
+                   personTotal = baseCount)
+
+attrition <- dplyr::bind_rows(base, rules) |>
+  dplyr::left_join(dplyr::select(jsonSet, cohortId, cohortName), by = "cohortId") |>
+  dplyr::arrange(cohortId, ruleSequence) |>
+  dplyr::relocate(cohortName, .after = cohortId)
+
+# privacy: censor small cells (same rule as elsewhere)
+.smallAttr <- attrition$personCount > 0 & attrition$personCount < settings$minCellCount
+attrition$gainCount[.smallAttr]   <- NA_integer_
+attrition$personCount[.smallAttr] <- -settings$minCellCount
+
+writeResultCsv(attrition, "attrition_target_1a")
+print(tibble::as_tibble(attrition), n = Inf)

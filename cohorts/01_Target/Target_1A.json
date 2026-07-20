@@ -1059,7 +1059,7 @@
           {
             "Criteria": {
               "ConditionOccurrence": {
-                "CodesetId": 1
+                "CodesetId": 5
               }
             },
             "StartWindow": {

@@ -18,22 +18,30 @@ readJsonCohorts <- function(dir) {
 }
 
 # --- CirceR: cohort-expression JSON -> OHDSI cohort SQL --------------------
-jsonToCohortSql <- function(json) {
+# generateStats = TRUE bakes Circe's inclusion-rule-statistics SQL into the
+# query (populates cohort_inclusion / cohort_inclusion_stats / cohort_summary_stats
+# on generation) — only worth it for JSON cohorts with named InclusionRules
+# whose attrition we actually want (Target 1A).
+jsonToCohortSql <- function(json, generateStats = FALSE) {
   expr <- CirceR::cohortExpressionFromJson(json)
-  CirceR::buildCohortQuery(expr, CirceR::createGenerateOptions(generateStats = FALSE))
+  CirceR::buildCohortQuery(expr, CirceR::createGenerateOptions(generateStats = generateStats))
 }
 
 # --- assemble a CohortGenerator cohortDefinitionSet ------------------------
 # `jsonCohorts`  : tibble(cohortName, json) — SQL built via CirceR.
 # `customCohorts`: tibble(cohortName, sql)  — pre-rendered SQL templates
 #                  (leave @target_* for CohortGenerator to fill).
-buildCohortSet <- function(jsonCohorts = NULL, customCohorts = NULL, startId = 1L) {
+# `generateStats`: applies to all `jsonCohorts` rows in this call (see
+#                  jsonToCohortSql); custom SQL templates have no Circe
+#                  inclusion rules, so it has no effect on them.
+buildCohortSet <- function(jsonCohorts = NULL, customCohorts = NULL, startId = 1L,
+                           generateStats = FALSE) {
   parts <- list()
   nextId <- as.integer(startId)
   if (!is.null(jsonCohorts) && nrow(jsonCohorts) > 0) {
     j <- jsonCohorts
     j$cohortId <- seq.int(nextId, length.out = nrow(j))
-    j$sql <- vapply(j$json, jsonToCohortSql, character(1))
+    j$sql <- vapply(j$json, jsonToCohortSql, character(1), generateStats = generateStats)
     nextId <- max(j$cohortId) + 1L
     parts$json <- tibble::tibble(cohortId = j$cohortId, cohortName = j$cohortName,
                                  sql = j$sql, json = j$json)
