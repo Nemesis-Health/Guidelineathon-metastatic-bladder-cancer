@@ -185,8 +185,8 @@ print(tibble::as_tibble(cohortCounts), n = Inf)
 # --- standard OHDSI inclusion-rule attrition (01_Target JSON cohorts) -------
 # Every JSON cohort under cohorts/01_Target/ (Target 1A: age>18; prior bladder
 # cancer; no other cancer) was built with generateStats = TRUE above, so Circe
-# already computed cumulative person/gain counts per rule during generation —
-# just read them back. Cohorts with no InclusionRules simply produce no rows.
+# already computed the rule stats during generation — just read them back.
+# Cohorts with no InclusionRules simply produce no rows.
 tableNames <- CohortGenerator::getCohortTableNames(cohortTable = settings$cohortTable)
 CohortGenerator::insertInclusionRuleNames(
   connection = connection, cohortDefinitionSet = jsonSet,
@@ -201,19 +201,49 @@ stats <- CohortGenerator::getCohortStats(
 # qualifying event, a person may contribute >1), mode_id 1 = person-level
 # (the single best-matching event per person, i.e. actual cohort entry).
 # cohort_counts.csv is person-level, so use mode 1 to match.
+#
+# personCount/gainCount (cohort_inclusion_stats) are MARGINAL, not a
+# sequential/cumulative narrowing: personCount = persons who satisfy this
+# rule alone (regardless of the others); gainCount = persons who'd be gained
+# back if only this rule were dropped (i.e. they fail this rule and pass every
+# other one). Rule order does not affect them — Circe rules are an unordered
+# AND, so there is no inherent "sequence" to narrow through.
+#
+# `remaining` reconstructs the classic waterfall (cumulative N surviving
+# rules 0..i together, in ruleSequence order) from cohort_inclusion_result:
+# for each observed bitmask, POWER(2, ruleSequence) is one bit; summing
+# person_count over every mask with bits 0..i ALL set gives "how many are
+# still in after applying rules 0 through i". The last rule's `remaining`
+# is therefore always exactly cohort_summary_stats$finalCount.
 rules <- dplyr::filter(stats$cohortInclusionStatsTable, modeId == 1) |>
   dplyr::inner_join(stats$cohortInclusionTable,
                     by = c("cohortDefinitionId", "ruleSequence")) |>
   dplyr::transmute(cohortId = cohortDefinitionId, ruleSequence,
                    ruleName = name, personCount, gainCount, personTotal)
 
+maskCounts <- dplyr::filter(stats$cohortInclusionResultTable, modeId == 1)
+nRulesByCohort <- dplyr::count(stats$cohortInclusionTable, cohortDefinitionId,
+                               name = "nRules")
+remaining <- dplyr::bind_rows(lapply(seq_len(nrow(nRulesByCohort)), function(k) {
+  cid    <- nRulesByCohort$cohortDefinitionId[k]
+  nRules <- nRulesByCohort$nRules[k]
+  masks  <- dplyr::filter(maskCounts, cohortDefinitionId == cid)
+  data.frame(
+    cohortId = cid, ruleSequence = seq_len(nRules) - 1L,
+    remaining = vapply(seq_len(nRules) - 1L, function(i) {
+      requiredMask <- bitwShiftL(1L, i + 1L) - 1L  # bits 0..i all set
+      sum(masks$personCount[bitwAnd(masks$inclusionRuleMask, requiredMask) == requiredMask])
+    }, numeric(1)))
+}))
+
 base <- dplyr::filter(stats$cohortSummaryStatsTable, modeId == 1) |>
   dplyr::transmute(cohortId = cohortDefinitionId, ruleSequence = -1L,
                    ruleName = "(qualifying event, before inclusion rules)",
                    personCount = baseCount, gainCount = NA_integer_,
-                   personTotal = baseCount)
+                   personTotal = baseCount, remaining = baseCount)
 
-attrition <- dplyr::bind_rows(base, rules) |>
+attrition <- dplyr::left_join(rules, remaining, by = c("cohortId", "ruleSequence")) |>
+  dplyr::bind_rows(base) |>
   dplyr::left_join(dplyr::select(jsonSet, cohortId, cohortName), by = "cohortId") |>
   dplyr::arrange(cohortId, ruleSequence) |>
   dplyr::relocate(cohortName, .after = cohortId)
@@ -222,6 +252,8 @@ attrition <- dplyr::bind_rows(base, rules) |>
 .smallAttr <- attrition$personCount > 0 & attrition$personCount < settings$minCellCount
 attrition$gainCount[.smallAttr]   <- NA_integer_
 attrition$personCount[.smallAttr] <- -settings$minCellCount
+.smallRem <- attrition$remaining > 0 & attrition$remaining < settings$minCellCount
+attrition$remaining[.smallRem] <- -settings$minCellCount
 
 writeResultCsv(attrition, "attrition_target_1a")
 print(tibble::as_tibble(attrition), n = Inf)
