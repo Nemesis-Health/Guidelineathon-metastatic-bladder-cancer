@@ -1,0 +1,34 @@
+{
+  "ConceptSets": [
+    {
+      "id": 0,
+      "name": "Gilbert's syndrome",
+      "expression": {
+        "items": [
+          {
+            "concept": { "CONCEPT_ID": 4099740 },
+            "isExcluded": false,
+            "includeDescendants": true,
+            "includeMapped": false
+          }
+        ]
+      }
+    }
+  ],
+  "PrimaryCriteria": {
+    "CriteriaList": [
+      { "ConditionOccurrence": { "CodesetId": 0 } },
+      { "Observation": { "CodesetId": 0 } }
+    ],
+    "ObservationWindow": { "PriorDays": 0, "PostDays": 0 },
+    "PrimaryCriteriaLimit": { "Type": "All" }
+  },
+  "QualifiedLimit": { "Type": "All" },
+  "ExpressionLimit": { "Type": "All" },
+  "InclusionRules": [],
+  "EndStrategy": { "DateOffset": { "DateField": "StartDate", "Offset": 1 } },
+  "CensoringCriteria": [],
+  "CollapseSettings": { "CollapseType": "ERA", "EraPad": 0 },
+  "CensorWindow": {},
+  "cdmVersionRange": ">=5.0.0"
+}

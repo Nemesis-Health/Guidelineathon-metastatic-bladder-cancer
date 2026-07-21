@@ -1,0 +1,28 @@
+# Trial-population reference for the bladder cancer generalizability module.
+#
+# One entry per EAU 2024 mBC guideline recommendation. Each entry captures the
+# baseline characteristics and outcome estimates published for the pivotal trial
+# behind that recommendation. The generalizability module compares cohort 2 / 3
+# baseline tables against these references via standardized mean differences.
+#
+# Phase 0: skeleton only. Populate during Phase 6 (see STUDY_PLAN.md section 4).
+
+# Example shape (do not rely on these numbers):
+# - recommendation_id: 3a
+#   regimen: enfortumab_vedotin_pembrolizumab
+#   trial: EV-302
+#   citation: "Powles T et al, NEJM 2024"
+#   baseline:
+#     n: 442
+#     age_mean: 69
+#     age_sd: 9.5
+#     pct_male: 76.7
+#     ecog:
+#       "0": 50.0
+#       "1": 47.5
+#       ">=2": 2.5
+#   outcomes:
+#     median_os_months: 31.5
+#     median_pfs_months: 12.5
+
+recommendations: []
