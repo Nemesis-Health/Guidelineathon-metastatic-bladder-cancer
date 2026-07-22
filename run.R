@@ -114,6 +114,16 @@ settings$preStudyArchiveName <- settings$preStudyArchiveName %||% "prestudy_quer
 # Run  —  do not edit below
 # ===========================================================================
 source("R/vendor_utils.R")   # .getDbms, %||%
+## Pre-study export: run before loading ARTEMIS or making DB connections
+tryCatch({
+  source("R/00_prestudy_queries.R")
+  exportPreStudyQueries(projectRoot = settings$preStudyProjectRoot,
+                        outputFolder = settings$outputFolder,
+                        archiveName = settings$preStudyArchiveName)
+  message("Pre-study queries exported to ", file.path(settings$outputFolder, "prestudy_queries"))
+}, error = function(e) {
+  message("Pre-study export skipped: ", e$message)
+})
 source("R/artemis.R")        # vendored: runArtemis(), writeArtemisEpisodes(), ...
 source("R/artemis_uncaptured.R")  # uncapturedExposures(), plotUncapturedAlignment()
 source("R/helpers.R")        # cohort generation + SQL utilities
