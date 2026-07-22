@@ -52,7 +52,8 @@ Cross-dialect / SqlRender
 ------------------------------------------------------------
 -- A) ANCHOR DIAGNOSIS CONCEPTS (DX)
 -- Anchor cohort = patients with any of these condition_concept_id values
--- Source: cohort_definitions/UC.json — ConceptSets id 7 "UC - Malignant neoplasm"
+-- Source: cohorts/01_Target/Target_1A.json — ConceptSets id 5 "[GDE] Bladder Cancer"
+-- (same set as cohorts/00_ARTEMIS/ARTEMIS_bladder_cohort.json ConceptSets id 0).
 -- Expanded with concept_ancestor (includeDescendants / isExcluded match Atlas).
 ------------------------------------------------------------
 DROP TABLE IF EXISTS #dx_anchor_include;
@@ -62,14 +63,7 @@ CREATE TABLE #dx_anchor_include (
 );
 
 INSERT INTO #dx_anchor_include (concept_id, include_descendants) VALUES
-    (197508, 1),      -- Malignant neoplasm of urinary bladder
-    (4181357, 1),     -- Malignant tumor of renal pelvis
-    (4177230, 1),     -- Malignant tumor of urethra
-    (37163176, 1),    -- Transitional cell carcinoma of upper urinary tract
-    (4178972, 1),     -- Malignant tumor of ureter
-    (4091486, 0),     -- Malignant neoplasm of overlapping sites of urinary organs
-    (44501785, 0),    -- Transitional cell carcinoma, NOS, of urinary system, NOS (ICDO3)
-    (37110270, 1)     -- Primary urothelial carcinoma of overlapping sites of urinary organs
+    (197508, 1)       -- Malignant neoplasm of urinary bladder
 ;
 
 DROP TABLE IF EXISTS #dx_anchor_exclude;
@@ -79,15 +73,14 @@ CREATE TABLE #dx_anchor_exclude (
 );
 
 INSERT INTO #dx_anchor_exclude (concept_id, include_descendants) VALUES
-    (4280899, 1),
-    (4289374, 1),
-    (4280900, 1),
-    (4283614, 1),
-    (4289097, 1),
-    (4280901, 1),
-    (4289376, 1),
-    (4280897, 1),
-    (4200889, 1);
+    (4200889, 1),     -- Local recurrence of malignant tumor of urinary bladder
+    (4280899, 1),     -- Malignant neoplasm involving urinary bladder by direct extension from endometrium
+    (4289374, 1),     -- Malignant neoplasm involving urinary bladder by direct extension from fallopian tube
+    (4280900, 1),     -- Malignant neoplasm involving urinary bladder by direct extension from ovary
+    (4283614, 1),     -- Malignant neoplasm involving urinary bladder by direct extension from prostate
+    (4289097, 1),     -- Malignant neoplasm involving urinary bladder by direct extension from uterine cervix
+    (4280901, 1),     -- Malignant neoplasm involving urinary bladder by direct extension from uterus
+    (4312566, 1);     -- Primary malignant neoplasm of rectovesical septum
 
 DROP TABLE IF EXISTS #dx_anchor_concepts;
 CREATE TABLE #dx_anchor_concepts (
