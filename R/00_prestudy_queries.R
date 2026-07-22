@@ -5,8 +5,7 @@
 # folder and writes a zip archive for downstream sharing.
 # ===========================================================================
 
-exportPreStudyQueries <- function(projectRoot = NULL, outputFolder = NULL,
-                                  archiveName = NULL) {
+exportPreStudyQueries <- function(projectRoot = NULL, outputFolder = NULL) {
   getSetting <- function(name, default = NULL) {
     if (exists("settings", mode = "list") && !is.null(settings[[name]])) {
       settings[[name]]
@@ -19,22 +18,16 @@ exportPreStudyQueries <- function(projectRoot = NULL, outputFolder = NULL,
     projectRoot <- if (!is.null(getSetting("preStudyProjectRoot")) && nzchar(getSetting("preStudyProjectRoot"))) {
       getSetting("preStudyProjectRoot")
     } else {
-      file.path("~", "onco-pre-study")
+      normalizePath(getwd(), mustWork = FALSE)
     }
   }
   if (is.null(outputFolder) || !nzchar(outputFolder)) {
     outputFolder <- getSetting("outputFolder", file.path("results"))
   }
-  if (is.null(archiveName) || !nzchar(archiveName)) {
-    archiveName <- if (!is.null(getSetting("preStudyArchiveName")) && nzchar(getSetting("preStudyArchiveName"))) {
-      getSetting("preStudyArchiveName")
-    } else {
-      "prestudy_queries.zip"
-    }
-  }
 
   projectRoot <- normalizePath(projectRoot, mustWork = FALSE)
   outputFolder <- normalizePath(outputFolder, mustWork = FALSE)
+  repoRoot <- normalizePath(getwd(), mustWork = FALSE)
 
   stagingDir <- file.path(outputFolder, "prestudy_queries")
   dir.create(stagingDir, recursive = TRUE, showWarnings = FALSE)
@@ -85,36 +78,33 @@ exportPreStudyQueries <- function(projectRoot = NULL, outputFolder = NULL,
   manifestDf <- dplyr::bind_rows(manifest)
   readr::write_csv(manifestDf, file.path(stagingDir, "prestudy_query_manifest.csv"), na = "")
 
-  archivePath <- file.path(outputFolder, archiveName)
-  if (dir.exists(stagingDir)) {
-    oldWd <- getwd()
-    on.exit(setwd(oldWd), add = TRUE)
-    setwd(stagingDir)
-    filesToZip <- list.files(".", recursive = TRUE, include.dirs = TRUE, all.files = TRUE)
-    filesToZip <- filesToZip[filesToZip != "."]
-    if (length(filesToZip) > 0L) {
-      utils::zip(zipfile = archivePath, files = filesToZip, flags = "-q")
-    }
-  }
-
   # Mirror SQL Server queries into the study `sql/prestudy` folder so the
-  # study can be self-contained. Only copy the server-specific SQLs; they
-  # will be translated later by the normal pipeline helpers if needed.
+  # study can be self-contained. Only copy from an external onco-pre-study
+  # checkout's `sql/sql_server`; if that isn't available, the repo-local
+  # `sql/prestudy` bundle (committed separately) is used as-is.
   tryCatch({
-    srcSqlServerDir <- file.path(projectRoot, "sql", "sql_server")
-    if (dir.exists(srcSqlServerDir)) {
-      destSqlDir <- file.path(normalizePath(".", mustWork = FALSE), "sql", "prestudy")
-      dir.create(destSqlDir, recursive = TRUE, showWarnings = FALSE)
-      sqlFiles <- list.files(srcSqlServerDir, pattern = "\\.sql$", full.names = TRUE)
+    destSqlDir <- file.path(repoRoot, "sql", "prestudy")
+    dir.create(destSqlDir, recursive = TRUE, showWarnings = FALSE)
+
+    srcSqlDir <- file.path(projectRoot, "sql", "sql_server")
+
+    if (dir.exists(srcSqlDir) &&
+        normalizePath(srcSqlDir, mustWork = FALSE) != normalizePath(destSqlDir, mustWork = FALSE)) {
+      sqlFiles <- list.files(srcSqlDir, pattern = "\\.sql$", full.names = TRUE, recursive = TRUE, include.dirs = FALSE)
       if (length(sqlFiles) > 0L) {
-        file.copy(sqlFiles, file.path(destSqlDir, basename(sqlFiles)), overwrite = TRUE)
-        # Add entries to the manifest for the project copies
-        projRows <- data.frame(
-          source_path = file.path("sql", "sql_server", basename(sqlFiles)),
-          destination_path = file.path(destSqlDir, basename(sqlFiles)),
-          stringsAsFactors = FALSE
-        )
-        manifestDf <- dplyr::bind_rows(manifestDf, projRows)
+        for (sqlFile in sqlFiles) {
+          relPath <- substring(sqlFile, nchar(srcSqlDir) + 2L)
+          destFile <- file.path(destSqlDir, relPath)
+          dir.create(dirname(destFile), recursive = TRUE, showWarnings = FALSE)
+          file.copy(sqlFile, destFile, overwrite = TRUE)
+
+          projRows <- data.frame(
+            source_path = file.path("sql", "sql_server", relPath),
+            destination_path = destFile,
+            stringsAsFactors = FALSE
+          )
+          manifestDf <- dplyr::bind_rows(manifestDf, projRows)
+        }
         readr::write_csv(manifestDf, file.path(stagingDir, "prestudy_query_manifest.csv"), na = "")
       }
     }
@@ -122,42 +112,80 @@ exportPreStudyQueries <- function(projectRoot = NULL, outputFolder = NULL,
     message("Warning: could not mirror SQL Server queries into project sql folder: ", e$message)
   })
 
-  invisible(list(stagingDir = stagingDir, archivePath = archivePath, manifestPath = file.path(stagingDir, "prestudy_query_manifest.csv")))
+  invisible(list(stagingDir = stagingDir, manifestPath = file.path(stagingDir, "prestudy_query_manifest.csv")))
 }
 
-zipResultsCsvs <- function(outputFolder = NULL,
-                           diagnosticsName = "diagnostics.zip",
-                           eligibilityName = "eligibility_results.zip") {
+zipPreStudyQueries <- function(outputFolder = NULL, archiveName = NULL) {
   if (is.null(outputFolder) || !nzchar(outputFolder)) outputFolder <- "results"
   outputFolder <- normalizePath(outputFolder, mustWork = FALSE)
-  csvDir <- file.path(outputFolder, "csv")
-  if (!dir.exists(csvDir)) return(invisible(NULL))
+  if (is.null(archiveName) || !nzchar(archiveName)) {
+    archiveName <- "prestudy_queries.zip"
+  }
 
-  allCsvs <- list.files(csvDir, pattern = "\\.csv$", full.names = FALSE)
-  if (length(allCsvs) == 0L) return(invisible(NULL))
-
-  # Exclude any suspected patient-level / raw files by keyword or extension.
-  excludePattern <- "(raw|patient|person|rowlevel|individual|detail|_rds|\\.rds)"
-  safeCsvs <- allCsvs[!grepl(excludePattern, allCsvs, ignore.case = TRUE)]
-  if (length(safeCsvs) == 0L) return(invisible(NULL))
-
-  diagnosticsList <- c("lab_results_summary.csv", "lab_results_rollup.csv",
-                       "lab_value_distribution.csv", "lab_cohort_counts.csv")
-  diagnosticsFiles <- intersect(diagnosticsList, safeCsvs)
-  eligibilityFiles <- setdiff(safeCsvs, diagnosticsFiles)
+  stagingDir <- file.path(outputFolder, "prestudy_queries")
+  if (!dir.exists(stagingDir)) return(invisible(NULL))
 
   oldWd <- getwd()
   on.exit(setwd(oldWd), add = TRUE)
-  setwd(csvDir)
+  setwd(stagingDir)
+  filesToZip <- list.files(".", recursive = TRUE, include.dirs = TRUE, all.files = TRUE)
+  filesToZip <- filesToZip[filesToZip != "."]
+  if (length(filesToZip) > 0L) {
+    utils::zip(zipfile = file.path(outputFolder, archiveName), files = filesToZip, flags = "-q")
+  }
 
-  if (length(diagnosticsFiles) > 0L) {
-    utils::zip(zipfile = file.path(outputFolder, diagnosticsName), files = diagnosticsFiles, flags = "-q")
-  }
-  if (length(eligibilityFiles) > 0L) {
-    utils::zip(zipfile = file.path(outputFolder, eligibilityName), files = eligibilityFiles, flags = "-q")
-  }
-  invisible(list(diagnostics = file.path(outputFolder, diagnosticsName),
-                 eligibility = file.path(outputFolder, eligibilityName)))
+  invisible(file.path(outputFolder, archiveName))
 }
 
-exportPreStudyQueries()
+stagePreStudyDiagnostics <- function(projectRoot = NULL, outputFolder = NULL) {
+  if (is.null(outputFolder) || !nzchar(outputFolder)) outputFolder <- "results"
+  outputFolder <- normalizePath(outputFolder, mustWork = FALSE)
+  stageDir <- file.path(outputFolder, "diagnostics")
+  dir.create(stageDir, recursive = TRUE, showWarnings = FALSE)
+
+  candidateRoots <- c()
+  if (!is.null(projectRoot) && nzchar(projectRoot)) {
+    candidateRoots <- c(candidateRoots, normalizePath(projectRoot, mustWork = FALSE))
+  }
+  candidateRoots <- c(candidateRoots, normalizePath(getwd(), mustWork = FALSE))
+  candidateRoots <- c(candidateRoots, normalizePath(file.path("~", "onco-pre-study"), mustWork = FALSE))
+  candidateRoots <- unique(candidateRoots)
+
+  sourceDir <- NULL
+  for (root in candidateRoots) {
+    preStudyDirs <- c(
+      file.path(root, "outputs_v6"),
+      file.path(root, "outputs"),
+      file.path(root, "outputs_v5"),
+      file.path(root, "outputs_all"),
+      file.path(root, "outputs_test")
+    )
+    sourceDir <- preStudyDirs[dir.exists(preStudyDirs)][1]
+    if (!is.null(sourceDir) && dir.exists(sourceDir)) break
+  }
+
+  if (is.null(sourceDir) || !dir.exists(sourceDir)) return(invisible(stageDir))
+
+  diagnosticsFiles <- list.files(sourceDir, pattern = "\\.csv$", full.names = FALSE, ignore.case = TRUE)
+  if (length(diagnosticsFiles) == 0L) return(invisible(stageDir))
+
+  file.copy(file.path(sourceDir, diagnosticsFiles), file.path(stageDir, diagnosticsFiles), overwrite = TRUE)
+  invisible(stageDir)
+}
+
+if (exists("settings", mode = "list")) {
+  outputFolder <- if (!is.null(settings$outputFolder) && nzchar(settings$outputFolder)) {
+    settings$outputFolder
+  } else {
+    "results"
+  }
+  archiveName <- if (!is.null(settings$preStudyArchiveName) && nzchar(settings$preStudyArchiveName)) {
+    settings$preStudyArchiveName
+  } else {
+    "prestudy_queries.zip"
+  }
+  exportPreStudyQueries(outputFolder = outputFolder)
+  zipPreStudyQueries(outputFolder = outputFolder, archiveName = archiveName)
+  stagePreStudyDiagnostics(outputFolder = outputFolder)
+}
+
