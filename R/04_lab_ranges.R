@@ -55,4 +55,4 @@ writeResultCsv(labRollup, "lab_results_rollup")
 message("  lab_results_rollup: ", nrow(labRollup), " rows")
 
 message("\nResults written under: ",
-        normalizePath(file.path(settings$outputFolder, "csv"), mustWork = FALSE))
+        normalizePath(file.path(settings$outputFolder, "eligibility"), mustWork = FALSE))
