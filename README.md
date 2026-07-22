@@ -4,8 +4,30 @@ Cohort-creation stage for the **EAU 2024 metastatic bladder cancer** RWE study.
 The orchestration uses the OHDSI packages directly, with the ARTEMIS integration
 in `R/artemis.R`.
 
-Only aggregate results leave the site (`results/csv/`), censored at
-`minCellCount` (default 5).
+Only aggregate, censored results leave the site — see
+[Study layout](#study-layout) and [Privacy censoring](#privacy-censoring-applies-to-every-file).
+
+---
+
+## Study layout
+
+A full run has two steps, in order:
+
+1. **Diagnostics** (`results/diagnostics/`) — pre-study characterization
+   queries against the CDM, run once before ARTEMIS or any cohort work
+   begins. This functionality is ported from the external
+   [`onco-pre-study`](https://github.com/Nemesis-Health/onco-pre-study) repo:
+   its query assets and SQL Server templates are mirrored into this
+   repository (`sql/prestudy/`, `results/prestudy_queries/`) so the study can
+   run standalone, without a separate checkout of that project. Details in
+   [Pre-study queries & result packaging](#pre-study-queries--result-packaging).
+2. **Eligibility** (`results/eligibility/`) — the main cohort-creation
+   pipeline: ARTEMIS regimen alignment, eligibility inputs, the cohort tree,
+   lab ranges, coverage, demographics, and covariates. Details in
+   [What it does — the pipeline stages](#what-it-does--the-pipeline-stages).
+
+At the end of a run, each step's outputs are packaged into their own zip —
+`diagnostics.zip` and `eligibility_results.zip` respectively.
 
 ---
 
@@ -24,11 +46,11 @@ Only aggregate results leave the site (`results/csv/`), censored at
 `run.R` holds the **CONFIG block** (the only thing to edit — `connectionDetails`,
 schemas, table names, run settings; it builds the `executionSettings` object the
 ARTEMIS code reads), then sources the numbered steps in order and writes
-CSVs under `results/csv/`.
+CSVs under `results/eligibility/`.
 
 ### Requirements
 
-**R 4.5.1** (the version the lockfile pins) and the eight direct R packages below. Everything else in `renv.lock` is a transitive dependency of these.
+**R 4.5.1** (the version the lockfile pins) and the eleven direct R packages below. Everything else in `renv.lock` is a transitive dependency of these.
 
 | Package | Version | Source |
 |---|---|---|
@@ -40,6 +62,9 @@ CSVs under `results/csv/`.
 | `dplyr` | 1.1.4 | CRAN |
 | `tibble` | 3.3.0 | CRAN |
 | `readr` | 2.1.6 | CRAN |
+| `cli` | 3.6.5 | CRAN |
+| `rlang` | 1.1.6 | CRAN |
+| `stringr` | 1.6.0 | CRAN |
 
 Everything except ARTEMIS comes from CRAN.
 
@@ -76,8 +101,8 @@ renv::restore()            # install every pinned package from renv.lock into it
 `renv::activate()` is what makes the restore project-local; skip it and
 `renv::restore()` installs into your normal library instead. Every entry in
 `renv.lock` is required to run the study (the recursive dependency closure of the
-eight packages — no dev/report extras); renv does not resolve unrecorded
-dependencies, which is why it lists ~110 packages rather than eight.
+eleven packages — no dev/report extras); renv does not resolve unrecorded
+dependencies, which is why it lists ~110 packages rather than eleven.
 
 **Option 2 — just make sure they're installed.** You don't strictly need renv or
 the exact pinned versions — the study only needs each package at **≥ the version
@@ -86,7 +111,8 @@ these; update anything older, and install ARTEMIS from GitHub:
 
 ```r
 install.packages(c("DatabaseConnector", "CirceR", "CohortGenerator",
-                   "SqlRender", "dplyr", "tibble", "readr", "remotes"))
+                   "SqlRender", "dplyr", "tibble", "readr",
+                   "cli", "rlang", "stringr", "remotes"))
 remotes::install_github("OHDSI/Artemis@242b5a24864b85a44c62d95a98cbaa2d16c55539")
 ```
 
@@ -94,12 +120,12 @@ To see what you already have first:
 
 ```r
 for (p in c("DatabaseConnector", "CirceR", "CohortGenerator", "SqlRender",
-            "dplyr", "tibble", "readr", "ARTEMIS"))
+            "dplyr", "tibble", "readr", "cli", "rlang", "stringr", "ARTEMIS"))
   cat(sprintf("%-18s %s\n", p,
       tryCatch(as.character(packageVersion(p)), error = function(e) "MISSING")))
 ```
 
-`run.R` checks all eight are present and stops with a clear message if any is
+`run.R` checks all eleven are present and stops with a clear message if any is
 missing. (ARTEMIS is the exception to "newer is fine": use the commit above,
 which is the tested one — see the ARTEMIS note.)
 
@@ -114,7 +140,7 @@ ARTEMIS.
 |---|---|---|
 | **(a)** ARTEMIS regimen alignment | `R/01_artemis.R` | `bc_artemis_episodes`, `bc_regimen_classifications` |
 | **(b)** eligibility labs **+** cohorts → one table | `R/02_eligibility_inputs.R` | `bc_lab_cohort` (labs **+** ECOG **+** conditions), `bc_raw_lab_results` |
-| **(c)** main cohort tree | `R/03_main_cohorts.R` | `bc_cohort`, `results/csv/cohort_counts.csv` |
+| **(c)** main cohort tree | `R/03_main_cohorts.R` | `bc_cohort`, `results/eligibility/cohort_counts.csv` |
 | **(d)** lab test ranges on (c) | `R/04_lab_ranges.R` | `lab_value_distribution.csv`, `lab_results_summary.csv`, `lab_results_rollup.csv` |
 | — eligibility-input counts + coverage | `R/05_eligibility_coverage.R` | `lab_cohort_counts.csv`, `eligibility_input_coverage.csv` |
 | — ARTEMIS alignment assessment | `R/06_artemis_assessment.R` | `artemis_summary.csv`, `artemis_coverage.csv`, `artemis_drug_exposures.csv`, `artemis_regimens_aligned.csv`, `artemis_episodes_per_patient.csv`, `artemis_uncaptured_drugs.csv` |
@@ -136,29 +162,33 @@ before the main pipeline (ARTEMIS or any DB connections). Purpose and behaviour:
 - **Pre-study export**: If a local checkout of the external `onco-pre-study`
   project is available, the run will copy the repo's query assets
   (`README.md`, `db_config.yaml`, `run.R`, `docs/`, `scripts/`, and the SQL
-  templates) into `results/prestudy_queries/` and create a zipped archive
-  (`results/prestudy_queries.zip`). SQL Server dialect files from
-  `onco-pre-study/sql/sql_server/` are mirrored into this project's
-  `sql/prestudy/` so the study can remain self-contained; the pipeline's
-  SQL translation helpers perform dialect translation later when needed.
+  templates) into `results/prestudy_queries/` for staging. A separate zip step
+  then writes `results/prestudy_queries.zip` from that staged folder. SQL
+  Server dialect files from `onco-pre-study/sql/sql_server/` are mirrored
+  into this project's `sql/prestudy/` so the study can remain self-contained;
+  the pipeline's SQL translation helpers perform dialect translation later
+  when needed.
 
 - **Configuration**: Set `settings$preStudyProjectRoot` in the CONFIG block of
   `run.R` to point to a local `onco-pre-study` checkout. The archive name can
   be changed via `settings$preStudyArchiveName`. Defaults point to
   `~/onco-pre-study` and `prestudy_queries.zip` respectively.
 
-- **Result packaging (zips)**: After the pre-study export and again at the
-  end of a successful run, the pipeline produces two archives from the
-  `results/csv/` folder:
-  - `diagnostics.zip` — contains diagnostic / whole-population QC CSVs
-    (for example `lab_results_summary.csv`, `lab_results_rollup.csv`,
-    `lab_value_distribution.csv`, `lab_cohort_counts.csv`) when present.
-  - `eligibility_results.zip` — contains the remaining safe, aggregate CSVs
-    suitable for sharing (cohort counts, coverage, ARTEMIS summaries, etc.).
+- **Result packaging (zips)**: At the end of a successful run, the pipeline
+  produces two archives:
+  - `diagnostics.zip` — the CSV outputs staged from the external
+    `onco-pre-study` project's latest available `outputs*` folder (such as
+    `outputs_v6` or `outputs`) into `results/diagnostics/`.
+  - `eligibility_results.zip` — every CSV under `results/eligibility/`
+    (cohort counts, coverage, ARTEMIS summaries, demographics, covariate
+    overlap, etc.), written by the main pipeline steps.
 
-  Both archives explicitly exclude files that look like row-level or patient-
-  level exports (file names containing `raw`, `patient`, `person`, `rowlevel`,
-  `individual`, `detail`) and any `.rds` files.
+  Every file the main pipeline writes into `results/eligibility/` already
+  censors small cells (subjects < `settings$minCellCount`) at the point it's
+  written — see the individual `R/0N_*.R` steps — so no additional filtering
+  is applied when packaging. `diagnostics.zip` mirrors whatever CSVs the
+  external `onco-pre-study` project produced as-is; this pipeline does not
+  inspect or filter that content.
 
 The pre-study export is intentionally resilient: failures to find or copy the
 external project are logged but do not stop the main pipeline.
@@ -205,15 +235,16 @@ characterisation covariates (e.g. hypertension, diabetes, smoking, metastasis
 sites) were removed — characterisation is a downstream stage this project does
 not run.
 
-### `results/` — outputs (`csv/`, git-ignored)
+### `results/` — outputs (`diagnostics/`, `eligibility/`, git-ignored)
 
 ---
 
-## Outputs (`results/csv/`)
+## Outputs (`results/eligibility/`)
 
-A full run writes **fourteen CSVs** to `results/csv/` (created on first write; the
-folder is git-ignored). These aggregate tables are the only artefacts that leave
-the site — no row-level data is exported. Every file is UTF-8, comma-separated,
+A full run writes **fourteen CSVs** to `results/eligibility/` (created on first
+write; the folder is git-ignored). These aggregate tables are the only
+artefacts the main pipeline exports — no row-level data is written. Every file
+is UTF-8, comma-separated,
 with a header row; missing/censored cells are written as **empty strings**
 (`readr::write_csv(..., na = "")`).
 
