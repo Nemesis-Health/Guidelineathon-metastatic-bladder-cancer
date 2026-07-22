@@ -97,6 +97,31 @@ exportPreStudyQueries <- function(projectRoot = NULL, outputFolder = NULL,
     }
   }
 
+  # Mirror SQL Server queries into the study `sql/prestudy` folder so the
+  # study can be self-contained. Only copy the server-specific SQLs; they
+  # will be translated later by the normal pipeline helpers if needed.
+  tryCatch({
+    srcSqlServerDir <- file.path(projectRoot, "sql", "sql_server")
+    if (dir.exists(srcSqlServerDir)) {
+      destSqlDir <- file.path(normalizePath(".", mustWork = FALSE), "sql", "prestudy")
+      dir.create(destSqlDir, recursive = TRUE, showWarnings = FALSE)
+      sqlFiles <- list.files(srcSqlServerDir, pattern = "\\.sql$", full.names = TRUE)
+      if (length(sqlFiles) > 0L) {
+        file.copy(sqlFiles, file.path(destSqlDir, basename(sqlFiles)), overwrite = TRUE)
+        # Add entries to the manifest for the project copies
+        projRows <- data.frame(
+          source_path = file.path("sql", "sql_server", basename(sqlFiles)),
+          destination_path = file.path(destSqlDir, basename(sqlFiles)),
+          stringsAsFactors = FALSE
+        )
+        manifestDf <- dplyr::bind_rows(manifestDf, projRows)
+        readr::write_csv(manifestDf, file.path(stagingDir, "prestudy_query_manifest.csv"), na = "")
+      }
+    }
+  }, error = function(e) {
+    message("Warning: could not mirror SQL Server queries into project sql folder: ", e$message)
+  })
+
   invisible(list(stagingDir = stagingDir, archivePath = archivePath, manifestPath = file.path(stagingDir, "prestudy_query_manifest.csv")))
 }
 
