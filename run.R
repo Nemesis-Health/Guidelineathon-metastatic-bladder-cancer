@@ -120,6 +120,13 @@ tryCatch({
   exportPreStudyQueries(projectRoot = settings$preStudyProjectRoot,
                         outputFolder = settings$outputFolder,
                         archiveName = settings$preStudyArchiveName)
+  # Zip CSV diagnostics and eligibility results (safe, aggregate CSVs only)
+  tryCatch({
+    zipResultsCsvs(outputFolder = settings$outputFolder)
+    message("Result CSV zips created in ", settings$outputFolder)
+  }, error = function(e) {
+    message("Result CSV zips skipped: ", e$message)
+  })
   message("Pre-study queries exported to ", file.path(settings$outputFolder, "prestudy_queries"))
 }, error = function(e) {
   message("Pre-study export skipped: ", e$message)
@@ -142,3 +149,10 @@ source("R/07_demographics.R")       # per-cohort demographics (age / sex / index
 source("R/08_covariates.R")         # covariate overlap with 1A (comorbidities + PS)
 
 message("\n=== Done. Results under ", settings$outputFolder, "/csv/ ===")
+## Final: zip results CSVs (diagnostics + eligibility_results)
+tryCatch({
+  zipResultsCsvs(outputFolder = settings$outputFolder)
+  message("Wrote diagnostics.zip and eligibility_results.zip to ", settings$outputFolder)
+}, error = function(e) {
+  message("Final result CSV zips skipped: ", e$message)
+})

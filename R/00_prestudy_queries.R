@@ -125,4 +125,39 @@ exportPreStudyQueries <- function(projectRoot = NULL, outputFolder = NULL,
   invisible(list(stagingDir = stagingDir, archivePath = archivePath, manifestPath = file.path(stagingDir, "prestudy_query_manifest.csv")))
 }
 
+zipResultsCsvs <- function(outputFolder = NULL,
+                           diagnosticsName = "diagnostics.zip",
+                           eligibilityName = "eligibility_results.zip") {
+  if (is.null(outputFolder) || !nzchar(outputFolder)) outputFolder <- "results"
+  outputFolder <- normalizePath(outputFolder, mustWork = FALSE)
+  csvDir <- file.path(outputFolder, "csv")
+  if (!dir.exists(csvDir)) return(invisible(NULL))
+
+  allCsvs <- list.files(csvDir, pattern = "\\.csv$", full.names = FALSE)
+  if (length(allCsvs) == 0L) return(invisible(NULL))
+
+  # Exclude any suspected patient-level / raw files by keyword or extension.
+  excludePattern <- "(raw|patient|person|rowlevel|individual|detail|_rds|\\.rds)"
+  safeCsvs <- allCsvs[!grepl(excludePattern, allCsvs, ignore.case = TRUE)]
+  if (length(safeCsvs) == 0L) return(invisible(NULL))
+
+  diagnosticsList <- c("lab_results_summary.csv", "lab_results_rollup.csv",
+                       "lab_value_distribution.csv", "lab_cohort_counts.csv")
+  diagnosticsFiles <- intersect(diagnosticsList, safeCsvs)
+  eligibilityFiles <- setdiff(safeCsvs, diagnosticsFiles)
+
+  oldWd <- getwd()
+  on.exit(setwd(oldWd), add = TRUE)
+  setwd(csvDir)
+
+  if (length(diagnosticsFiles) > 0L) {
+    utils::zip(zipfile = file.path(outputFolder, diagnosticsName), files = diagnosticsFiles, flags = "-q")
+  }
+  if (length(eligibilityFiles) > 0L) {
+    utils::zip(zipfile = file.path(outputFolder, eligibilityName), files = eligibilityFiles, flags = "-q")
+  }
+  invisible(list(diagnostics = file.path(outputFolder, diagnosticsName),
+                 eligibility = file.path(outputFolder, eligibilityName)))
+}
+
 exportPreStudyQueries()
