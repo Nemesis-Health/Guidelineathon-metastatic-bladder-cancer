@@ -128,6 +128,41 @@ membership is *inserted* into the same table under reserved test-id slots. So
 
 ---
 
+## Pre-study queries & result packaging
+
+This repository now includes an automated pre-study export step that runs
+before the main pipeline (ARTEMIS or any DB connections). Purpose and behaviour:
+
+- **Pre-study export**: If a local checkout of the external `onco-pre-study`
+  project is available, the run will copy the repo's query assets
+  (`README.md`, `db_config.yaml`, `run.R`, `docs/`, `scripts/`, and the SQL
+  templates) into `results/prestudy_queries/` and create a zipped archive
+  (`results/prestudy_queries.zip`). SQL Server dialect files from
+  `onco-pre-study/sql/sql_server/` are mirrored into this project's
+  `sql/prestudy/` so the study can remain self-contained; the pipeline's
+  SQL translation helpers perform dialect translation later when needed.
+
+- **Configuration**: Set `settings$preStudyProjectRoot` in the CONFIG block of
+  `run.R` to point to a local `onco-pre-study` checkout. The archive name can
+  be changed via `settings$preStudyArchiveName`. Defaults point to
+  `~/onco-pre-study` and `prestudy_queries.zip` respectively.
+
+- **Result packaging (zips)**: After the pre-study export and again at the
+  end of a successful run, the pipeline produces two archives from the
+  `results/csv/` folder:
+  - `diagnostics.zip` — contains diagnostic / whole-population QC CSVs
+    (for example `lab_results_summary.csv`, `lab_results_rollup.csv`,
+    `lab_value_distribution.csv`, `lab_cohort_counts.csv`) when present.
+  - `eligibility_results.zip` — contains the remaining safe, aggregate CSVs
+    suitable for sharing (cohort counts, coverage, ARTEMIS summaries, etc.).
+
+  Both archives explicitly exclude files that look like row-level or patient-
+  level exports (file names containing `raw`, `patient`, `person`, `rowlevel`,
+  `individual`, `detail`) and any `.rds` files.
+
+The pre-study export is intentionally resilient: failures to find or copy the
+external project are logged but do not stop the main pipeline.
+
 ## File map
 
 ### `R/` — driver + logic
