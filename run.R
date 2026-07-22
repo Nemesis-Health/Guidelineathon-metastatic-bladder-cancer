@@ -105,6 +105,11 @@ settings <- list(
   outputFolder        = file.path("results")
 )
 
+# --- Optional pre-study export settings ------------------------------------
+# If set, `preStudyProjectRoot` may point to a local onco-pre-study checkout.
+settings$preStudyProjectRoot <- settings$preStudyProjectRoot %||% file.path("~", "onco-pre-study")
+settings$preStudyArchiveName <- settings$preStudyArchiveName %||% "prestudy_queries.zip"
+
 # ===========================================================================
 # Run  —  do not edit below
 # ===========================================================================
@@ -113,6 +118,18 @@ source("R/artemis.R")        # vendored: runArtemis(), writeArtemisEpisodes(), .
 source("R/artemis_uncaptured.R")  # uncapturedExposures(), plotUncapturedAlignment()
 source("R/helpers.R")        # cohort generation + SQL utilities
 source("R/setup.R")          # config checks + derived paths + executionSettings
+
+# Export pre-study queries before any DB connections or heavy steps run.
+# This is intentionally resilient: failures won't stop the main pipeline.
+tryCatch({
+  source("R/00_prestudy_queries.R")
+  exportPreStudyQueries(projectRoot = settings$preStudyProjectRoot,
+                        outputFolder = settings$outputFolder,
+                        archiveName = settings$preStudyArchiveName)
+  message("Pre-study queries exported to ", file.path(settings$outputFolder, "prestudy_queries"))
+}, error = function(e) {
+  message("Pre-study export skipped: ", e$message)
+})
 
 connection <- DatabaseConnector::connect(connectionDetails)
 on.exit(try(DatabaseConnector::disconnect(connection), silent = TRUE), add = TRUE)
