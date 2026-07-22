@@ -1,11 +1,6 @@
 # Bladder eligibility study
 
-Cohort-creation stage for the **EAU 2024 metastatic bladder cancer** RWE study.
-The orchestration uses the OHDSI packages directly, with the ARTEMIS integration
-in `R/artemis.R`.
-
-Only aggregate, censored results leave the site — see
-[Study layout](#study-layout) and [Privacy censoring](#privacy-censoring-applies-to-every-file).
+Eligibility stage for the **Metastatic bladder cancer guidelines** RWE study.
 
 ---
 
@@ -14,16 +9,15 @@ Only aggregate, censored results leave the site — see
 A full run has two steps, in order:
 
 1. **Diagnostics** (`results/diagnostics/`) — pre-study characterization
-   queries against the CDM, run once before ARTEMIS or any cohort work
-   begins. This functionality is ported from the external
+   queries against the OMOP CDM. This functionality is ported from the external
    [`onco-pre-study`](https://github.com/Nemesis-Health/onco-pre-study) repo:
    its query assets and SQL Server templates are mirrored into this
    repository (`sql/prestudy/`, `results/prestudy_queries/`) so the study can
    run standalone, without a separate checkout of that project. Details in
    [Pre-study queries & result packaging](#pre-study-queries--result-packaging).
 2. **Eligibility** (`results/eligibility/`) — the main cohort-creation
-   pipeline: ARTEMIS regimen alignment, eligibility inputs, the cohort tree,
-   lab ranges, coverage, demographics, and covariates. Details in
+   pipeline: ARTEMIS regimen alignment, eligibility / lab test normalization, cohort creation,
+   cohort lab ranges and demographics.
    [What it does — the pipeline stages](#what-it-does--the-pipeline-stages).
 
 At the end of a run, each step's outputs are packaged into their own zip —
