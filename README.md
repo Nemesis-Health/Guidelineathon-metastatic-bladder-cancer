@@ -6,19 +6,20 @@ Eligibility stage for the **Metastatic bladder cancer guidelines** RWE study.
 
 ## Study layout
 
-A full run has two steps, in order:
+A full run has two main steps, in order:
 
 1. **Diagnostics** (`results/diagnostics/`) — pre-study characterization
    queries against the OMOP CDM. This functionality is ported from the external
-   [`onco-pre-study`](https://github.com/Nemesis-Health/onco-pre-study) repo:
-   its query assets and SQL Server templates are mirrored into this
-   repository (`sql/prestudy/`, `results/prestudy_queries/`) so the study can
-   run standalone, without a separate checkout of that project. Details in
-   [Pre-study queries & result packaging](#pre-study-queries--result-packaging).
+   [`onco-pre-study`](https://github.com/Nemesis-Health/onco-pre-study/tree/fb30995fa0c776e4681e92a9e640812a9e4e88df)
+   repo (pinned at commit `fb30995`): its query assets and SQL Server templates
+   are mirrored into this repository (`sql/prestudy/`, `results/prestudy_queries/`)
+   so the study can run standalone, without a separate checkout of that project.
+   See [What it does — the diagnostics stage](#what-it-does--the-diagnostics-stage)
+   and [Pre-study queries & result packaging](#pre-study-queries--result-packaging).
 2. **Eligibility** (`results/eligibility/`) — the main cohort-creation
    pipeline: ARTEMIS regimen alignment, eligibility / lab test normalization, cohort creation,
    cohort lab ranges and demographics.
-   [What it does — the pipeline stages](#what-it-does--the-pipeline-stages).
+   See [What it does — the pipeline stages](#what-it-does--the-pipeline-stages).
 
 At the end of a run, each step's outputs are packaged into their own zip —
 `diagnostics.zip` and `eligibility_results.zip` respectively.
@@ -148,13 +149,41 @@ membership is *inserted* into the same table under reserved test-id slots. So
 
 ---
 
+## What it does — the diagnostics stage
+
+Runs a fixed battery of pre-study characterization queries against the CDM,
+anchored on the bladder-cancer diagnosis cohort (`sql/prestudy/chunks/00_setup.sql`,
+section A — aligned with the main study's `[GDE] Bladder Cancer` concept set from
+`cohorts/01_Target/Target_1A.json`). All queries live in `sql/prestudy/`
+(`00_setup.sql` builds shared temp tables; `chunks/01`–`35` each export one CSV).
+This is a high-level orientation only — for the exact query logic and output
+schemas, see [onco-pre-study at `fb30995`](https://github.com/Nemesis-Health/onco-pre-study/tree/fb30995fa0c776e4681e92a9e640812a9e4e88df),
+the source this was mirrored from.
+
+| Group | Chunk(s) | Covers |
+|---|---|---|
+| Attrition & prevalence | `00b`, `01` | Cohort attrition (any qualifying DX → the obs-period-eligible subset), population prevalence. |
+| Code counts & timing | `02`–`05` | Code-count summaries and pairwise event timing (DX / MET / L01), overall and by year. |
+| ODX / GDX prevalence | `06`, `06b`, `33`–`35` | Directional other-cancer-dx and general-cancer-dx concept prevalence around the anchor, banded and cumulative. |
+| L01 (antineoplastic) treatment | `07`, `11`–`15` | Treatment-exposure windows and consecutive-record gap distributions. |
+| Death timing | `08`, `13`–`14` | Death date vs. index/first-MET and vs. observation-period end. |
+| Demographics | `09` | Age/sex at anchor dates. |
+| Anchor code detail | `10`, `18`–`19` | Per-concept anchor-code counts, record-repeat and intercode timing. |
+| Observation-period QC | `16`–`17` | Look-back/follow-up observability, period-definition integrity. |
+| MET-first subgroup | `20`–`23` | Ordering, support, and timing of first Metastasis vs. first specific diagnosis. |
+| MET → treatment timing | `24`–`28` | Where/when the closest antineoplastic treatment falls relative to first Metastasis. |
+| Drug-therapy procedures | `29`–`32` | Procedure-vs-drug-exposure signal source, timing, and co-occurrence. |
+
+---
+
 ## Pre-study queries & result packaging
 
 This repository now includes an automated pre-study export step that runs
 before the main pipeline (ARTEMIS or any DB connections). Purpose and behaviour:
 
-- **Pre-study export**: If a local checkout of the external `onco-pre-study`
-  project is available, the run will copy the repo's query assets
+- **Pre-study export**: If a local checkout of the external
+  [`onco-pre-study`](https://github.com/Nemesis-Health/onco-pre-study/tree/fb30995fa0c776e4681e92a9e640812a9e4e88df)
+  project (pinned at commit `fb30995`) is available, the run will copy the repo's query assets
   (`README.md`, `db_config.yaml`, `run.R`, `docs/`, `scripts/`, and the SQL
   templates) into `results/prestudy_queries/` for staging. A separate zip step
   then writes `results/prestudy_queries.zip` from that staged folder. SQL
