@@ -1,11 +1,28 @@
-# Bladder eligibility study
+# FACLON-Bladder Diagnostics and Feasibility 
 
-Cohort-creation stage for the **EAU 2024 metastatic bladder cancer** RWE study.
-The orchestration uses the OHDSI packages directly, with the ARTEMIS integration
-in `R/artemis.R`.
+Eligibility stage for the **FALCON-Bladder/Guidelinathon** study.
 
-Only aggregate results leave the site (`results/csv/`), censored at
-`minCellCount` (default 5).
+---
+
+## Study layout
+
+A full run has two main steps, in order:
+
+1. **Diagnostics** (`results/diagnostics/`) — pre-study characterization
+   queries against the OMOP CDM. This functionality is ported from the external
+   [`onco-pre-study`](https://github.com/Nemesis-Health/onco-pre-study/tree/fb30995fa0c776e4681e92a9e640812a9e4e88df)
+   repo (pinned at commit `fb30995`): its query assets and SQL Server templates
+   are mirrored into this repository (`sql/prestudy/`, `results/prestudy_queries/`)
+   so the study can run standalone, without a separate checkout of that project.
+   See [What it does — the diagnostics stage](#what-it-does--the-diagnostics-stage)
+   and [Pre-study queries & result packaging](#pre-study-queries--result-packaging).
+2. **Eligibility** (`results/eligibility/`) — the main cohort-creation
+   pipeline: ARTEMIS regimen alignment, eligibility / lab test normalization, cohort creation,
+   cohort lab ranges and demographics.
+   See [What it does — the pipeline stages](#what-it-does--the-pipeline-stages).
+
+At the end of a run, each step's outputs are packaged into their own zip —
+`diagnostics.zip` and `eligibility_results.zip` respectively.
 
 ---
 
@@ -24,11 +41,11 @@ Only aggregate results leave the site (`results/csv/`), censored at
 `run.R` holds the **CONFIG block** (the only thing to edit — `connectionDetails`,
 schemas, table names, run settings; it builds the `executionSettings` object the
 ARTEMIS code reads), then sources the numbered steps in order and writes
-CSVs under `results/csv/`.
+CSVs under `results/eligibility/`.
 
 ### Requirements
 
-**R 4.5.1** (the version the lockfile pins) and the eight direct R packages below. Everything else in `renv.lock` is a transitive dependency of these.
+**R 4.5.1** (the version the lockfile pins) and the eleven direct R packages below. Everything else in `renv.lock` is a transitive dependency of these.
 
 | Package | Version | Source |
 |---|---|---|
@@ -40,6 +57,9 @@ CSVs under `results/csv/`.
 | `dplyr` | 1.1.4 | CRAN |
 | `tibble` | 3.3.0 | CRAN |
 | `readr` | 2.1.6 | CRAN |
+| `cli` | 3.6.5 | CRAN |
+| `rlang` | 1.1.6 | CRAN |
+| `stringr` | 1.6.0 | CRAN |
 
 Everything except ARTEMIS comes from CRAN.
 
@@ -76,8 +96,8 @@ renv::restore()            # install every pinned package from renv.lock into it
 `renv::activate()` is what makes the restore project-local; skip it and
 `renv::restore()` installs into your normal library instead. Every entry in
 `renv.lock` is required to run the study (the recursive dependency closure of the
-eight packages — no dev/report extras); renv does not resolve unrecorded
-dependencies, which is why it lists ~110 packages rather than eight.
+eleven packages — no dev/report extras); renv does not resolve unrecorded
+dependencies, which is why it lists ~110 packages rather than eleven.
 
 **Option 2 — just make sure they're installed.** You don't strictly need renv or
 the exact pinned versions — the study only needs each package at **≥ the version
@@ -86,7 +106,8 @@ these; update anything older, and install ARTEMIS from GitHub:
 
 ```r
 install.packages(c("DatabaseConnector", "CirceR", "CohortGenerator",
-                   "SqlRender", "dplyr", "tibble", "readr", "remotes"))
+                   "SqlRender", "dplyr", "tibble", "readr",
+                   "cli", "rlang", "stringr", "remotes"))
 remotes::install_github("OHDSI/Artemis@242b5a24864b85a44c62d95a98cbaa2d16c55539")
 ```
 
@@ -94,12 +115,12 @@ To see what you already have first:
 
 ```r
 for (p in c("DatabaseConnector", "CirceR", "CohortGenerator", "SqlRender",
-            "dplyr", "tibble", "readr", "ARTEMIS"))
+            "dplyr", "tibble", "readr", "cli", "rlang", "stringr", "ARTEMIS"))
   cat(sprintf("%-18s %s\n", p,
       tryCatch(as.character(packageVersion(p)), error = function(e) "MISSING")))
 ```
 
-`run.R` checks all eight are present and stops with a clear message if any is
+`run.R` checks all eleven are present and stops with a clear message if any is
 missing. (ARTEMIS is the exception to "newer is fine": use the commit above,
 which is the tested one — see the ARTEMIS note.)
 
@@ -114,7 +135,7 @@ ARTEMIS.
 |---|---|---|
 | **(a)** ARTEMIS regimen alignment | `R/01_artemis.R` | `bc_artemis_episodes`, `bc_regimen_classifications` |
 | **(b)** eligibility labs **+** cohorts → one table | `R/02_eligibility_inputs.R` | `bc_lab_cohort` (labs **+** ECOG **+** conditions), `bc_raw_lab_results` |
-| **(c)** main cohort tree | `R/03_main_cohorts.R` | `bc_cohort`, `results/csv/cohort_counts.csv` |
+| **(c)** main cohort tree | `R/03_main_cohorts.R` | `bc_cohort`, `results/eligibility/cohort_counts.csv` |
 | **(d)** lab test ranges on (c) | `R/04_lab_ranges.R` | `lab_value_distribution.csv`, `lab_results_summary.csv`, `lab_results_rollup.csv` |
 | — eligibility-input counts + coverage | `R/05_eligibility_coverage.R` | `lab_cohort_counts.csv`, `eligibility_input_coverage.csv` |
 | — ARTEMIS alignment assessment | `R/06_artemis_assessment.R` | `artemis_summary.csv`, `artemis_coverage.csv`, `artemis_drug_exposures.csv`, `artemis_regimens_aligned.csv`, `artemis_episodes_per_patient.csv`, `artemis_uncaptured_drugs.csv` |
@@ -127,6 +148,49 @@ membership is *inserted* into the same table under reserved test-id slots. So
 `sql/eligibility_2*.sql` reads a single table uniformly.
 
 ---
+
+## What it does — the diagnostics stage
+
+Runs a fixed battery of pre-study characterization queries against the CDM,
+anchored on the bladder-cancer diagnosis cohort (`sql/prestudy/chunks/00_setup.sql`,
+section A — aligned with the main study's `[GDE] Bladder Cancer` concept set from
+`cohorts/01_Target/Target_1A.json`). All queries live in `sql/prestudy/`
+(`00_setup.sql` builds shared temp tables; `chunks/01`–`35` each export one CSV).
+This is a high-level orientation only — for the exact query logic and output
+schemas, see [onco-pre-study at `fb30995`](https://github.com/Nemesis-Health/onco-pre-study/tree/fb30995fa0c776e4681e92a9e640812a9e4e88df),
+the source this was mirrored from.
+
+| Group | Chunk(s) | Covers |
+|---|---|---|
+| Attrition & prevalence | `00b`, `01` | Cohort attrition (any qualifying DX → the obs-period-eligible subset), population prevalence. |
+| Code counts & timing | `02`–`05` | Code-count summaries and pairwise event timing (DX / MET / L01), overall and by year. |
+| ODX / GDX prevalence | `06`, `06b`, `33`–`35` | Directional other-cancer-dx and general-cancer-dx concept prevalence around the anchor, banded and cumulative. |
+| L01 (antineoplastic) treatment | `07`, `11`–`15` | Treatment-exposure windows and consecutive-record gap distributions. |
+| Death timing | `08`, `13`–`14` | Death date vs. index/first-MET and vs. observation-period end. |
+| Demographics | `09` | Age/sex at anchor dates. |
+| Anchor code detail | `10`, `18`–`19` | Per-concept anchor-code counts, record-repeat and intercode timing. |
+| Observation-period QC | `16`–`17` | Look-back/follow-up observability, period-definition integrity. |
+| MET-first subgroup | `20`–`23` | Ordering, support, and timing of first Metastasis vs. first specific diagnosis. |
+| MET → treatment timing | `24`–`28` | Where/when the closest antineoplastic treatment falls relative to first Metastasis. |
+| Drug-therapy procedures | `29`–`32` | Procedure-vs-drug-exposure signal source, timing, and co-occurrence. |
+
+---
+
+## Pre-study queries & result packaging
+
+`sql/prestudy/` is already committed (mirrored from
+[onco-pre-study at `fb30995`](https://github.com/Nemesis-Health/onco-pre-study/tree/fb30995fa0c776e4681e92a9e640812a9e4e88df))
+— no external checkout needed to run the study.
+
+At the end of a run, results are packaged into two archives:
+
+- **`diagnostics.zip`** — CSVs staged into `results/diagnostics/` from an
+  external onco-pre-study checkout's output folder, if one is configured
+  (`settings$preStudyProjectRoot`, unset by default); mirrored as-is,
+  unfiltered.
+- **`eligibility_results.zip`** — every CSV under `results/eligibility/`,
+  already censored at write time (subjects < `settings$minCellCount`) by
+  each `R/0N_*.R` step — no additional filtering happens at packaging time.
 
 ## File map
 
@@ -170,15 +234,16 @@ characterisation covariates (e.g. hypertension, diabetes, smoking, metastasis
 sites) were removed — characterisation is a downstream stage this project does
 not run.
 
-### `results/` — outputs (`csv/`, git-ignored)
+### `results/` — outputs (`diagnostics/`, `eligibility/`, git-ignored)
 
 ---
 
-## Outputs (`results/csv/`)
+## Outputs (`results/eligibility/`)
 
-A full run writes **fourteen CSVs** to `results/csv/` (created on first write; the
-folder is git-ignored). These aggregate tables are the only artefacts that leave
-the site — no row-level data is exported. Every file is UTF-8, comma-separated,
+A full run writes **fourteen CSVs** to `results/eligibility/` (created on first
+write; the folder is git-ignored). These aggregate tables are the only
+artefacts the main pipeline exports — no row-level data is written. Every file
+is UTF-8, comma-separated,
 with a header row; missing/censored cells are written as **empty strings**
 (`readr::write_csv(..., na = "")`).
 

@@ -17,7 +17,7 @@
 # ===========================================================================
 
 for (p in c("DatabaseConnector", "SqlRender", "CohortGenerator", "CirceR",
-            "ARTEMIS", "dplyr", "tibble", "readr")) {
+            "ARTEMIS", "dplyr", "tibble", "readr", "cli", "rlang", "stringr")) {
   if (!requireNamespace(p, quietly = TRUE))
     stop("Required package not installed: ", p, call. = FALSE)
 }
@@ -95,7 +95,7 @@ settings <- list(
   #                                vocab (nab-paclitaxel, liposomal doxorubicin,
   #                                ADCs, ...) and their regimens — so it is opt-in.
   validDrugsRegimenComponents = TRUE,
-  validDrugsAtcClasses = character(0),
+  validDrugsAtcClasses = c("L01", "L02", "L03", "L04"),
   # ATC 2nd-level classes whose descendant ingredients are kept in the ARTEMIS
   # exposure assessment (drug_exposures / uncaptured / coverage in step (f)).
   # NULL (default) mirrors the regimen anticancer filter: L01/L03/L04, plus L02
@@ -105,10 +105,16 @@ settings <- list(
   outputFolder        = file.path("results")
 )
 
+# --- Optional pre-study export settings ------------------------------------
+# The bundled pre-study query assets live in this repository, so the export
+# uses the current repository root by default.
+settings$preStudyArchiveName <- settings$preStudyArchiveName %||% "prestudy_queries.zip"
+
 # ===========================================================================
 # Run  —  do not edit below
 # ===========================================================================
 source("R/vendor_utils.R")   # .getDbms, %||%
+source("R/00_prestudy_queries.R")
 source("R/artemis.R")        # vendored: runArtemis(), writeArtemisEpisodes(), ...
 source("R/artemis_uncaptured.R")  # uncapturedExposures(), plotUncapturedAlignment()
 source("R/helpers.R")        # cohort generation + SQL utilities
@@ -126,4 +132,9 @@ source("R/06_artemis_assessment.R") # ARTEMIS alignment assessment (uses artemis
 source("R/07_demographics.R")       # per-cohort demographics (age / sex / index year)
 source("R/08_covariates.R")         # covariate overlap with 1A (comorbidities + PS)
 
-message("\n=== Done. Results under ", settings$outputFolder, "/csv/ ===")
+message("\n=== Done. Results under ", settings$outputFolder, "/eligibility/ ===")
+
+utils::zip(zipfile = file.path(settings$outputFolder, "diagnostics.zip"), files = list.files(file.path(settings$outputFolder, "diagnostics"), recursive = TRUE, full.names = TRUE, include.dirs = TRUE, all.files = TRUE), flags = "-q")
+utils::zip(zipfile = file.path(settings$outputFolder, "eligibility_results.zip"), files = list.files(file.path(settings$outputFolder, "eligibility"), recursive = TRUE, full.names = TRUE, include.dirs = TRUE, all.files = TRUE), flags = "-q")
+
+message("Wrote diagnostics.zip and eligibility_results.zip to ", settings$outputFolder)

@@ -107,9 +107,9 @@ querySqlFile <- function(connection, file, ...) {
   DatabaseConnector::querySql(connection, sql)
 }
 
-# --- write a result data frame to results/csv ------------------------------
+# --- write a result data frame to results/eligibility ----------------------
 writeResultCsv <- function(df, name) {
-  d <- file.path(settings$outputFolder, "csv")
+  d <- file.path(settings$outputFolder, "eligibility")
   dir.create(d, recursive = TRUE, showWarnings = FALSE)
   readr::write_csv(df, file.path(d, paste0(name, ".csv")), na = "")
 }
