@@ -1,6 +1,6 @@
 # Bladder eligibility study
 
-Eligibility stage for the **Metastatic bladder cancer guidelines** RWE study.
+Eligibility stage for the **Metastatic bladder cancer guidelines** study.
 
 ---
 
