@@ -178,43 +178,33 @@ the source this was mirrored from.
 
 ## Pre-study queries & result packaging
 
-This repository now includes an automated pre-study export step that runs
-before the main pipeline (ARTEMIS or any DB connections). Purpose and behaviour:
+The queries in `sql/prestudy/` are already committed to this repo (mirrored
+once from [onco-pre-study at `fb30995`](https://github.com/Nemesis-Health/onco-pre-study/tree/fb30995fa0c776e4681e92a9e640812a9e4e88df)) —
+running the study does **not** require a local onco-pre-study checkout.
 
-- **Pre-study export**: If a local checkout of the external
-  [`onco-pre-study`](https://github.com/Nemesis-Health/onco-pre-study/tree/fb30995fa0c776e4681e92a9e640812a9e4e88df)
-  project (pinned at commit `fb30995`) is available, the run will copy the repo's query assets
-  (`README.md`, `db_config.yaml`, `run.R`, `docs/`, `scripts/`, and the SQL
-  templates) into `results/prestudy_queries/` for staging. A separate zip step
-  then writes `results/prestudy_queries.zip` from that staged folder. SQL
-  Server dialect files from `onco-pre-study/sql/sql_server/` are mirrored
-  into this project's `sql/prestudy/` so the study can remain self-contained;
-  the pipeline's SQL translation helpers perform dialect translation later
-  when needed.
+At the end of a run, results are packaged into two archives:
 
-- **Configuration**: Set `settings$preStudyProjectRoot` in the CONFIG block of
-  `run.R` to point to a local `onco-pre-study` checkout. The archive name can
-  be changed via `settings$preStudyArchiveName`. Defaults point to
-  `~/onco-pre-study` and `prestudy_queries.zip` respectively.
+- **`diagnostics.zip`** — CSV outputs staged into `results/diagnostics/`.
+  These come from an external onco-pre-study checkout's `outputs*` folder if
+  `settings$preStudyProjectRoot` points to one (see below); this pipeline
+  mirrors those CSVs as-is and does not inspect or filter them.
+- **`eligibility_results.zip`** — every CSV under `results/eligibility/`
+  (cohort counts, coverage, ARTEMIS summaries, demographics, covariate
+  overlap, etc.), written by the main pipeline steps. Every file written
+  there already censors small cells (subjects < `settings$minCellCount`)
+  at the point it's written — see the individual `R/0N_*.R` steps — so no
+  additional filtering happens at packaging time.
 
-- **Result packaging (zips)**: At the end of a successful run, the pipeline
-  produces two archives:
-  - `diagnostics.zip` — the CSV outputs staged from the external
-    `onco-pre-study` project's latest available `outputs*` folder (such as
-    `outputs_v6` or `outputs`) into `results/diagnostics/`.
-  - `eligibility_results.zip` — every CSV under `results/eligibility/`
-    (cohort counts, coverage, ARTEMIS summaries, demographics, covariate
-    overlap, etc.), written by the main pipeline steps.
-
-  Every file the main pipeline writes into `results/eligibility/` already
-  censors small cells (subjects < `settings$minCellCount`) at the point it's
-  written — see the individual `R/0N_*.R` steps — so no additional filtering
-  is applied when packaging. `diagnostics.zip` mirrors whatever CSVs the
-  external `onco-pre-study` project produced as-is; this pipeline does not
-  inspect or filter that content.
-
-The pre-study export is intentionally resilient: failures to find or copy the
-external project are logged but do not stop the main pipeline.
+**Optional — refreshing from a local onco-pre-study checkout.** If you have
+one and set `settings$preStudyProjectRoot` (in `run.R`'s CONFIG block) to
+point to it, the run will additionally re-mirror `sql/sql_server/` into
+`sql/prestudy/` and archive the checkout's own `README.md`, `db_config.yaml`,
+`run.R`, `docs/`, and `scripts/` into `results/prestudy_queries.zip` (name
+configurable via `settings$preStudyArchiveName`) — useful for keeping the
+bundled SQL current or archiving the exact source alongside a run's results.
+See `R/00_prestudy_queries.R` for exactly what gets copied. This step is
+resilient: if no checkout is found, it's skipped without stopping the main
+pipeline.
 
 ## File map
 
