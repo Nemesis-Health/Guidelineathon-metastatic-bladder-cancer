@@ -178,33 +178,21 @@ the source this was mirrored from.
 
 ## Pre-study queries & result packaging
 
-The queries in `sql/prestudy/` are already committed to this repo (mirrored
-once from [onco-pre-study at `fb30995`](https://github.com/Nemesis-Health/onco-pre-study/tree/fb30995fa0c776e4681e92a9e640812a9e4e88df)) —
-running the study does **not** require a local onco-pre-study checkout.
+`sql/prestudy/` is already committed (mirrored from
+[onco-pre-study at `fb30995`](https://github.com/Nemesis-Health/onco-pre-study/tree/fb30995fa0c776e4681e92a9e640812a9e4e88df))
+— no external checkout needed to run the study.
 
 At the end of a run, results are packaged into two archives:
 
-- **`diagnostics.zip`** — CSV outputs staged into `results/diagnostics/`.
-  These come from an external onco-pre-study checkout's `outputs*` folder if
-  `settings$preStudyProjectRoot` points to one (see below); this pipeline
-  mirrors those CSVs as-is and does not inspect or filter them.
-- **`eligibility_results.zip`** — every CSV under `results/eligibility/`
-  (cohort counts, coverage, ARTEMIS summaries, demographics, covariate
-  overlap, etc.), written by the main pipeline steps. Every file written
-  there already censors small cells (subjects < `settings$minCellCount`)
-  at the point it's written — see the individual `R/0N_*.R` steps — so no
-  additional filtering happens at packaging time.
+- **`diagnostics.zip`** — CSVs staged into `results/diagnostics/` from an
+  external onco-pre-study checkout's output folder, if one is configured
+  (`settings$preStudyProjectRoot`, unset by default); mirrored as-is,
+  unfiltered.
+- **`eligibility_results.zip`** — every CSV under `results/eligibility/`,
+  already censored at write time (subjects < `settings$minCellCount`) by
+  each `R/0N_*.R` step — no additional filtering happens at packaging time.
 
-**Optional — refreshing from a local onco-pre-study checkout.** If you have
-one and set `settings$preStudyProjectRoot` (in `run.R`'s CONFIG block) to
-point to it, the run will additionally re-mirror `sql/sql_server/` into
-`sql/prestudy/` and archive the checkout's own `README.md`, `db_config.yaml`,
-`run.R`, `docs/`, and `scripts/` into `results/prestudy_queries.zip` (name
-configurable via `settings$preStudyArchiveName`) — useful for keeping the
-bundled SQL current or archiving the exact source alongside a run's results.
-See `R/00_prestudy_queries.R` for exactly what gets copied. This step is
-resilient: if no checkout is found, it's skipped without stopping the main
-pipeline.
+See `R/00_prestudy_queries.R` for the full mirroring/archiving mechanics.
 
 ## File map
 
