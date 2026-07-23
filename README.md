@@ -192,8 +192,6 @@ At the end of a run, results are packaged into two archives:
   already censored at write time (subjects < `settings$minCellCount`) by
   each `R/0N_*.R` step — no additional filtering happens at packaging time.
 
-See `R/00_prestudy_queries.R` for the full mirroring/archiving mechanics.
-
 ## File map
 
 ### `R/` — driver + logic
