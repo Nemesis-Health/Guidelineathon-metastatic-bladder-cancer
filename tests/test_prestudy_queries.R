@@ -6,16 +6,13 @@ dir.create(tmp, recursive = TRUE)
 projectDir <- file.path(tmp, "onco-pre-study")
 outputDir <- file.path(tmp, "results")
 dir.create(file.path(projectDir, "sql", "postgresql"), recursive = TRUE)
-dir.create(file.path(projectDir, "outputs_v6"), recursive = TRUE)
 dir.create(file.path(outputDir, "eligibility"), recursive = TRUE)
 writeLines("SELECT 1 AS n", file.path(projectDir, "sql", "postgresql", "example.sql"))
 writeLines("demo", file.path(projectDir, "README.md"))
-writeLines("prestudy output", file.path(projectDir, "outputs_v6", "prestudy_output.csv"))
 writeLines("main study output", file.path(outputDir, "eligibility", "main_study.csv"))
 
 exportPreStudyQueries(projectRoot = projectDir, outputFolder = outputDir)
 zipPreStudyQueries(outputFolder = outputDir)
-stagePreStudyDiagnostics(projectRoot = projectDir, outputFolder = outputDir)
 
 manifest <- file.path(outputDir, "prestudy_queries", "prestudy_query_manifest.csv")
 archive <- file.path(outputDir, "prestudy_queries.zip")
@@ -23,9 +20,6 @@ archive <- file.path(outputDir, "prestudy_queries.zip")
 if (!file.exists(manifest)) stop("manifest was not created")
 if (!dir.exists(file.path(outputDir, "prestudy_queries"))) stop("pre-study staging directory was not created")
 if (!file.exists(archive)) stop("pre-study archive was not created")
-if (!file.exists(file.path(outputDir, "diagnostics", "prestudy_output.csv"))) {
-  stop("diagnostics staging directory did not receive the pre-study output CSV")
-}
 
 # Regression test: a repository-local sql/prestudy bundle should be usable even
 # when the external onco-pre-study checkout is unavailable.

@@ -137,40 +137,34 @@ zipPreStudyQueries <- function(outputFolder = NULL, archiveName = NULL) {
   invisible(file.path(outputFolder, archiveName))
 }
 
-stagePreStudyDiagnostics <- function(projectRoot = NULL, outputFolder = NULL) {
-  if (is.null(outputFolder) || !nzchar(outputFolder)) outputFolder <- "results"
-  outputFolder <- normalizePath(outputFolder, mustWork = FALSE)
-  stageDir <- file.path(outputFolder, "diagnostics")
-  dir.create(stageDir, recursive = TRUE, showWarnings = FALSE)
+# Executes the mirrored onco-pre-study characterization queries
+# (sql/prestudy/chunks/*.sql) against the live connection and writes one CSV
+# per chunk into settings$outputFolder/diagnostics. 00_setup.sql builds the
+# shared `#`-prefixed temp tables every other chunk reads, so it must run
+# first and on the same connection/session as the result chunks.
+runPreStudyDiagnostics <- function(connection, settings) {
+  chunkDir <- file.path("prestudy", "chunks")
+  allChunks <- sort(list.files(file.path(sqlDir, chunkDir), pattern = "\\.sql$"))
+  setupFile <- "00_setup.sql"
+  resultChunks <- setdiff(allChunks, setupFile)
 
-  candidateRoots <- c()
-  if (!is.null(projectRoot) && nzchar(projectRoot)) {
-    candidateRoots <- c(candidateRoots, normalizePath(projectRoot, mustWork = FALSE))
+  diagDir <- file.path(settings$outputFolder, "diagnostics")
+  dir.create(diagDir, recursive = TRUE, showWarnings = FALSE)
+
+  message("Running pre-study setup (00_setup.sql) ...")
+  runSqlFile(connection, file.path(chunkDir, setupFile),
+             cdm_database_schema = settings$cdmDatabaseSchema,
+             min_cell_count      = settings$minCellCount)
+
+  for (f in resultChunks) {
+    message(sprintf("Running %s", f))
+    result <- querySqlFile(connection, file.path(chunkDir, f),
+                            cdm_database_schema = settings$cdmDatabaseSchema,
+                            min_cell_count      = settings$minCellCount)
+    readr::write_csv(result, file.path(diagDir, sub("\\.sql$", ".csv", f)), na = "")
   }
-  candidateRoots <- c(candidateRoots, normalizePath(getwd(), mustWork = FALSE))
-  candidateRoots <- c(candidateRoots, normalizePath(file.path("~", "onco-pre-study"), mustWork = FALSE))
-  candidateRoots <- unique(candidateRoots)
 
-  sourceDir <- NULL
-  for (root in candidateRoots) {
-    preStudyDirs <- c(
-      file.path(root, "outputs_v6"),
-      file.path(root, "outputs"),
-      file.path(root, "outputs_v5"),
-      file.path(root, "outputs_all"),
-      file.path(root, "outputs_test")
-    )
-    sourceDir <- preStudyDirs[dir.exists(preStudyDirs)][1]
-    if (!is.null(sourceDir) && dir.exists(sourceDir)) break
-  }
-
-  if (is.null(sourceDir) || !dir.exists(sourceDir)) return(invisible(stageDir))
-
-  diagnosticsFiles <- list.files(sourceDir, pattern = "\\.csv$", full.names = FALSE, ignore.case = TRUE)
-  if (length(diagnosticsFiles) == 0L) return(invisible(stageDir))
-
-  file.copy(file.path(sourceDir, diagnosticsFiles), file.path(stageDir, diagnosticsFiles), overwrite = TRUE)
-  invisible(stageDir)
+  invisible(diagDir)
 }
 
 if (exists("settings", mode = "list")) {
@@ -186,6 +180,5 @@ if (exists("settings", mode = "list")) {
   }
   exportPreStudyQueries(outputFolder = outputFolder)
   zipPreStudyQueries(outputFolder = outputFolder, archiveName = archiveName)
-  stagePreStudyDiagnostics(outputFolder = outputFolder)
 }
 

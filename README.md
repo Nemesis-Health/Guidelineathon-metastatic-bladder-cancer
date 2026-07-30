@@ -184,10 +184,11 @@ the source this was mirrored from.
 
 At the end of a run, results are packaged into two archives:
 
-- **`diagnostics.zip`** — CSVs staged into `results/diagnostics/` from an
-  external onco-pre-study checkout's output folder, if one is configured
-  (`settings$preStudyProjectRoot`, unset by default); mirrored as-is,
-  unfiltered.
+- **`diagnostics.zip`** — `run.R` executes `sql/prestudy/chunks/00_setup.sql`
+  then every other chunk against the live connection (`R/00_prestudy_queries.R::runPreStudyDiagnostics()`),
+  writing one CSV per chunk to `results/diagnostics/`; mirrored as-is,
+  unfiltered (any cell-count suppression happens inside the SQL itself via
+  `@min_cell_count`, same as the external project).
 - **`eligibility_results.zip`** — every CSV under `results/eligibility/`,
   already censored at write time (subjects < `settings$minCellCount`) by
   each `R/0N_*.R` step — no additional filtering happens at packaging time.

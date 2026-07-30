@@ -2,6 +2,7 @@
 # run.R  —  Bladder eligibility study (standalone; no OncoStudyModules dep)
 # ===========================================================================
 # Stage: cohort creation.
+#   (0) pre-study diagnostics                -> R/00_prestudy_queries.R
 #   (a) ARTEMIS regimen alignment            -> R/01_artemis.R
 #   (b) eligibility labs + cohorts -> 1 table -> R/02_eligibility_inputs.R
 #   (c) main cohort tree                      -> R/03_main_cohorts.R
@@ -128,6 +129,9 @@ source("R/setup.R")          # config checks + derived paths + executionSettings
 
 connection <- DatabaseConnector::connect(connectionDetails)
 on.exit(try(DatabaseConnector::disconnect(connection), silent = TRUE), add = TRUE)
+
+message("\n=== Diagnostics: pre-study characterization queries ===")
+runPreStudyDiagnostics(connection, settings)      # (0)
 
 source("R/01_artemis.R")            # (a)
 source("R/02_eligibility_inputs.R") # (b)
