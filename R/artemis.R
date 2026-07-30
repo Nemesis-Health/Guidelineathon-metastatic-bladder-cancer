@@ -80,6 +80,13 @@ runArtemis <- function(executionSettings,
   rlang::check_installed("DatabaseConnector",
     reason = "to connect to the CDM database")
 
+  # ARTEMIS must be ATTACHED (not just loaded via `::`): loadRegimens() does
+  # data("regimens", package = "ARTEMIS", envir = regimens_env) internally, but
+  # then checks exists("regimens") without envir = regimens_env, so the check
+  # only succeeds when package:ARTEMIS is already on the search path.
+  if (!"package:ARTEMIS" %in% search())
+    suppressMessages(library(ARTEMIS))
+
   if (!inherits(executionSettings, "OsmExecutionSettings"))
     stop("`executionSettings` must be a OsmExecutionSettings object.",
          call. = FALSE)
