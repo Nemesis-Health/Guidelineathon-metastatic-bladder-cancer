@@ -856,7 +856,7 @@ FROM (
         days_diff,
         ROW_NUMBER() OVER (
             PARTITION BY anchor_event, event_family, concept_id, person_id
-            ORDER BY DATEDIFF(DAY, '1900-01-01', event_date) ASC, event_date ASC
+            ORDER BY event_date ASC
         ) AS rn
     FROM #event_code_all_events
 ) x
@@ -1014,7 +1014,7 @@ FROM (
         days_diff,
         ROW_NUMBER() OVER (
             PARTITION BY anchor_event, event_family, time_relative, concept_id, person_id
-            ORDER BY DATEDIFF(DAY, '1900-01-01', event_date) ASC, event_date ASC
+            ORDER BY event_date ASC
         ) AS rn
     FROM #event_code_ba_events
 ) x
