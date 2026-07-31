@@ -810,7 +810,9 @@ INSERT INTO @work_database_schema.@cat_concept_table (cat, measurement_concept_i
 -- table for unit conversion, including non-UCUM units
 DROP TABLE IF EXISTS @work_database_schema.@unit_factor_table;
 -- standard_value = value_as_number * factor + offset   (offset<>0 only for HbA1c mmol/mol, which is affine)
-CREATE TABLE @work_database_schema.@unit_factor_table (cat varchar(40), unit_concept_id int, factor float, offset float, is_std bit);
+-- is_std: 'bit' isn't a portable ANSI type (unsupported on Snowflake); using int since every
+-- reference to this column compares against literal 1 (see is_std=1 in the comment below).
+CREATE TABLE @work_database_schema.@unit_factor_table (cat varchar(40), unit_concept_id int, factor float, offset float, is_std int);
 INSERT INTO @work_database_schema.@unit_factor_table (cat, unit_concept_id, factor, offset, is_std) VALUES
  ('ALT',8645,1.0,0.0,1),
  ('ALT',8923,1.0,0.0,0),
@@ -1065,14 +1067,21 @@ SELECT
       WHEN 'both'  THEN CASE WHEN g.p25 > 0 AND g.p75 > 0 AND n.range_low > 0 AND n.range_high > 0
           THEN ABS( (LOG10(n.range_low)+LOG10(n.range_high))/2
                   - (LOG10(g.p25*s.factor+s.offset)+LOG10(g.p75*s.factor+s.offset))/2 ) END
+      -- GREATEST-via-VALUES (the SQL Server <2022 compatibility trick this file's header
+      -- flags) fails on Snowflake specifically: a VALUES()-clause derived table there can't
+      -- reference outer-query columns ("Invalid expression [CORRELATION(...)] in VALUES
+      -- clause" -- confirmed via a minimal repro against live Snowflake). Native GREATEST()
+      -- works on Snowflake, Postgres, Redshift, Oracle, and SQL Server 2022+ (verified
+      -- SqlRender has no dialect-specific translation rule for GREATEST -- passes through
+      -- unchanged everywhere); only pre-2022 SQL Server loses compatibility here.
       WHEN 'upper' THEN CASE WHEN g.p03 > 0 AND g.p97 > 0 AND n.range_high > 0
-          THEN (SELECT MAX(v) FROM (VALUES (0.0),
+          THEN GREATEST(0.0,
                    (LOG10(n.range_high) - LOG10(g.p97*s.factor+s.offset)),
-                   (LOG10(g.p03*s.factor+s.offset) - LOG10(n.range_high)) ) t(v)) END
+                   (LOG10(g.p03*s.factor+s.offset) - LOG10(n.range_high)) ) END
       WHEN 'lower' THEN CASE WHEN g.p03 > 0 AND g.p97 > 0 AND n.range_low > 0
-          THEN (SELECT MAX(v) FROM (VALUES (0.0),
+          THEN GREATEST(0.0,
                    (LOG10(n.range_low) - LOG10(g.p97*s.factor+s.offset)),
-                   (LOG10(g.p03*s.factor+s.offset) - LOG10(n.range_low)) ) t(v)) END
+                   (LOG10(g.p03*s.factor+s.offset) - LOG10(n.range_low)) ) END
     END
   END AS dist_decade
 INTO @work_database_schema.@scored_table
