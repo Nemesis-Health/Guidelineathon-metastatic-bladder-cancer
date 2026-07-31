@@ -78,6 +78,27 @@ is up to you — `connectionDetails` is defined by you in `run.R` (see step 2 in
 > good guidance for resolving the Python dependency:
 > <https://github.com/OHDSI/Artemis#installation>.
 
+> [!WARNING]
+> **Pin `pandas` to the 2.x line (e.g. `2.2.3`) in ARTEMIS's Python environment —
+> `pandas 3.x` silently breaks regimen alignment.** Confirmed 2026-07-31: with
+> `pandas==3.0.3` installed in the reticulate venv ARTEMIS builds (usually
+> `<Rlib>/ARTEMIS/.r-reticulate`), `ARTEMIS::generateRawAlignments()` /
+> `runArtemis()` fails with `Error in if (nrow(output) == 0) { : argument is of
+> length zero` — **after** "Generating raw alignments" reports 100% complete, so
+> it looks like an alignment/data problem, not an environment one. It is not:
+> the Cython alignment engine's return value silently fails to convert to a
+> proper R data.frame under pandas 3.x, for **any** input data (verified with
+> correctly-tokenized, correctly-matched regimen strings — reproduces even in a
+> direct, standalone call to `ARTEMIS::generateRawAlignments()`). Fix:
+> ```bash
+> <path-to-ARTEMIS-venv>/bin/python3 -m pip install "pandas==2.2.3"
+> ```
+> After downgrading, the exact same call returns a proper populated data.frame
+> (132,920 correct alignments in testing, vs. a hard crash before). Check the
+> installed version with `<venv>/bin/python3 -m pip list | grep -i pandas`. If
+> a future ARTEMIS release is confirmed pandas-3-compatible, this note (and the
+> pin) can be dropped.
+
 ### Installing the dependencies
 
 Two ways — renv first (reproducible), or a plain install if you prefer.
