@@ -38,6 +38,15 @@ At the end of a run, each step's outputs are packaged into their own zip —
    source("run.R")
    ```
 
+> [!TIP]
+> Just need the diagnostics results and stuck on the ARTEMIS/Python setup?
+> `run_diagnostics_only.R` runs **only** the pre-study diagnostics stage
+> (`R/00_prestudy_queries.R`) — no ARTEMIS, CohortGenerator, or CirceR
+> required. Edit its CONFIG block (connection + `cdmDatabaseSchema`) and
+> `source("run_diagnostics_only.R")`; it writes `results/diagnostics/` and
+> `diagnostics.zip` and stops there. Run the full `run.R` later for the
+> eligibility stage.
+
 `run.R` holds the **CONFIG block** (the only thing to edit — `connectionDetails`,
 schemas, table names, run settings; it builds the `executionSettings` object the
 ARTEMIS code reads), then sources the numbered steps in order and writes
