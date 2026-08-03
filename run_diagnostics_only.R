@@ -55,7 +55,6 @@ source("R/00_prestudy_queries.R")   # runPreStudyDiagnostics() + exports/zips pr
 source("R/helpers.R")
 
 connection <- DatabaseConnector::connect(connectionDetails)
-on.exit(try(DatabaseConnector::disconnect(connection), silent = TRUE), add = TRUE)
 
 message("\n=== Diagnostics: pre-study characterization queries ===")
 runPreStudyDiagnostics(connection, settings)
@@ -64,3 +63,5 @@ utils::zip(zipfile = file.path(settings$outputFolder, "diagnostics.zip"), files 
 
 message("\n=== Done. Results under ", settings$outputFolder, "/diagnostics/ ===")
 message("Wrote diagnostics.zip to ", settings$outputFolder)
+
+DatabaseConnector::disconnect(connection)

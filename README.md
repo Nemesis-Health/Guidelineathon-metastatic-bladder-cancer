@@ -39,13 +39,19 @@ At the end of a run, each step's outputs are packaged into their own zip —
    ```
 
 > [!TIP]
-> Just need the diagnostics results and stuck on the ARTEMIS/Python setup?
-> `run_diagnostics_only.R` runs **only** the pre-study diagnostics stage
-> (`R/00_prestudy_queries.R`) — no ARTEMIS, CohortGenerator, or CirceR
-> required. Edit its CONFIG block (connection + `cdmDatabaseSchema`) and
-> `source("run_diagnostics_only.R")`; it writes `results/diagnostics/` and
-> `diagnostics.zip` and stops there. Run the full `run.R` later for the
-> eligibility stage.
+> `run.R` splits into two independent, complementary scripts if you don't want
+> to run both stages in one go — together they do exactly what `run.R` does:
+> - **`run_diagnostics_only.R`** — just the pre-study diagnostics stage
+>   (`R/00_prestudy_queries.R`). No ARTEMIS, CohortGenerator, or CirceR
+>   required. Use this if you're stuck on the ARTEMIS/Python setup but want
+>   diagnostics results now. Writes `results/diagnostics/` + `diagnostics.zip`.
+> - **`run_feasibility_only.R`** — just the eligibility/feasibility pipeline
+>   (steps a–h: ARTEMIS alignment through covariates). Use this once ARTEMIS
+>   is sorted, whether or not you've already run diagnostics separately.
+>   Writes `results/eligibility/` + `eligibility_results.zip`.
+>
+> Each has its own CONFIG block (same fields as `run.R`) — edit and
+> `source()` the one you need.
 
 `run.R` holds the **CONFIG block** (the only thing to edit — `connectionDetails`,
 schemas, table names, run settings; it builds the `executionSettings` object the

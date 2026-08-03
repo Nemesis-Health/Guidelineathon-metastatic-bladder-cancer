@@ -1,13 +1,9 @@
 # ===========================================================================
-# run.R  —  Bladder eligibility study (standalone; no OncoStudyModules dep)
+# run_feasibility_only.R  —  feasibility/eligibility pipeline only
 # ===========================================================================
-# Runs diagnostics + the eligibility/feasibility pipeline in one go. To run
-# either half on its own (e.g. diagnostics now, eligibility once ARTEMIS is
-# sorted), use run_diagnostics_only.R and run_feasibility_only.R instead —
-# together they do exactly what this file does.
-#
-# Stage: cohort creation.
-#   (0) pre-study diagnostics                -> R/00_prestudy_queries.R
+# Complement of run_diagnostics_only.R: runs everything in run.R EXCEPT the
+# pre-study diagnostics stage (0). Together, run_diagnostics_only.R +
+# run_feasibility_only.R cover exactly what run.R does.
 #   (a) ARTEMIS regimen alignment            -> R/01_artemis.R
 #   (b) eligibility labs + cohorts -> 1 table -> R/02_eligibility_inputs.R
 #   (c) main cohort tree                      -> R/03_main_cohorts.R
@@ -17,7 +13,11 @@
 #   (g) per-cohort demographics               -> R/07_demographics.R
 #   (h) covariate overlap with 1A             -> R/08_covariates.R
 #
-# Usage: edit the CONFIG block below, then  source("run.R")
+# Use this once ARTEMIS is sorted (see README.md) if you already have
+# diagnostics results from run_diagnostics_only.R and just need the
+# eligibility/feasibility cohorts now — no need to re-run diagnostics.
+#
+# Usage: edit the CONFIG block below, then  source("run_feasibility_only.R")
 # Requires: DatabaseConnector, SqlRender, CohortGenerator, CirceR, ARTEMIS,
 #           dplyr, tibble, readr  (installed; NOT OncoStudyModules).
 # ===========================================================================
@@ -35,30 +35,11 @@ for (p in c("DatabaseConnector", "SqlRender", "CohortGenerator", "CirceR",
 suppressMessages(library(ARTEMIS))
 
 # ===========================================================================
-# CONFIG  [EDIT HERE]
+# CONFIG  [EDIT HERE]  — same as run.R
 # ===========================================================================
 
 # --- Database connection ----------------------------------------------------
-# Define `connectionDetails` however your site connects — this is left open on
-# purpose. Most JDBC setups use DatabaseConnector::createConnectionDetails(),
-# but some sites need a different constructor (e.g. createDbiConnectionDetails()
-# for Azure AD token auth). Any DatabaseConnector connectionDetails works; the
-# SQL dialect is read from the live connection, so nothing else depends on how
-# it is built.
-#
-# Example (JDBC):
-#   connectionDetails <- DatabaseConnector::createConnectionDetails(
-#     dbms = "sql server", server = "host/db", user = "...", password = "...",
-#     pathToDriver = path.expand("~/.jdbc_drivers"))
-#
-# Example (DBI / Azure token):
-#   connectionDetails <- DatabaseConnector::createDbiConnectionDetails(
-#     dbms = "sql server", drv = odbc::odbc(),
-#     Driver = "ODBC Driver 18 for SQL Server",
-#     Server = "...", Database = "...", Encrypt = "yes",
-#     TrustServerCertificate = "No",
-#     attributes = list("azure_token" = token$credentials$access_token))
-
+# Same as run.R — see that file's CONFIG block for JDBC / DBI examples.
 connectionDetails <- NULL   # <-- REPLACE with your connection
 
 # --- Site + OMOP CDM schemas ------------------------------------------------
@@ -117,25 +98,16 @@ settings <- list(
   outputFolder        = file.path("results")
 )
 
-# --- Optional pre-study export settings ------------------------------------
-# The bundled pre-study query assets live in this repository, so the export
-# uses the current repository root by default.
-settings$preStudyArchiveName <- settings$preStudyArchiveName %||% "prestudy_queries.zip"
-
 # ===========================================================================
 # Run  —  do not edit below
 # ===========================================================================
 source("R/vendor_utils.R")   # .getDbms, %||%
-source("R/00_prestudy_queries.R")
 source("R/artemis.R")        # vendored: runArtemis(), writeArtemisEpisodes(), ...
 source("R/artemis_uncaptured.R")  # uncapturedExposures(), plotUncapturedAlignment()
 source("R/helpers.R")        # cohort generation + SQL utilities
 source("R/setup.R")          # config checks + derived paths + executionSettings
 
 connection <- DatabaseConnector::connect(connectionDetails)
-
-message("\n=== Diagnostics: pre-study characterization queries ===")
-runPreStudyDiagnostics(connection, settings)      # (0)
 
 source("R/01_artemis.R")            # (a)
 source("R/02_eligibility_inputs.R") # (b)
@@ -148,9 +120,8 @@ source("R/08_covariates.R")         # covariate overlap with 1A (comorbidities +
 
 message("\n=== Done. Results under ", settings$outputFolder, "/eligibility/ ===")
 
-utils::zip(zipfile = file.path(settings$outputFolder, "diagnostics.zip"), files = list.files(file.path(settings$outputFolder, "diagnostics"), recursive = TRUE, full.names = TRUE, include.dirs = TRUE, all.files = TRUE), flags = "-q")
 utils::zip(zipfile = file.path(settings$outputFolder, "eligibility_results.zip"), files = list.files(file.path(settings$outputFolder, "eligibility"), recursive = TRUE, full.names = TRUE, include.dirs = TRUE, all.files = TRUE), flags = "-q")
 
-message("Wrote diagnostics.zip and eligibility_results.zip to ", settings$outputFolder)
+message("Wrote eligibility_results.zip to ", settings$outputFolder)
 
 DatabaseConnector::disconnect(connection)
