@@ -2,14 +2,13 @@
 SELECT
     s.prevalence_year,
     s.anchor_event,
-    CASE WHEN s.n_patients <= @min_cell_count THEN -@min_cell_count ELSE s.n_patients END AS n_patients,
+    CASE WHEN s.n_patients BETWEEN 1 AND @min_cell_count THEN -@min_cell_count ELSE s.n_patients END AS n_patients,
     CASE
-        WHEN s.n_patients <= @min_cell_count THEN -@min_cell_count
         WHEN s.n_deaths BETWEEN 1 AND @min_cell_count THEN -@min_cell_count
         ELSE s.n_deaths
     END AS n_deaths,
-    CASE WHEN s.n_patients <= @min_cell_count OR s.n_deaths <= @min_cell_count THEN NULL ELSE s.n_deaths_in_obs END AS n_deaths_in_obs,
-    CASE WHEN s.n_patients <= @min_cell_count OR s.n_deaths <= @min_cell_count THEN NULL ELSE s.n_deaths_out_obs END AS n_deaths_out_obs,
+    CASE WHEN s.n_deaths_in_obs  BETWEEN 1 AND @min_cell_count THEN -@min_cell_count ELSE s.n_deaths_in_obs  END AS n_deaths_in_obs,
+    CASE WHEN s.n_deaths_out_obs BETWEEN 1 AND @min_cell_count THEN -@min_cell_count ELSE s.n_deaths_out_obs END AS n_deaths_out_obs,
     CASE WHEN s.n_patients <= @min_cell_count OR s.n_deaths <= @min_cell_count THEN NULL ELSE q.lq_days END AS lq_days,
     CASE WHEN s.n_patients <= @min_cell_count OR s.n_deaths <= @min_cell_count THEN NULL ELSE q.median_days END AS median_days,
     CASE WHEN s.n_patients <= @min_cell_count OR s.n_deaths <= @min_cell_count THEN NULL ELSE q.uq_days END AS uq_days,

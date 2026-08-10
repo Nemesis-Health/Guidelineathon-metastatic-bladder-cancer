@@ -73,7 +73,7 @@ SELECT
     timing_type,
     from_event,
     to_event,
-    CASE WHEN n_patients_with_pair <= @min_cell_count THEN -@min_cell_count ELSE n_patients_with_pair END AS n_patients_with_pair,
+    CASE WHEN n_patients_with_pair > 0 AND n_patients_with_pair <= @min_cell_count THEN -@min_cell_count ELSE n_patients_with_pair END AS n_patients_with_pair,
     CASE WHEN n_patients_with_pair <= @min_cell_count THEN NULL ELSE p01_days END AS p01_days,
     CASE WHEN n_patients_with_pair <= @min_cell_count THEN NULL ELSE p05_days END AS p05_days,
     CASE WHEN n_patients_with_pair <= @min_cell_count THEN NULL ELSE p10_days END AS p10_days,

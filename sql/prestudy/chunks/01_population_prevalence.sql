@@ -18,24 +18,20 @@ WITH base AS (
 )
 SELECT
     prevalence_year,
-    CASE WHEN n_patients <= @min_cell_count THEN -@min_cell_count ELSE n_patients END AS n_dx,
+    CASE WHEN n_patients BETWEEN 1 AND @min_cell_count THEN -@min_cell_count ELSE n_patients END AS n_dx,
     CASE
-        WHEN n_patients <= @min_cell_count THEN -@min_cell_count
         WHEN n_with_other_dx BETWEEN 1 AND @min_cell_count THEN -@min_cell_count
         ELSE n_with_other_dx
     END AS n_odx,
     CASE
-        WHEN n_patients <= @min_cell_count THEN -@min_cell_count
         WHEN n_with_gen_cancer_dx BETWEEN 1 AND @min_cell_count THEN -@min_cell_count
         ELSE n_with_gen_cancer_dx
     END AS n_gdx,
     CASE
-        WHEN n_patients <= @min_cell_count THEN -@min_cell_count
         WHEN n_with_met BETWEEN 1 AND @min_cell_count THEN -@min_cell_count
         ELSE n_with_met
     END AS n_met,
     CASE
-        WHEN n_patients <= @min_cell_count THEN -@min_cell_count
         WHEN n_with_l01 BETWEEN 1 AND @min_cell_count THEN -@min_cell_count
         ELSE n_with_l01
     END AS n_l01

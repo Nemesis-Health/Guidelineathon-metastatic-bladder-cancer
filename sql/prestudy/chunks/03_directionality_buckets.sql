@@ -68,7 +68,7 @@ SELECT
     x.pair,
     x.index_year,
     x.direction,
-    CASE WHEN x.n_patients <= @min_cell_count THEN -@min_cell_count ELSE x.n_patients END AS n_patients
+    CASE WHEN x.n_patients > 0 AND x.n_patients <= @min_cell_count THEN -@min_cell_count ELSE x.n_patients END AS n_patients
 FROM (
     -- DX -> MET: OVERALL
     SELECT 'DX_MET' AS pair, 'OVERALL' AS index_year, direction, COUNT(*) AS n_patients
