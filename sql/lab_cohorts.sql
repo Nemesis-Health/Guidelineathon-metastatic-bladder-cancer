@@ -25,7 +25,6 @@
      does not translate PERCENTILE_CONT.
      Remaining dialect-specific bits, flagged inline: LOG10() and the
      GREATEST-via-VALUES trick (SQL Server <2022).
-     NB: column name "offset" is reserved in Postgres -- quote/rename when porting.
    ============================================================================ */
 
 /* ---------------------------------------------------------------------------
@@ -809,11 +808,11 @@ INSERT INTO @work_database_schema.@cat_concept_table (cat, measurement_concept_i
 
 -- table for unit conversion, including non-UCUM units
 DROP TABLE IF EXISTS @work_database_schema.@unit_factor_table;
--- standard_value = value_as_number * factor + offset   (offset<>0 only for HbA1c mmol/mol, which is affine)
+-- standard_value = value_as_number * factor + val_offset   (val_offset<>0 only for HbA1c mmol/mol, which is affine)
 -- is_std: 'bit' isn't a portable ANSI type (unsupported on Snowflake); using int since every
 -- reference to this column compares against literal 1 (see is_std=1 in the comment below).
-CREATE TABLE @work_database_schema.@unit_factor_table (cat varchar(40), unit_concept_id int, factor float, offset float, is_std int);
-INSERT INTO @work_database_schema.@unit_factor_table (cat, unit_concept_id, factor, offset, is_std) VALUES
+CREATE TABLE @work_database_schema.@unit_factor_table (cat varchar(40), unit_concept_id int, factor float, val_offset float, is_std int);
+INSERT INTO @work_database_schema.@unit_factor_table (cat, unit_concept_id, factor, val_offset, is_std) VALUES
  ('ALT',8645,1.0,0.0,1),
  ('ALT',8923,1.0,0.0,0),
  ('ALT',4118000,1.0,0.0,0),
@@ -1029,7 +1028,7 @@ SELECT cat, m_id, u_id, rlo, rhi,
  GROUP BY cat, m_id, u_id, rlo, rhi;
 
 /* ---------------------------------------------------------------------------
-   2.  SCORE every candidate scale (distinct factor+offset for the cat).
+   2.  SCORE every candidate scale (distinct factor+val_offset for the cat).
        range_decade: provided range vs normal range -- PRIMARY (device's own reference)
        dist_decade : percentile distribution vs normal range (only if records>20)
        score       : range_decade if a range is present, else dist_decade.
@@ -1037,16 +1036,16 @@ SELECT cat, m_id, u_id, rlo, rhi,
                      (mixed healthy/sick population, bimodal, skewed), so it is
                      only a fallback when the group has no provided range.
    --------------------------------------------------------------------------- */
--- @work_database_schema.@scales_table = the DISTINCT factor+offset per cat. NOT a copy of @work_database_schema.@unit_factor_table: many
+-- @work_database_schema.@scales_table = the DISTINCT factor+val_offset per cat. NOT a copy of @work_database_schema.@unit_factor_table: many
 -- unit_concept_ids share one factor (e.g. ALT has 4 units but 1 factor), so this
 -- collapses synonyms to one scale each -- otherwise that scale would be scored N
 -- times, inflating grp_npass (is_ambiguous) and giving ROW_NUMBER duplicate winners.
 DROP TABLE IF EXISTS @work_database_schema.@scales_table;
-SELECT DISTINCT cat, factor, offset INTO @work_database_schema.@scales_table FROM @work_database_schema.@unit_factor_table;
+SELECT DISTINCT cat, factor, val_offset INTO @work_database_schema.@scales_table FROM @work_database_schema.@unit_factor_table;
 
 DROP TABLE IF EXISTS @work_database_schema.@scored_table;
 SELECT
-  g.m_id, g.u_id, g.rlo, g.rhi, g.cat, g.records, s.factor, s.offset,
+  g.m_id, g.u_id, g.rlo, g.rhi, g.cat, g.records, s.factor, s.val_offset,
   -- range_decade: bound-to-bound vs the standard normal, gated on the normal's matching.
   --   'both'  -> data must supply BOTH bounds (else NULL -> distribution)
   --   'upper' -> data must supply the high bound (else NULL -> distribution)
@@ -1055,18 +1054,18 @@ SELECT
   CASE n.matching
     WHEN 'both'  THEN CASE WHEN g.rlo > 0 AND g.rhi > 0 AND n.range_low > 0 AND n.range_high > 0
         THEN ABS( (LOG10(n.range_low)+LOG10(n.range_high))/2
-                - (LOG10(g.rlo*s.factor+s.offset)+LOG10(g.rhi*s.factor+s.offset))/2 ) END
+                - (LOG10(g.rlo*s.factor+s.val_offset)+LOG10(g.rhi*s.factor+s.val_offset))/2 ) END
     WHEN 'upper' THEN CASE WHEN g.rhi > 0 AND n.range_high > 0
-        THEN ABS( LOG10(n.range_high) - LOG10(g.rhi*s.factor+s.offset) ) END
+        THEN ABS( LOG10(n.range_high) - LOG10(g.rhi*s.factor+s.val_offset) ) END
     WHEN 'lower' THEN CASE WHEN g.rlo > 0 AND n.range_low > 0
-        THEN ABS( LOG10(n.range_low)  - LOG10(g.rlo*s.factor+s.offset) ) END
+        THEN ABS( LOG10(n.range_low)  - LOG10(g.rlo*s.factor+s.val_offset) ) END
   END AS range_decade,
   -- distribution decade: bound-to-bound with p25-p75 for both, and similarly for upper and lower
   CASE WHEN g.records > 20 THEN
     CASE n.matching
       WHEN 'both'  THEN CASE WHEN g.p25 > 0 AND g.p75 > 0 AND n.range_low > 0 AND n.range_high > 0
           THEN ABS( (LOG10(n.range_low)+LOG10(n.range_high))/2
-                  - (LOG10(g.p25*s.factor+s.offset)+LOG10(g.p75*s.factor+s.offset))/2 ) END
+                  - (LOG10(g.p25*s.factor+s.val_offset)+LOG10(g.p75*s.factor+s.val_offset))/2 ) END
       -- GREATEST-via-VALUES (the SQL Server <2022 compatibility trick this file's header
       -- flags) fails on Snowflake specifically: a VALUES()-clause derived table there can't
       -- reference outer-query columns ("Invalid expression [CORRELATION(...)] in VALUES
@@ -1076,12 +1075,12 @@ SELECT
       -- unchanged everywhere); only pre-2022 SQL Server loses compatibility here.
       WHEN 'upper' THEN CASE WHEN g.p03 > 0 AND g.p97 > 0 AND n.range_high > 0
           THEN GREATEST(0.0,
-                   (LOG10(n.range_high) - LOG10(g.p97*s.factor+s.offset)),
-                   (LOG10(g.p03*s.factor+s.offset) - LOG10(n.range_high)) ) END
+                   (LOG10(n.range_high) - LOG10(g.p97*s.factor+s.val_offset)),
+                   (LOG10(g.p03*s.factor+s.val_offset) - LOG10(n.range_high)) ) END
       WHEN 'lower' THEN CASE WHEN g.p03 > 0 AND g.p97 > 0 AND n.range_low > 0
           THEN GREATEST(0.0,
-                   (LOG10(n.range_low) - LOG10(g.p97*s.factor+s.offset)),
-                   (LOG10(g.p03*s.factor+s.offset) - LOG10(n.range_low)) ) END
+                   (LOG10(n.range_low) - LOG10(g.p97*s.factor+s.val_offset)),
+                   (LOG10(g.p03*s.factor+s.val_offset) - LOG10(n.range_low)) ) END
     END
   END AS dist_decade
 INTO @work_database_schema.@scored_table
@@ -1104,11 +1103,11 @@ SELECT m_id, u_id, rlo, rhi, cat,
         WHEN grp_best   < 0.7 THEN factor
         WHEN grp_best IS NULL AND prov_factor IS NOT NULL THEN prov_factor
         ELSE NULL END AS factor,
--- offset for best match
+-- val_offset for best match
    CASE WHEN prov_score < 0.7 THEN prov_offset
-        WHEN grp_best   < 0.7 THEN offset
+        WHEN grp_best   < 0.7 THEN val_offset
         WHEN grp_best IS NULL AND prov_factor IS NOT NULL THEN prov_offset
-        ELSE NULL END AS offset,
+        ELSE NULL END AS val_offset,
 -- assessement for match:
 -- verified if provided unit=best match unit, overridden with best if they don't match
 -- unverified if unit provided but no match, unresolved if nothing
@@ -1125,16 +1124,16 @@ FROM (
       SUM(CASE WHEN score < 0.7 THEN 1 ELSE 0 END) OVER (PARTITION BY m_id, u_id, rlo, rhi) AS grp_npass,
       MAX(CASE WHEN is_provided = 1 THEN score  END) OVER (PARTITION BY m_id, u_id, rlo, rhi) AS prov_score,
       MAX(CASE WHEN is_provided = 1 THEN factor END) OVER (PARTITION BY m_id, u_id, rlo, rhi) AS prov_factor,
-      MAX(CASE WHEN is_provided = 1 THEN offset END) OVER (PARTITION BY m_id, u_id, rlo, rhi) AS prov_offset,
+      MAX(CASE WHEN is_provided = 1 THEN val_offset END) OVER (PARTITION BY m_id, u_id, rlo, rhi) AS prov_offset,
       ROW_NUMBER() OVER (PARTITION BY m_id, u_id, rlo, rhi ORDER BY CASE WHEN score IS NULL THEN 1 ELSE 0 END, score) AS rn
    FROM (
-      SELECT sc.m_id, sc.u_id, sc.rlo, sc.rhi, sc.cat, sc.factor, sc.offset,
+      SELECT sc.m_id, sc.u_id, sc.rlo, sc.rhi, sc.cat, sc.factor, sc.val_offset,
              COALESCE(sc.range_decade, sc.dist_decade) AS score,   -- range first, distribution only as fallback
              CASE WHEN uf.unit_concept_id IS NOT NULL THEN 1 ELSE 0 END AS is_provided
       FROM @work_database_schema.@scored_table sc
       LEFT JOIN @work_database_schema.@unit_factor_table uf
              ON uf.cat = sc.cat AND uf.unit_concept_id = sc.u_id
-            AND uf.factor = sc.factor AND uf.offset = sc.offset
+            AND uf.factor = sc.factor AND uf.val_offset = sc.val_offset
    ) i
 ) z
 WHERE rn = 1;
@@ -1146,13 +1145,13 @@ DROP TABLE IF EXISTS @work_database_schema.@raw_lab_results_table;
 SELECT
    t.test_id, m.person_id, m.measurement_date, t.cat, m.measurement_concept_id, m.unit_concept_id,
    t.basis, t.min_op, t.max_op,
-   (m.value_as_number * r.factor + r.offset)                                   AS std_value,
-   COALESCE(NULLIF(m.range_high,0) * r.factor + r.offset, n.range_high)         AS uln_std,
+   (m.value_as_number * r.factor + r.val_offset)                                   AS std_value,
+   COALESCE(NULLIF(m.range_high,0) * r.factor + r.val_offset, n.range_high)         AS uln_std,
    CASE WHEN t.basis = 'ULN'
-        THEN t.min_val * COALESCE(NULLIF(m.range_high,0)*r.factor+r.offset, n.range_high)
+        THEN t.min_val * COALESCE(NULLIF(m.range_high,0)*r.factor+r.val_offset, n.range_high)
         ELSE t.min_val END                                                      AS min_bound,
    CASE WHEN t.basis = 'ULN'
-        THEN t.max_val * COALESCE(NULLIF(m.range_high,0)*r.factor+r.offset, n.range_high)
+        THEN t.max_val * COALESCE(NULLIF(m.range_high,0)*r.factor+r.val_offset, n.range_high)
         ELSE t.max_val END                                                      AS max_bound,
    r.status, r.is_ambiguous
 INTO @work_database_schema.@raw_lab_results_table
