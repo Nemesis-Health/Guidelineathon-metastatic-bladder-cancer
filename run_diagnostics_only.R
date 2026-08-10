@@ -55,6 +55,7 @@ source("R/00_prestudy_queries.R")   # runPreStudyDiagnostics() + exports/zips pr
 source("R/helpers.R")
 
 connection <- DatabaseConnector::connect(connectionDetails)
+.checkDbiPostgresBug(connection)
 
 message("\n=== Diagnostics: pre-study characterization queries ===")
 runPreStudyDiagnostics(connection, settings)
