@@ -61,7 +61,7 @@ cov <- querySqlFile(connection, "eligibility_input_coverage.sql",
   lab_window_after_days  = settings$labWindowAfterDays)
 names(cov) <- tolower(names(cov))
 cov$label      <- label(cov$test_id)
-cov$n_target1a <- nT1a
+cov$n_target1a <- if (nrow(cov) > 0) nT1a else integer(0)
 cov$n_tested   <- censor(cov$n_tested)
 cov$n_passed   <- censor(cov$n_passed)
 cov <- cov[c("test_id","label","n_target1a","n_tested","n_passed")]
