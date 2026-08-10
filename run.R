@@ -133,6 +133,7 @@ source("R/helpers.R")        # cohort generation + SQL utilities
 source("R/setup.R")          # config checks + derived paths + executionSettings
 
 connection <- DatabaseConnector::connect(connectionDetails)
+.checkDbiPostgresBug(connection)
 
 message("\n=== Diagnostics: pre-study characterization queries ===")
 runPreStudyDiagnostics(connection, settings)      # (0)

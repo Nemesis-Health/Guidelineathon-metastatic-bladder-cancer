@@ -85,6 +85,18 @@ relevant **ODBC/DBI driver** if you use `createDbiConnectionDetails()`. Which on
 is up to you — `connectionDetails` is defined by you in `run.R` (see step 2 in
 [Quick start](#quick-start)).
 
+> [!WARNING]
+> **PostgreSQL: use a JDBC connection, not DBI/RPostgres.** DatabaseConnector's
+> DBI code path calls `getTableNames()` to verify cohort tables after creating
+> them, but `RPostgres::Postgres()`'s `dbListTables()` ignores the schema
+> argument and only lists tables on the current session's `search_path`
+> ([OHDSI/DatabaseConnector#339](https://github.com/OHDSI/DatabaseConnector/issues/339)).
+> This makes `CohortGenerator::generateCohortSet()` fail with "The following
+> tables have not been created" even though they were. The pipeline detects
+> this combination right after connecting and stops with a pointer to this
+> note; other DBMSes/drivers (e.g. DBI via `odbc::odbc()` for SQL Server) are
+> unaffected.
+
 > [!IMPORTANT]
 > **ARTEMIS must be the version this study was built against.** It is a
 > GitHub-only package (not on CRAN); use **`OHDSI/Artemis` at v1.6.0** (commit
