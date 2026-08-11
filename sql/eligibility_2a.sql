@@ -42,13 +42,24 @@
 -- apply the eligibility logic as plain boolean algebra over those flags. Same
 -- semantics as the EXISTS version (a flag is 1 iff a qualifying record exists
 -- for that subject in the relevant window), same eligibility_2b/2c/2d pattern.
+--
+-- NOTE on statement shape — `WITH ... INSERT INTO ...` vs `INSERT INTO ...
+-- WITH ...` is NOT portable: Snowflake requires the WITH nested after the
+-- INSERT's column list (confirmed live), while SQL Server (T-SQL) requires
+-- WITH to precede INSERT entirely — SqlRender does not rewrite clause order
+-- across dialects, so neither placement alone works everywhere. We sidestep
+-- this by materialising the CTE result into a #temp table via the
+-- SqlRender-portable `SELECT ... INTO #temp FROM ...` idiom (translates to
+-- native SELECT INTO on SQL Server, CREATE TEMP TABLE AS on
+-- Postgres/Redshift/Snowflake — same idiom already used across OHDSI SQL),
+-- then a plain, CTE-free INSERT INTO ... SELECT FROM #temp.
 -- =============================================================================
 
 DELETE FROM @target_database_schema.@target_cohort_table
  WHERE cohort_definition_id = @target_cohort_id;
 
-INSERT INTO @target_database_schema.@target_cohort_table
-  (cohort_definition_id, subject_id, cohort_start_date, cohort_end_date)
+DROP TABLE IF EXISTS #elig2a_tmp;
+
 WITH base AS (
   SELECT tc.subject_id, tc.cohort_start_date, tc.cohort_end_date,
          DATEADD(day, -@lab_window_before_days, tc.cohort_start_date) AS win_lo,
@@ -105,8 +116,8 @@ flags AS (
   FROM labs
   GROUP BY subject_id, cohort_start_date, cohort_end_date
 )
-SELECT @target_cohort_id AS cohort_definition_id,
-       subject_id, cohort_start_date, cohort_end_date
+SELECT subject_id, cohort_start_date, cohort_end_date
+  INTO #elig2a_tmp
   FROM flags
  WHERE
 
@@ -167,3 +178,12 @@ SELECT @target_cohort_id AS cohort_definition_id,
    -- Enfortumab: no pre-existing significant skin disorders (test 34).
    AND f_skin = 0
 ;
+
+INSERT INTO @target_database_schema.@target_cohort_table
+  (cohort_definition_id, subject_id, cohort_start_date, cohort_end_date)
+SELECT @target_cohort_id AS cohort_definition_id,
+       subject_id, cohort_start_date, cohort_end_date
+  FROM #elig2a_tmp
+;
+
+DROP TABLE IF EXISTS #elig2a_tmp;
