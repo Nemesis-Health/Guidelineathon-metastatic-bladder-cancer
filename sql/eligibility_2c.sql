@@ -4,9 +4,12 @@
 -- Protocol: Cohort 1 + washout + combination-therapy eligible + NOT enfortumab-
 -- eligible + NOT cisplatin-eligible + carboplatin-eligible.
 --
--- See eligibility_2a.sql for full test_id reference and for why this template
+-- See eligibility_2a.sql for full test_id reference, for why this template
 -- uses flag columns rather than nested EXISTS/OR (Redshift rejects correlated
--- subqueries combined with OR — error 500310).
+-- subqueries combined with OR — error 500310), and for why the flags are
+-- materialised into a #temp table via SELECT...INTO rather than combined
+-- directly with INSERT (WITH+INSERT clause ordering is not portable across
+-- dialects).
 -- Planned ids: 24-26 ECOG; 28 liver mets; 33 neuropathy >= 2; 38 NYHA >= III;
 --              40 hearing loss grade >= 2.
 -- =============================================================================
@@ -14,8 +17,8 @@
 DELETE FROM @target_database_schema.@target_cohort_table
  WHERE cohort_definition_id = @target_cohort_id;
 
-INSERT INTO @target_database_schema.@target_cohort_table
-  (cohort_definition_id, subject_id, cohort_start_date, cohort_end_date)
+DROP TABLE IF EXISTS #elig2c_tmp;
+
 WITH base AS (
   SELECT tc.subject_id, tc.cohort_start_date, tc.cohort_end_date,
          DATEADD(day, -@lab_window_before_days, tc.cohort_start_date) AS win_lo,
@@ -85,8 +88,8 @@ flags AS (
   FROM labs
   GROUP BY subject_id, cohort_start_date, cohort_end_date
 )
-SELECT @target_cohort_id AS cohort_definition_id,
-       subject_id, cohort_start_date, cohort_end_date
+SELECT subject_id, cohort_start_date, cohort_end_date
+  INTO #elig2c_tmp
   FROM flags
  WHERE
 
@@ -119,3 +122,12 @@ SELECT @target_cohort_id AS cohort_definition_id,
          OR f_neuropathy = 1 -- [33] peripheral neuropathy present (grade >= 2 proxy)
        )
 ;
+
+INSERT INTO @target_database_schema.@target_cohort_table
+  (cohort_definition_id, subject_id, cohort_start_date, cohort_end_date)
+SELECT @target_cohort_id AS cohort_definition_id,
+       subject_id, cohort_start_date, cohort_end_date
+  FROM #elig2c_tmp
+;
+
+DROP TABLE IF EXISTS #elig2c_tmp;

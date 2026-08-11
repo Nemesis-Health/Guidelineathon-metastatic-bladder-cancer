@@ -4,11 +4,14 @@
 -- Protocol: Cohort 1 + washout + NOT combination-therapy eligible + pembro/atezo
 -- renal/PS/comorbidity criteria + PD-L1 biomarker.
 --
--- See eligibility_2a.sql for full test_id reference and for why this template
+-- See eligibility_2a.sql for full test_id reference, for why this template
 -- uses flag columns rather than nested EXISTS/OR (Redshift rejects correlated
--- subqueries combined with OR — error 500310). With combo-eligibility reduced
--- to boolean flag columns, "NOT combination-therapy eligible" is just
--- NOT (combo_eligible_expression) — no manual De Morgan expansion needed.
+-- subqueries combined with OR — error 500310), and for why the flags are
+-- materialised into a #temp table via SELECT...INTO rather than combined
+-- directly with INSERT (WITH+INSERT clause ordering is not portable across
+-- dialects). With combo-eligibility reduced to boolean flag columns,
+-- "NOT combination-therapy eligible" is just NOT (combo_eligible_expression)
+-- — no manual De Morgan expansion needed.
 --
 -- Planned ids: 24-27 ECOG; 28 liver mets; 41 comorbidities grade > 2;
 --              42 PD-L1 CPS >= 10; 43 PD-L1 TIC >= 5%.
@@ -17,8 +20,8 @@
 DELETE FROM @target_database_schema.@target_cohort_table
  WHERE cohort_definition_id = @target_cohort_id;
 
-INSERT INTO @target_database_schema.@target_cohort_table
-  (cohort_definition_id, subject_id, cohort_start_date, cohort_end_date)
+DROP TABLE IF EXISTS #elig2d_tmp;
+
 WITH base AS (
   SELECT tc.subject_id, tc.cohort_start_date, tc.cohort_end_date,
          DATEADD(day, -@lab_window_before_days, tc.cohort_start_date) AS win_lo,
@@ -73,8 +76,8 @@ flags AS (
   FROM labs
   GROUP BY subject_id, cohort_start_date, cohort_end_date
 )
-SELECT @target_cohort_id AS cohort_definition_id,
-       subject_id, cohort_start_date, cohort_end_date
+SELECT subject_id, cohort_start_date, cohort_end_date
+  INTO #elig2d_tmp
   FROM flags
  WHERE
 
@@ -110,3 +113,12 @@ SELECT @target_cohort_id AS cohort_definition_id,
    -- (was 1 = 0) so 2d is not forced empty. Restore when PD-L1 is encoded.
    AND 1 = 1
 ;
+
+INSERT INTO @target_database_schema.@target_cohort_table
+  (cohort_definition_id, subject_id, cohort_start_date, cohort_end_date)
+SELECT @target_cohort_id AS cohort_definition_id,
+       subject_id, cohort_start_date, cohort_end_date
+  FROM #elig2d_tmp
+;
+
+DROP TABLE IF EXISTS #elig2d_tmp;

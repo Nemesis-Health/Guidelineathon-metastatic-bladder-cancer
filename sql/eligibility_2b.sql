@@ -4,19 +4,22 @@
 -- Protocol: Cohort 1 + washout + combination-therapy eligible + NOT enfortumab-
 -- eligible + cisplatin-eligible. Index/end dates inherited from Cohort 1.
 --
--- See eligibility_2a.sql for full test_id reference (lab_cohorts.sql ids 1-23)
--- and for why this template is written as flag columns rather than nested
--- EXISTS/OR: Redshift rejects correlated subqueries combined with OR (error
--- 500310), and several of these criteria are OR alternatives (Cr/CrCl, TBil,
--- AST, ALT, coag). Planned ids: 24-26 ECOG; 28 liver mets; 32 neuropathy;
+-- See eligibility_2a.sql for full test_id reference (lab_cohorts.sql ids 1-23),
+-- for why this template is written as flag columns rather than nested
+-- EXISTS/OR (Redshift rejects correlated subqueries combined with OR — error
+-- 500310, and several of these criteria are OR alternatives: Cr/CrCl, TBil,
+-- AST, ALT, coag), and for why the flags are materialised into a #temp table
+-- via SELECT...INTO rather than combined directly with INSERT (WITH+INSERT
+-- clause ordering is not portable across dialects).
+-- Planned ids: 24-26 ECOG; 28 liver mets; 32 neuropathy;
 -- 37 NYHA < III; 39 hearing loss grade < 2.
 -- =============================================================================
 
 DELETE FROM @target_database_schema.@target_cohort_table
  WHERE cohort_definition_id = @target_cohort_id;
 
-INSERT INTO @target_database_schema.@target_cohort_table
-  (cohort_definition_id, subject_id, cohort_start_date, cohort_end_date)
+DROP TABLE IF EXISTS #elig2b_tmp;
+
 WITH base AS (
   SELECT tc.subject_id, tc.cohort_start_date, tc.cohort_end_date,
          DATEADD(day, -@lab_window_before_days, tc.cohort_start_date) AS win_lo,
@@ -80,8 +83,8 @@ flags AS (
   FROM labs
   GROUP BY subject_id, cohort_start_date, cohort_end_date
 )
-SELECT @target_cohort_id AS cohort_definition_id,
-       subject_id, cohort_start_date, cohort_end_date
+SELECT subject_id, cohort_start_date, cohort_end_date
+  INTO #elig2b_tmp
   FROM flags
  WHERE
 
@@ -111,3 +114,12 @@ SELECT @target_cohort_id AS cohort_definition_id,
    AND f_hearing    = 0   -- Cisplatin: no significant audiometric hearing loss (test 40).
    AND f_neuropathy = 0   -- Cisplatin: no significant peripheral neuropathy (test 33).
 ;
+
+INSERT INTO @target_database_schema.@target_cohort_table
+  (cohort_definition_id, subject_id, cohort_start_date, cohort_end_date)
+SELECT @target_cohort_id AS cohort_definition_id,
+       subject_id, cohort_start_date, cohort_end_date
+  FROM #elig2b_tmp
+;
+
+DROP TABLE IF EXISTS #elig2b_tmp;
