@@ -23,14 +23,15 @@ passed AS (
    GROUP BY lab.cohort_definition_id
 ),
 tested AS (
-  SELECT raw.test_id AS test_id,
+  -- alias "rlr" (not "raw"): RAW is a reserved word in Redshift and breaks as a bare alias
+  SELECT rlr.test_id AS test_id,
          COUNT(DISTINCT t1a.subject_id) AS n_tested
     FROM t1a
-    JOIN @work_database_schema.@raw_lab_results_table raw
-      ON raw.person_id = t1a.subject_id
-     AND raw.measurement_date BETWEEN DATEADD(day, -@lab_window_before_days, t1a.cohort_start_date)
+    JOIN @work_database_schema.@raw_lab_results_table rlr
+      ON rlr.person_id = t1a.subject_id
+     AND rlr.measurement_date BETWEEN DATEADD(day, -@lab_window_before_days, t1a.cohort_start_date)
                                   AND DATEADD(day,  @lab_window_after_days, t1a.cohort_start_date)
-   GROUP BY raw.test_id
+   GROUP BY rlr.test_id
 )
 SELECT COALESCE(p.test_id, t.test_id) AS test_id,
        t.n_tested,
