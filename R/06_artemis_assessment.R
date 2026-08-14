@@ -35,9 +35,21 @@
 
 message("\n== ARTEMIS assessment ==")
 
+# artemisResult is normally still in scope from step (a) in the same session,
+# but step (a) persists it to disk too (see R/01_artemis.R), so a session that
+# only re-runs (b)-(e) can reload it here instead of re-running the alignment.
 if (!exists("artemisResult")) {
-  message("  artemisResult not in scope (ARTEMIS step (a) did not run this ",
-          "session) — skipping assessment.")
+  rdsPath <- file.path(settings$outputFolder, "artemis_result.rds")
+  if (file.exists(rdsPath)) {
+    message("  artemisResult not in scope (ARTEMIS step (a) did not run this ",
+            "session) — reloading from ", rdsPath)
+    artemisResult <- readRDS(rdsPath)
+  }
+}
+
+if (!exists("artemisResult")) {
+  message("  artemisResult not in scope and no saved artemis_result.rds found ",
+          "in the output folder — skipping assessment.")
 } else {
 
   minCell   <- settings$minCellCount
