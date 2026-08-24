@@ -13,6 +13,7 @@
 #   (g) per-cohort demographics               -> R/07_demographics.R
 #   (h) covariate overlap with 1A             -> R/08_covariates.R
 #   (i) outcomes: DTI / OS / TTNT / TTD / TFI -> R/09_outcomes.R
+#   (j) guideline relevance + adherence       -> R/10_adherence.R
 #
 # Use this once ARTEMIS is sorted (see README.md) if you already have
 # diagnostics results from run_diagnostics_only.R and just need the
@@ -109,6 +110,7 @@ source("R/helpers.R")        # cohort generation + SQL utilities
 source("R/timeToEvent.R")    # computeTimeToEvent(), computeTimeDiffStats()
 source("R/survivalMilestones.R") # extractSurvivalMilestones()
 source("R/eventBuilders.R")  # fetchDeathEvents(), buildLineOfTherapyEvents(), buildDtiEvents(), anchorEpisodes(), combineEarliestEvent()
+source("R/guidelineAdherence.R") # computeGuidelineRelevance(), computeAdherenceRollup()
 source("R/setup.R")          # config checks + derived paths + executionSettings
 
 connection <- DatabaseConnector::connect(connectionDetails)
@@ -123,6 +125,7 @@ source("R/06_artemis_assessment.R") # ARTEMIS alignment assessment (uses artemis
 source("R/07_demographics.R")       # per-cohort demographics (age / sex / index year)
 source("R/08_covariates.R")         # covariate overlap with 1A (comorbidities + PS)
 source("R/09_outcomes.R")           # outcomes: DTI / OS / TTNT / TTD / TFI
+source("R/10_adherence.R")          # guideline relevance + adherence roll-up
 
 message("\n=== Done. Results under ", settings$outputFolder, "/eligibility/ ===")
 
