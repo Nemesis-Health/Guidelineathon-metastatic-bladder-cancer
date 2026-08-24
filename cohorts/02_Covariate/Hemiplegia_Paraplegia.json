@@ -2,15 +2,15 @@
   "ConceptSets": [
     {
       "id": 0,
-      "name": "Liver Disease",
+      "name": "Hemiplegia Paraplegia",
       "expression": {
         "items": [
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "9953008",
-              "CONCEPT_ID": 201343,
-              "CONCEPT_NAME": "Acute alcoholic liver disease",
+              "CONCEPT_CODE": "192970008",
+              "CONCEPT_ID": 4102342,
+              "CONCEPT_NAME": "Cauda equina syndrome",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -23,9 +23,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "420054005",
-              "CONCEPT_ID": 196463,
-              "CONCEPT_NAME": "Alcoholic cirrhosis",
+              "CONCEPT_CODE": "12454008",
+              "CONCEPT_ID": 193186,
+              "CONCEPT_NAME": "Cauda equina syndrome with neurogenic bladder",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -38,9 +38,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "50325005",
-              "CONCEPT_ID": 193256,
-              "CONCEPT_NAME": "Alcoholic fatty liver",
+              "CONCEPT_CODE": "8663007",
+              "CONCEPT_ID": 134331,
+              "CONCEPT_NAME": "Cauda equina syndrome without neurogenic bladder",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -53,9 +53,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "235880004",
-              "CONCEPT_ID": 4340385,
-              "CONCEPT_NAME": "Alcoholic fibrosis and sclerosis of liver",
+              "CONCEPT_CODE": "128188000",
+              "CONCEPT_ID": 4134120,
+              "CONCEPT_NAME": "Cerebral palsy",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -68,9 +68,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "235875008",
-              "CONCEPT_ID": 4340383,
-              "CONCEPT_NAME": "Alcoholic hepatitis",
+              "CONCEPT_CODE": "29188005",
+              "CONCEPT_ID": 4104204,
+              "CONCEPT_NAME": "Complete bilateral paralysis",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -83,9 +83,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "41309000",
-              "CONCEPT_ID": 201612,
-              "CONCEPT_NAME": "Alcoholic liver damage",
+              "CONCEPT_CODE": "290401000119108",
+              "CONCEPT_ID": 43530718,
+              "CONCEPT_NAME": "Complete paraplegia",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -98,9 +98,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1082601000119100",
-              "CONCEPT_ID": 46269816,
-              "CONCEPT_NAME": "Ascites due to alcoholic cirrhosis",
+              "CONCEPT_CODE": "441705005",
+              "CONCEPT_ID": 40480416,
+              "CONCEPT_NAME": "Complete tetraplegia due to lesion at C1-C4 level",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -113,9 +113,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "408335007",
-              "CONCEPT_ID": 200762,
-              "CONCEPT_NAME": "Autoimmune hepatitis",
+              "CONCEPT_CODE": "441980007",
+              "CONCEPT_ID": 40481376,
+              "CONCEPT_NAME": "Complete tetraplegia due to lesion at C5-C7 level",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -128,9 +128,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1761006",
-              "CONCEPT_ID": 192675,
-              "CONCEPT_NAME": "Biliary cirrhosis",
+              "CONCEPT_CODE": "275468009",
+              "CONCEPT_ID": 4173811,
+              "CONCEPT_NAME": "Congenital quadriplegia",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -143,9 +143,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "197364000",
-              "CONCEPT_ID": 4058696,
-              "CONCEPT_NAME": "Central hemorrhagic necrosis of liver",
+              "CONCEPT_CODE": "54099005",
+              "CONCEPT_ID": 372880,
+              "CONCEPT_NAME": "Diplegia of upper limbs",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -158,9 +158,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "197284004",
-              "CONCEPT_ID": 4026125,
-              "CONCEPT_NAME": "Chronic active hepatitis",
+              "CONCEPT_CODE": "58193001",
+              "CONCEPT_ID": 132617,
+              "CONCEPT_NAME": "Diplegic cerebral palsy",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -173,9 +173,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "76783007",
-              "CONCEPT_ID": 200763,
-              "CONCEPT_NAME": "Chronic hepatitis",
+              "CONCEPT_CODE": "80935004",
+              "CONCEPT_ID": 372613,
+              "CONCEPT_NAME": "Flaccid hemiplegia",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -188,9 +188,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "128302006",
-              "CONCEPT_ID": 198964,
-              "CONCEPT_NAME": "Chronic hepatitis C",
+              "CONCEPT_CODE": "442020005",
+              "CONCEPT_ID": 40481757,
+              "CONCEPT_NAME": "Flaccid hemiplegia of dominant side",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -203,9 +203,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "57339008",
-              "CONCEPT_ID": 4238978,
-              "CONCEPT_NAME": "Chronic lobular hepatitis",
+              "CONCEPT_CODE": "442077006",
+              "CONCEPT_ID": 40481820,
+              "CONCEPT_NAME": "Flaccid hemiplegia of nondominant side",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -218,9 +218,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "79720007",
-              "CONCEPT_ID": 201613,
-              "CONCEPT_NAME": "Chronic nonalcoholic liver disease",
+              "CONCEPT_CODE": "192966000",
+              "CONCEPT_ID": 4101738,
+              "CONCEPT_NAME": "Flaccid paraplegia",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -233,9 +233,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "41889008",
-              "CONCEPT_ID": 199867,
-              "CONCEPT_NAME": "Chronic persistent hepatitis",
+              "CONCEPT_CODE": "192964002",
+              "CONCEPT_ID": 4104848,
+              "CONCEPT_NAME": "Flaccid tetraplegia",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -248,9 +248,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "10295004",
-              "CONCEPT_ID": 4012113,
-              "CONCEPT_NAME": "Chronic viral hepatitis",
+              "CONCEPT_CODE": "50582007",
+              "CONCEPT_ID": 374022,
+              "CONCEPT_NAME": "Hemiplegia",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -263,9 +263,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "235869004",
-              "CONCEPT_ID": 192240,
-              "CONCEPT_NAME": "Chronic viral hepatitis B with hepatitis D",
+              "CONCEPT_CODE": "442155009",
+              "CONCEPT_ID": 40482237,
+              "CONCEPT_NAME": "Hemiplegia of dominant side",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -278,9 +278,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "186639003",
-              "CONCEPT_ID": 439674,
-              "CONCEPT_NAME": "Chronic viral hepatitis B without delta-agent",
+              "CONCEPT_CODE": "441717007",
+              "CONCEPT_ID": 40480429,
+              "CONCEPT_NAME": "Hemiplegia of nondominant side",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -293,9 +293,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "435101000124104",
-              "CONCEPT_ID": 763021,
-              "CONCEPT_NAME": "Chronic viral hepatitis C with hepatic coma",
+              "CONCEPT_CODE": "43486001",
+              "CONCEPT_ID": 134031,
+              "CONCEPT_NAME": "Hemiplegic cerebral palsy",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -308,9 +308,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "266468003",
-              "CONCEPT_ID": 194692,
-              "CONCEPT_NAME": "Cirrhosis - non-alcoholic",
+              "CONCEPT_CODE": "39912006",
+              "CONCEPT_ID": 192901,
+              "CONCEPT_NAME": "Hereditary spastic paraplegia",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -323,9 +323,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "197279005",
-              "CONCEPT_ID": 4059284,
-              "CONCEPT_NAME": "Cirrhosis and chronic liver disease",
+              "CONCEPT_CODE": "714279000",
+              "CONCEPT_ID": 37019108,
+              "CONCEPT_NAME": "Human T-cell lymphotropic virus 1-associated myelopathy",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -338,9 +338,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "19943007",
-              "CONCEPT_ID": 4064161,
-              "CONCEPT_NAME": "Cirrhosis of liver",
+              "CONCEPT_CODE": "290411000119106",
+              "CONCEPT_ID": 43530719,
+              "CONCEPT_NAME": "Incomplete paraplegia",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -353,9 +353,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "235856003",
-              "CONCEPT_ID": 194984,
-              "CONCEPT_NAME": "Disease of liver",
+              "CONCEPT_CODE": "441794001",
+              "CONCEPT_ID": 40480514,
+              "CONCEPT_NAME": "Incomplete tetraplegia due to lesion at C5-C7 level",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -368,9 +368,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1092801000119100",
-              "CONCEPT_ID": 46273476,
-              "CONCEPT_NAME": "Hepatic ascites co-occurrent with chronic active hepatitis due to toxic liver disease",
+              "CONCEPT_CODE": "441688003",
+              "CONCEPT_ID": 40480066,
+              "CONCEPT_NAME": "Incomplete tetraplegia due to spinal cord lesion at C1-C4 level",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -383,9 +383,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1085021000119100",
-              "CONCEPT_ID": 46269835,
-              "CONCEPT_NAME": "Hepatic ascites due to chronic alcoholic hepatitis",
+              "CONCEPT_CODE": "1593000",
+              "CONCEPT_ID": 374336,
+              "CONCEPT_NAME": "Infantile hemiplegia",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -398,9 +398,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "186624004",
-              "CONCEPT_ID": 439675,
-              "CONCEPT_NAME": "Hepatic coma due to acute hepatitis B with delta agent",
+              "CONCEPT_CODE": "86022000",
+              "CONCEPT_ID": 381548,
+              "CONCEPT_NAME": "Monoplegia",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -413,9 +413,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "424340000",
-              "CONCEPT_ID": 4308946,
-              "CONCEPT_NAME": "Hepatic coma due to chronic hepatitis B",
+              "CONCEPT_CODE": "80420005",
+              "CONCEPT_ID": 195240,
+              "CONCEPT_NAME": "Monoplegia of lower limb",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -428,9 +428,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "40946000",
-              "CONCEPT_ID": 196029,
-              "CONCEPT_NAME": "Hepatic coma due to viral hepatitis",
+              "CONCEPT_CODE": "426167003",
+              "CONCEPT_ID": 4144328,
+              "CONCEPT_NAME": "Monoplegia of lower limb affecting dominant side",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -443,9 +443,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "62484002",
-              "CONCEPT_ID": 4267417,
-              "CONCEPT_NAME": "Hepatic fibrosis",
+              "CONCEPT_CODE": "426934001",
+              "CONCEPT_ID": 4141654,
+              "CONCEPT_NAME": "Monoplegia of lower limb affecting non-dominant side",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -458,9 +458,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "235901004",
-              "CONCEPT_ID": 4340948,
-              "CONCEPT_NAME": "Hepatic fibrosis with hepatic sclerosis",
+              "CONCEPT_CODE": "41764006",
+              "CONCEPT_ID": 379012,
+              "CONCEPT_NAME": "Monoplegia of upper limb",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -473,9 +473,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "17890003",
-              "CONCEPT_ID": 194417,
-              "CONCEPT_NAME": "Hepatic infarction",
+              "CONCEPT_CODE": "426536006",
+              "CONCEPT_ID": 380393,
+              "CONCEPT_NAME": "Monoplegia of upper limb affecting non-dominant side",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -488,9 +488,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "87248009",
-              "CONCEPT_ID": 4337543,
-              "CONCEPT_NAME": "Hepatic necrosis",
+              "CONCEPT_CODE": "426536006",
+              "CONCEPT_ID": 380393,
+              "CONCEPT_NAME": "Monoplegia of upper limb affecting non-dominant side",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -503,9 +503,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "235899008",
-              "CONCEPT_ID": 4340394,
-              "CONCEPT_NAME": "Hepatic sclerosis",
+              "CONCEPT_CODE": "441951003",
+              "CONCEPT_ID": 40481345,
+              "CONCEPT_NAME": "Monoplegia of upper limb of dominant side",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -518,9 +518,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "371067004",
-              "CONCEPT_ID": 4159144,
-              "CONCEPT_NAME": "Hepatopulmonary syndrome",
+              "CONCEPT_CODE": "56409008",
+              "CONCEPT_ID": 442543,
+              "CONCEPT_NAME": "Monoplegic cerebral palsy",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -533,9 +533,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "128241005",
-              "CONCEPT_ID": 194990,
-              "CONCEPT_NAME": "Inflammatory disease of liver",
+              "CONCEPT_CODE": "44695005",
+              "CONCEPT_ID": 440377,
+              "CONCEPT_NAME": "Paralysis",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -548,9 +548,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "58008004",
-              "CONCEPT_ID": 4240725,
-              "CONCEPT_NAME": "Peliosis hepatis",
+              "CONCEPT_CODE": "29426003",
+              "CONCEPT_ID": 374377,
+              "CONCEPT_NAME": "Paralytic syndrome",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -563,9 +563,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "31712002",
-              "CONCEPT_ID": 4135822,
-              "CONCEPT_NAME": "Primary biliary cholangitis",
+              "CONCEPT_CODE": "609557004",
+              "CONCEPT_ID": 43531639,
+              "CONCEPT_NAME": "Paralytic syndrome on one side of the body",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -578,9 +578,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "12368000",
-              "CONCEPT_ID": 4046123,
-              "CONCEPT_NAME": "Secondary biliary cirrhosis",
+              "CONCEPT_CODE": "60389000",
+              "CONCEPT_ID": 192606,
+              "CONCEPT_NAME": "Paraplegia",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -593,9 +593,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "197321007",
-              "CONCEPT_ID": 4059290,
-              "CONCEPT_NAME": "Steatosis of liver",
+              "CONCEPT_CODE": "22881000119100",
+              "CONCEPT_ID": 44782711,
+              "CONCEPT_NAME": "Quadriplegia with quadriparesis",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -608,9 +608,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "197361008",
-              "CONCEPT_ID": 4059299,
-              "CONCEPT_NAME": "Toxic liver disease with chronic active hepatitis",
+              "CONCEPT_CODE": "79633009",
+              "CONCEPT_ID": 375528,
+              "CONCEPT_NAME": "Spastic hemiplegia",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -623,9 +623,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "197359004",
-              "CONCEPT_ID": 4059298,
-              "CONCEPT_NAME": "Toxic liver disease with chronic persistent hepatitis",
+              "CONCEPT_CODE": "441892008",
+              "CONCEPT_ID": 40480944,
+              "CONCEPT_NAME": "Spastic hemiplegia of dominant side",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -638,9 +638,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "197362001",
-              "CONCEPT_ID": 4058695,
-              "CONCEPT_NAME": "Toxic liver disease with fibrosis and cirrhosis of liver",
+              "CONCEPT_CODE": "441722007",
+              "CONCEPT_ID": 40480435,
+              "CONCEPT_NAME": "Spastic hemiplegia of nondominant side",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -653,9 +653,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "737297006",
-              "CONCEPT_ID": 42537742,
-              "CONCEPT_NAME": "Transplanted liver present",
+              "CONCEPT_CODE": "813921000000104",
+              "CONCEPT_ID": 44806793,
+              "CONCEPT_NAME": "Spastic hemiplegic cerebral palsy",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -668,9 +668,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "111891008",
-              "CONCEPT_ID": 198683,
-              "CONCEPT_NAME": "Viral hepatitis B without hepatic coma",
+              "CONCEPT_CODE": "192967009",
+              "CONCEPT_ID": 4101739,
+              "CONCEPT_NAME": "Spastic paraplegia",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -683,9 +683,24 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "111896003",
-              "CONCEPT_ID": 193693,
-              "CONCEPT_NAME": "Viral hepatitis without hepatic coma",
+              "CONCEPT_CODE": "192965001",
+              "CONCEPT_ID": 4102341,
+              "CONCEPT_NAME": "Spastic tetraplegia",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CODE": "11538006",
+              "CONCEPT_ID": 374914,
+              "CONCEPT_NAME": "Tetraplegia",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",

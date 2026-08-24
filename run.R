@@ -18,6 +18,7 @@
 #   (h) covariate overlap with 1A             -> R/08_covariates.R
 #   (i) outcomes: DTI / OS / TTNT / TTD / TFI -> R/09_outcomes.R
 #   (j) guideline relevance + adherence       -> R/10_adherence.R
+#   (k) baseline vitals + Charlson CCI        -> R/11_baseline_characterization.R
 #
 # Usage: edit the CONFIG block below, then  source("run.R")
 # Requires: DatabaseConnector, SqlRender, CohortGenerator, CirceR, ARTEMIS,
@@ -25,7 +26,8 @@
 # ===========================================================================
 
 for (p in c("DatabaseConnector", "SqlRender", "CohortGenerator", "CirceR",
-            "ARTEMIS", "dplyr", "tibble", "readr", "cli", "rlang", "stringr")) {
+            "ARTEMIS", "dplyr", "tibble", "readr", "cli", "rlang", "stringr",
+            "jsonlite")) {
   if (!requireNamespace(p, quietly = TRUE))
     stop("Required package not installed: ", p, call. = FALSE)
 }
@@ -85,6 +87,10 @@ settings <- list(
   # how many days BEFORE and AFTER the index date a record may fall. Asymmetric.
   labWindowBeforeDays = 14L,
   labWindowAfterDays  = 7L,
+  # Index window for baseline weight/height/BMI (step (k)) — wider than the
+  # lab window above; matches onco-study-modules' own +/-90-day convention
+  # for vitals.
+  vitalsWindowDays    = 90L,
   # Exclude endocrine-therapy regimens (tamoxifen, abiraterone, GnRH agonists,
   # ...) from the ARTEMIS reference. Applied via the is_endocrine column of
   # cohorts/extras/regimen_reference.csv. TRUE = drop hormone therapy (default);
@@ -136,6 +142,7 @@ source("R/timeToEvent.R")    # computeTimeToEvent(), computeTimeDiffStats()
 source("R/survivalMilestones.R") # extractSurvivalMilestones()
 source("R/eventBuilders.R")  # fetchDeathEvents(), buildLineOfTherapyEvents(), buildDtiEvents(), anchorEpisodes(), combineEarliestEvent()
 source("R/guidelineAdherence.R") # computeGuidelineRelevance(), computeAdherenceRollup()
+source("R/charlsonScore.R")  # computeCharlsonScore(), charlsonComponents()
 source("R/setup.R")          # config checks + derived paths + executionSettings
 
 connection <- DatabaseConnector::connect(connectionDetails)
@@ -154,6 +161,7 @@ source("R/07_demographics.R")       # per-cohort demographics (age / sex / index
 source("R/08_covariates.R")         # covariate overlap with 1A (comorbidities + PS)
 source("R/09_outcomes.R")           # outcomes: DTI / OS / TTNT / TTD / TFI
 source("R/10_adherence.R")          # guideline relevance + adherence roll-up
+source("R/11_baseline_characterization.R") # weight/height/BMI + Charlson CCI
 
 message("\n=== Done. Results under ", settings$outputFolder, "/eligibility/ ===")
 

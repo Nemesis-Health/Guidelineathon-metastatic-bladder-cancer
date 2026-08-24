@@ -2,15 +2,15 @@
   "ConceptSets": [
     {
       "id": 0,
-      "name": "Liver Disease",
+      "name": "Peripheral Vascular Disease",
       "expression": {
         "items": [
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "9953008",
-              "CONCEPT_ID": 201343,
-              "CONCEPT_NAME": "Acute alcoholic liver disease",
+              "CONCEPT_CODE": "95443002",
+              "CONCEPT_ID": 4316222,
+              "CONCEPT_NAME": "Venous intermittent claudication",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -23,9 +23,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "420054005",
-              "CONCEPT_ID": 196463,
-              "CONCEPT_NAME": "Alcoholic cirrhosis",
+              "CONCEPT_CODE": "82196007",
+              "CONCEPT_ID": 192673,
+              "CONCEPT_NAME": "Vascular insufficiency of intestine",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -38,9 +38,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "50325005",
-              "CONCEPT_ID": 193256,
-              "CONCEPT_NAME": "Alcoholic fatty liver",
+              "CONCEPT_CODE": "128321003",
+              "CONCEPT_ID": 4134603,
+              "CONCEPT_NAME": "Vascular disorder of intestine",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -53,9 +53,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "235880004",
-              "CONCEPT_ID": 4340385,
-              "CONCEPT_NAME": "Alcoholic fibrosis and sclerosis of liver",
+              "CONCEPT_CODE": "52403007",
+              "CONCEPT_ID": 312939,
+              "CONCEPT_NAME": "Thromboangiitis obliterans",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -68,9 +68,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "235875008",
-              "CONCEPT_ID": 4340383,
-              "CONCEPT_NAME": "Alcoholic hepatitis",
+              "CONCEPT_CODE": "195265003",
+              "CONCEPT_ID": 433222,
+              "CONCEPT_NAME": "Thoracoabdominal aortic aneurysm, ruptured",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -83,9 +83,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "41309000",
-              "CONCEPT_ID": 201612,
-              "CONCEPT_NAME": "Alcoholic liver damage",
+              "CONCEPT_CODE": "233984007",
+              "CONCEPT_ID": 436996,
+              "CONCEPT_NAME": "Thoracoabdominal aortic aneurysm",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -98,9 +98,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1082601000119100",
-              "CONCEPT_ID": 46269816,
-              "CONCEPT_NAME": "Ascites due to alcoholic cirrhosis",
+              "CONCEPT_CODE": "74883004",
+              "CONCEPT_ID": 441051,
+              "CONCEPT_NAME": "Thoracic aortic aneurysm without rupture",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -113,9 +113,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "408335007",
-              "CONCEPT_ID": 200762,
-              "CONCEPT_NAME": "Autoimmune hepatitis",
+              "CONCEPT_CODE": "195258006",
+              "CONCEPT_ID": 441875,
+              "CONCEPT_NAME": "Thoracic aortic aneurysm which has ruptured",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -128,9 +128,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1761006",
-              "CONCEPT_ID": 192675,
-              "CONCEPT_NAME": "Biliary cirrhosis",
+              "CONCEPT_CODE": "12232008",
+              "CONCEPT_ID": 320646,
+              "CONCEPT_NAME": "Syphilitic aneurysm of aorta",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -143,9 +143,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "197364000",
-              "CONCEPT_ID": 4058696,
-              "CONCEPT_NAME": "Central hemorrhagic necrosis of liver",
+              "CONCEPT_CODE": "68109007",
+              "CONCEPT_ID": 317305,
+              "CONCEPT_NAME": "Stricture of artery",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -158,9 +158,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "197284004",
-              "CONCEPT_ID": 4026125,
-              "CONCEPT_NAME": "Chronic active hepatitis",
+              "CONCEPT_CODE": "73067008",
+              "CONCEPT_ID": 312343,
+              "CONCEPT_NAME": "Ruptured aortic aneurysm",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -173,9 +173,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "76783007",
-              "CONCEPT_ID": 200763,
-              "CONCEPT_NAME": "Chronic hepatitis",
+              "CONCEPT_CODE": "14336007",
+              "CONCEPT_ID": 195559,
+              "CONCEPT_NAME": "Ruptured abdominal aortic aneurysm",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -188,9 +188,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "128302006",
-              "CONCEPT_ID": 198964,
-              "CONCEPT_NAME": "Chronic hepatitis C",
+              "CONCEPT_CODE": "34881000119105",
+              "CONCEPT_ID": 44782775,
+              "CONCEPT_NAME": "Peripheral vascular disease associated with another disorder",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -203,9 +203,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "57339008",
-              "CONCEPT_ID": 4238978,
-              "CONCEPT_NAME": "Chronic lobular hepatitis",
+              "CONCEPT_CODE": "400047006",
+              "CONCEPT_ID": 321052,
+              "CONCEPT_NAME": "Peripheral vascular disease",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -218,9 +218,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "79720007",
-              "CONCEPT_ID": 201613,
-              "CONCEPT_NAME": "Chronic nonalcoholic liver disease",
+              "CONCEPT_CODE": "399957001",
+              "CONCEPT_ID": 317309,
+              "CONCEPT_NAME": "Peripheral arterial occlusive disease",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -233,9 +233,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "41889008",
-              "CONCEPT_ID": 199867,
-              "CONCEPT_NAME": "Chronic persistent hepatitis",
+              "CONCEPT_CODE": "12237231000119100",
+              "CONCEPT_ID": 36712807,
+              "CONCEPT_NAME": "Pain at rest of right lower limb co-occurrent and due to atherosclerosis",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -248,9 +248,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "10295004",
-              "CONCEPT_ID": 4012113,
-              "CONCEPT_NAME": "Chronic viral hepatitis",
+              "CONCEPT_CODE": "12237111000119100",
+              "CONCEPT_ID": 36712805,
+              "CONCEPT_NAME": "Pain at rest of left lower limb co-occurrent and due to atherosclerosis",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -263,9 +263,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "235869004",
-              "CONCEPT_ID": 192240,
-              "CONCEPT_NAME": "Chronic viral hepatitis B with hepatitis D",
+              "CONCEPT_CODE": "428171009",
+              "CONCEPT_ID": 4325344,
+              "CONCEPT_NAME": "Pain at rest due to peripheral vascular disease",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -278,9 +278,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "186639003",
-              "CONCEPT_ID": 439674,
-              "CONCEPT_NAME": "Chronic viral hepatitis B without delta-agent",
+              "CONCEPT_CODE": "792854004",
+              "CONCEPT_ID": 37312520,
+              "CONCEPT_NAME": "Ischemic foot ulcer due to atherosclerosis of artery of lower limb",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -293,9 +293,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "435101000124104",
-              "CONCEPT_ID": 763021,
-              "CONCEPT_NAME": "Chronic viral hepatitis C with hepatic coma",
+              "CONCEPT_CODE": "12237191000119100",
+              "CONCEPT_ID": 36712806,
+              "CONCEPT_NAME": "Intermittent claudication of right lower limb co-occurrent and due to atherosclerosis",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -308,9 +308,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "266468003",
-              "CONCEPT_ID": 194692,
-              "CONCEPT_NAME": "Cirrhosis - non-alcoholic",
+              "CONCEPT_CODE": "12237071000119100",
+              "CONCEPT_ID": 36717286,
+              "CONCEPT_NAME": "Intermittent claudication of left lower limb co-occurrent and due to atherosclerosis",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -323,9 +323,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "197279005",
-              "CONCEPT_ID": 4059284,
-              "CONCEPT_NAME": "Cirrhosis and chronic liver disease",
+              "CONCEPT_CODE": "12236951000119100",
+              "CONCEPT_ID": 36717006,
+              "CONCEPT_NAME": "Intermittent claudication of bilateral lower limbs co-occurrent and due to atherosclerosis",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -338,9 +338,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "19943007",
-              "CONCEPT_ID": 4064161,
-              "CONCEPT_NAME": "Cirrhosis of liver",
+              "CONCEPT_CODE": "792845002",
+              "CONCEPT_ID": 37312529,
+              "CONCEPT_NAME": "Intermittent claudication due to atherosclerosis of artery of limb",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -353,9 +353,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "235856003",
-              "CONCEPT_ID": 194984,
-              "CONCEPT_NAME": "Disease of liver",
+              "CONCEPT_CODE": "63491006",
+              "CONCEPT_ID": 442774,
+              "CONCEPT_NAME": "Intermittent claudication",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -368,9 +368,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1092801000119100",
-              "CONCEPT_ID": 46273476,
-              "CONCEPT_NAME": "Hepatic ascites co-occurrent with chronic active hepatitis due to toxic liver disease",
+              "CONCEPT_CODE": "39823006",
+              "CONCEPT_ID": 321882,
+              "CONCEPT_NAME": "Generalized atherosclerosis",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -383,9 +383,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1085021000119100",
-              "CONCEPT_ID": 46269835,
-              "CONCEPT_NAME": "Hepatic ascites due to chronic alcoholic hepatitis",
+              "CONCEPT_CODE": "15649901000119100",
+              "CONCEPT_ID": 36717279,
+              "CONCEPT_NAME": "Gangrene of right lower limb due to atherosclerosis",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -398,9 +398,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "186624004",
-              "CONCEPT_ID": 439675,
-              "CONCEPT_NAME": "Hepatic coma due to acute hepatitis B with delta agent",
+              "CONCEPT_CODE": "792843009",
+              "CONCEPT_ID": 37312531,
+              "CONCEPT_NAME": "Gangrene of limb due to atherosclerosis of artery of limb",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -413,9 +413,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "424340000",
-              "CONCEPT_ID": 4308946,
-              "CONCEPT_NAME": "Hepatic coma due to chronic hepatitis B",
+              "CONCEPT_CODE": "15649991000119100",
+              "CONCEPT_ID": 36712963,
+              "CONCEPT_NAME": "Gangrene of left lower limb due to atherosclerosis",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -428,9 +428,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "40946000",
-              "CONCEPT_ID": 196029,
-              "CONCEPT_NAME": "Hepatic coma due to viral hepatitis",
+              "CONCEPT_CODE": "37151006",
+              "CONCEPT_ID": 134380,
+              "CONCEPT_NAME": "Erythromelalgia",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -443,9 +443,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "62484002",
-              "CONCEPT_ID": 4267417,
-              "CONCEPT_NAME": "Hepatic fibrosis",
+              "CONCEPT_CODE": "230730001",
+              "CONCEPT_ID": 432346,
+              "CONCEPT_NAME": "Dissection of vertebral artery",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -458,9 +458,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "235901004",
-              "CONCEPT_ID": 4340948,
-              "CONCEPT_NAME": "Hepatic fibrosis with hepatic sclerosis",
+              "CONCEPT_CODE": "713029000",
+              "CONCEPT_ID": 37016882,
+              "CONCEPT_NAME": "Dissection of thoracoabdominal aorta",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -473,9 +473,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "17890003",
-              "CONCEPT_ID": 194417,
-              "CONCEPT_NAME": "Hepatic infarction",
+              "CONCEPT_CODE": "233994002",
+              "CONCEPT_ID": 436136,
+              "CONCEPT_NAME": "Dissection of thoracic aorta",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -488,9 +488,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "87248009",
-              "CONCEPT_ID": 4337543,
-              "CONCEPT_NAME": "Hepatic necrosis",
+              "CONCEPT_CODE": "713036004",
+              "CONCEPT_ID": 37016889,
+              "CONCEPT_NAME": "Dissection of renal artery",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -503,9 +503,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "235899008",
-              "CONCEPT_ID": 4340394,
-              "CONCEPT_NAME": "Hepatic sclerosis",
+              "CONCEPT_CODE": "233999007",
+              "CONCEPT_ID": 201043,
+              "CONCEPT_NAME": "Dissection of iliac artery",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -518,9 +518,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "371067004",
-              "CONCEPT_ID": 4159144,
-              "CONCEPT_NAME": "Hepatopulmonary syndrome",
+              "CONCEPT_CODE": "720626009",
+              "CONCEPT_ID": 37109512,
+              "CONCEPT_NAME": "Dissection of carotid artery",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -533,9 +533,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "128241005",
-              "CONCEPT_ID": 194990,
-              "CONCEPT_NAME": "Inflammatory disease of liver",
+              "CONCEPT_CODE": "710864009",
+              "CONCEPT_ID": 46272492,
+              "CONCEPT_NAME": "Dissection of artery",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -548,9 +548,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "58008004",
-              "CONCEPT_ID": 4240725,
-              "CONCEPT_NAME": "Peliosis hepatis",
+              "CONCEPT_CODE": "308546005",
+              "CONCEPT_ID": 320739,
+              "CONCEPT_NAME": "Dissection of aorta",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -563,9 +563,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "31712002",
-              "CONCEPT_ID": 4135822,
-              "CONCEPT_NAME": "Primary biliary cholangitis",
+              "CONCEPT_CODE": "408666009",
+              "CONCEPT_ID": 4256889,
+              "CONCEPT_NAME": "Dissection of abdominal aorta",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -578,9 +578,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "12368000",
-              "CONCEPT_ID": 4046123,
-              "CONCEPT_NAME": "Secondary biliary cirrhosis",
+              "CONCEPT_CODE": "111354009",
+              "CONCEPT_ID": 199064,
+              "CONCEPT_NAME": "Chronic vascular insufficiency of intestine",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -593,9 +593,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "197321007",
-              "CONCEPT_ID": 4059290,
-              "CONCEPT_NAME": "Steatosis of liver",
+              "CONCEPT_CODE": "698816006",
+              "CONCEPT_ID": 44782819,
+              "CONCEPT_NAME": "Chronic occlusion of artery of extremity",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -608,9 +608,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "197361008",
-              "CONCEPT_ID": 4059299,
-              "CONCEPT_NAME": "Toxic liver disease with chronic active hepatitis",
+              "CONCEPT_CODE": "12236991000119100",
+              "CONCEPT_ID": 35611566,
+              "CONCEPT_NAME": "Bilateral lower limb atherosclerosis pain at rest co-occurrent and due to atherosclerosis",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -623,9 +623,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "197359004",
-              "CONCEPT_ID": 4059298,
-              "CONCEPT_NAME": "Toxic liver disease with chronic persistent hepatitis",
+              "CONCEPT_CODE": "15649941000119100",
+              "CONCEPT_ID": 35615028,
+              "CONCEPT_NAME": "Bilateral atherosclerosis of lower limbs with gangrene",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -638,9 +638,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "197362001",
-              "CONCEPT_ID": 4058695,
-              "CONCEPT_NAME": "Toxic liver disease with fibrosis and cirrhosis of liver",
+              "CONCEPT_CODE": "45281005",
+              "CONCEPT_ID": 195834,
+              "CONCEPT_NAME": "Atherosclerosis of renal artery",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -653,9 +653,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "737297006",
-              "CONCEPT_ID": 42537742,
-              "CONCEPT_NAME": "Transplanted liver present",
+              "CONCEPT_CODE": "442701004",
+              "CONCEPT_ID": 40484551,
+              "CONCEPT_NAME": "Atherosclerosis of nonautologous biological bypass graft of limb",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -668,9 +668,9 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "111891008",
-              "CONCEPT_ID": 198683,
-              "CONCEPT_NAME": "Viral hepatitis B without hepatic coma",
+              "CONCEPT_CODE": "709584004",
+              "CONCEPT_ID": 46271459,
+              "CONCEPT_NAME": "Atherosclerosis of bypass graft of lower limb",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -683,9 +683,189 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "111896003",
-              "CONCEPT_ID": 193693,
-              "CONCEPT_NAME": "Viral hepatitis without hepatic coma",
+              "CONCEPT_CODE": "442439008",
+              "CONCEPT_ID": 40483538,
+              "CONCEPT_NAME": "Atherosclerosis of bypass graft of limb",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CODE": "442693003",
+              "CONCEPT_ID": 40484541,
+              "CONCEPT_NAME": "Atherosclerosis of autologous vein bypass graft of limb",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CODE": "724440007",
+              "CONCEPT_ID": 37110250,
+              "CONCEPT_NAME": "Atherosclerosis of artery of lower limb",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CODE": "441574008",
+              "CONCEPT_ID": 40479625,
+              "CONCEPT_NAME": "Atherosclerosis of artery",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CODE": "51274000",
+              "CONCEPT_ID": 315558,
+              "CONCEPT_NAME": "Atherosclerosis of arteries of the extremities",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CODE": "81817003",
+              "CONCEPT_ID": 312934,
+              "CONCEPT_NAME": "Atherosclerosis of aorta",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CODE": "72092001",
+              "CONCEPT_ID": 318443,
+              "CONCEPT_NAME": "Arteriosclerotic vascular disease",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CODE": "49176002",
+              "CONCEPT_ID": 317577,
+              "CONCEPT_NAME": "Arteriosclerotic gangrene",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CODE": "67362008",
+              "CONCEPT_ID": 317585,
+              "CONCEPT_NAME": "Aortic aneurysm",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CODE": "433068007",
+              "CONCEPT_ID": 443622,
+              "CONCEPT_NAME": "Aneurysm of thoracic aorta",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CODE": "432119003",
+              "CONCEPT_ID": 4332246,
+              "CONCEPT_NAME": "Aneurysm",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CODE": "75878002",
+              "CONCEPT_ID": 321314,
+              "CONCEPT_NAME": "Abdominal aortic aneurysm without rupture",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CODE": "233985008",
+              "CONCEPT_ID": 198177,
+              "CONCEPT_NAME": "Abdominal aortic aneurysm",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",

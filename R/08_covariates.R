@@ -23,16 +23,34 @@
 message("\n== covariate overlap with 1A (comorbidities + performance status) ==")
 
 # code -> covariate cohort name (filename with "_"->" ") -> human label
+#
+# The last 11 rows (MI onward) exist for Charlson CCI scoring
+# (R/11_baseline_characterization.R, R/charlsonScore.R) — sourced from
+# Fortin/Reps/Ryan 2022 (BMC Med Inform Decis Mak 22:225, 2023 correction
+# 23:110), the standard OHDSI-authored SNOMED translation of the Quan 2005
+# Charlson coding algorithm — but they double as their own comorbidity rows
+# here for free.
 comorbMap <- tibble::tribble(
-  ~code,      ~cohortName,                 ~label,
-  "T2DM",     "Type 2 Diabetes",           "Type 2 diabetes mellitus",
-  "HTN",      "Hypertension",              "Hypertension",
-  "CVD",      "Cardiovascular Disease",    "Cardiovascular disease",
-  "Stroke",   "Stroke",                    "Stroke",
-  "VTE",      "Venous Thrombotic Events",  "Venous thromboembolic events",
-  "LiverDx",  "Liver Disease",             "Liver disease",
-  "RenalDx",  "Renal Disease",             "Renal disease",
-  "Dementia", "Dementia",                  "Dementia"
+  ~code,          ~cohortName,                   ~label,
+  "T2DM",         "Type 2 Diabetes",             "Type 2 diabetes mellitus",
+  "HTN",          "Hypertension",                "Hypertension",
+  "CVD",          "Cardiovascular Disease",       "Cardiovascular disease",
+  "Stroke",       "Stroke",                       "Stroke",
+  "VTE",          "Venous Thrombotic Events",     "Venous thromboembolic events",
+  "LiverDx",      "Liver Disease",                "Liver disease (mild)",
+  "RenalDx",      "Renal Disease",                "Renal disease",
+  "Dementia",     "Dementia",                     "Dementia",
+  "MI",           "Myocardial Infarction",        "Myocardial infarction",
+  "CHF",          "Congestive Heart Failure",     "Congestive heart failure",
+  "PVD",          "Peripheral Vascular Disease",  "Peripheral vascular disease",
+  "COPD",         "Chronic Pulmonary Disease",    "Chronic pulmonary disease",
+  "RheumDx",      "Rheumatic Disease",            "Rheumatic disease",
+  "PUD",          "Peptic Ulcer Disease",         "Peptic ulcer disease",
+  "DMComplic",    "Diabetes With Complications",  "Diabetes with chronic complications",
+  "Hemiplegia",   "Hemiplegia Paraplegia",        "Hemiplegia or paraplegia",
+  "AIDS",         "AIDS HIV",                     "AIDS/HIV",
+  "LiverDxSevere","Liver Disease Severe",         "Liver disease (moderate/severe)",
+  "MetSolidTumor","Metastatic Solid Tumor",        "Metastatic solid tumor"
 )
 # performance-status strata (derived from the reserved ECOG slots 24-27)
 psLabels <- c("PS1" = "Performance status = 0", "PS2" = "Performance status = 1",
