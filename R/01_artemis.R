@@ -138,12 +138,13 @@ if (nrow(episodes) > 0L) {
   writeArtemisEpisodes(connection = connection,
                        executionSettings = executionSettings,
                        episodes = episodes)
-  saveRDS(episodes, file.path(settings$outputFolder, "episodes.rds"))
+  saveState("episodes", episodes, path = file.path(settings$outputFolder, "episodes.rds"))
 }
 
 # --- Regimen classification table (lens columns -> work schema for step 03) -
 regimenClass <- as.data.frame(regRef[, c("regName", "regCode",
   "class_eau", "class_hemonc_mbc", "class_any")])
+saveState("regimenClass", regimenClass)
 DatabaseConnector::insertTable(
   connection = connection, databaseSchema = settings$workDatabaseSchema,
   tableName = settings$regimenClassTable, dropTableIfExists = TRUE,

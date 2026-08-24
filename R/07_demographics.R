@@ -18,6 +18,8 @@
 
 message("\n== demographics (age / sex / index year per cohort) ==")
 
+mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
+
 demo <- querySqlFile(connection, "demographics.sql",
   work_database_schema = settings$workDatabaseSchema,
   cohort_table         = settings$cohortTable,

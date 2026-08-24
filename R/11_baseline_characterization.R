@@ -48,6 +48,9 @@
 
 message("\n== (k) baseline characterization: vitals + Charlson CCI ==")
 
+mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
+cohortNames  <- loadState("cohortNames", "R/03_main_cohorts.R")
+
 nameMap <- dplyr::select(mainManifest, cohort_definition_id = "cohortId",
                          cohort_name = "cohortName")
 
@@ -131,7 +134,9 @@ charlsonMap <- tibble::tribble(
 
 t1Id <- cohortIdByName(mainManifest, cohortNames[["T1"]])
 
-if (!exists("covSet") || is.null(covSet) || nrow(covSet) == 0L) {
+covSet <- tryCatch(loadState("covSet", "R/08_covariates.R"), error = function(e) NULL)
+
+if (is.null(covSet) || nrow(covSet) == 0L) {
 
   message("  no comorbidity cohorts generated (see step (h)) — skipping Charlson CCI.")
 

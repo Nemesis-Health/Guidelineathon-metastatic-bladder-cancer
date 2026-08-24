@@ -17,6 +17,9 @@
 
 message("\n== (j) guideline relevance + adherence ==")
 
+mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
+cohortNames  <- loadState("cohortNames", "R/03_main_cohorts.R")
+
 idsByCodes <- function(codes)
   as.integer(vapply(codes, function(cd) cohortIdByName(mainManifest, cohortNames[[cd]]),
                      integer(1)))

@@ -52,6 +52,12 @@
 
 message("\n== (l) treatment patterns ==")
 
+mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
+cohortNames  <- loadState("cohortNames", "R/03_main_cohorts.R")
+regimenClass <- loadState("regimenClass", "R/01_artemis.R")
+episodes     <- loadState("episodes", "R/01_artemis.R",
+                          path = file.path(settings$outputFolder, "episodes.rds"))
+
 if (is.null(episodes) || nrow(episodes) == 0L) {
 
   message("  no ARTEMIS episodes — skipping treatment patterns.")

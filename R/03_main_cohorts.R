@@ -68,6 +68,7 @@ cohortNames <- c(
   T6d = "T6d PD-L1 initiated mBC",
   T6e = "T6e Trt initiated other trt mBC",   # empty by construction (class_any has no "other_recommended")
   T6f = "T6f Trt initiated other mBC")       # class_any catch-all (ingredient-based "other")
+saveState("cohortNames", cohortNames)
 lensCode <- c(eau = "4", hemonc_mbc = "5", any = "6")
 labCode  <- c(ev_pembro = "a", cisplatin = "b", carboplatin = "c",
               pdl1_mono = "d", other_recommended = "e", other = "f")
@@ -171,6 +172,7 @@ message("Full manifest: ", nrow(fullSet), " cohorts (",
 
 cohortCounts <- generateCohorts(connection, fullSet, dropTables = TRUE)
 mainManifest <<- fullSet
+saveState("mainManifest", mainManifest)
 
 # Censor small cells (same rule as steps 05/06): subject counts of 1..(minCell-1)
 # -> -minCell, and blank the paired entry count. A true 0 stays 0.

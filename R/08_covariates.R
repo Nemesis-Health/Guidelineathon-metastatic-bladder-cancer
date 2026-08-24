@@ -57,6 +57,8 @@ psLabels <- c("PS1" = "Performance status = 0", "PS2" = "Performance status = 1"
               "PS2+" = "Performance status >= 2", "PS 0-2" = "Performance status 0-2",
               "PS 0-1" = "Performance status 0-1")
 
+mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
+
 cohort1Id <- cohortIdByName(mainManifest, "T1 Metastatic bladder cancer")
 nT1 <- as.integer(querySqlFile(connection, "n_target1a.sql",
   work_database_schema = settings$workDatabaseSchema,
@@ -75,6 +77,7 @@ comorbRows <- tibble::tibble()
 if (nrow(present)) {
   covSet <- buildCohortSet(
     jsonCohorts = covJson[covJson$cohortName %in% present$cohortName, ], startId = 1L)
+  saveState("covSet", covSet)
   generateCohorts(connection, covSet, dropTables = TRUE,
                   cohortTable = settings$covariateCohortTable)
 
