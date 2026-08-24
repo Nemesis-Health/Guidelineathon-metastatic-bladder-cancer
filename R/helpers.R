@@ -91,8 +91,21 @@ generateCohorts <- function(connection, cohortDefinitionSet, dropTables = TRUE,
                    by = "cohortId")
 }
 
+# --- fail loudly on a NULL/missing SqlRender parameter, instead of letting
+# SqlRender silently substitute it as an empty string (e.g. a NULL
+# `settings$someKey` turning `-@some_param` into a bare `-`, which only
+# surfaces later as a cryptic DBMS-specific syntax error) ------------------
+.checkSqlRenderParams <- function(file, params) {
+  bad <- names(params)[vapply(params, function(x) length(x) == 0L || is.na(x)[1], logical(1))]
+  if (length(bad) > 0L)
+    stop("querySqlFile/runSqlFile(\"", file, "\"): parameter(s) ",
+         paste(bad, collapse = ", "), " are NULL/NA — check that `settings` ",
+         "defines them (see run.R) before sourcing this step.", call. = FALSE)
+}
+
 # --- render + translate + execute a .sql file ------------------------------
 runSqlFile <- function(connection, file, ...) {
+  .checkSqlRenderParams(file, list(...))
   sql <- paste(readLines(file.path(sqlDir, file), warn = FALSE), collapse = "\n")
   sql <- SqlRender::render(sql, ..., warnOnMissingParameters = FALSE)
   sql <- SqlRender::translate(sql, targetDialect = .getDbms(connection))
@@ -101,6 +114,7 @@ runSqlFile <- function(connection, file, ...) {
 
 # --- render + translate + query a .sql file --------------------------------
 querySqlFile <- function(connection, file, ...) {
+  .checkSqlRenderParams(file, list(...))
   sql <- paste(readLines(file.path(sqlDir, file), warn = FALSE), collapse = "\n")
   sql <- SqlRender::render(sql, ..., warnOnMissingParameters = FALSE)
   sql <- SqlRender::translate(sql, targetDialect = .getDbms(connection))
