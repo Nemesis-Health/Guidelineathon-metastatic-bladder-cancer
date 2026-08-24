@@ -15,6 +15,7 @@
 #   (i) outcomes: DTI / OS / TTNT / TTD / TFI -> R/09_outcomes.R
 #   (j) guideline relevance + adherence       -> R/10_adherence.R
 #   (k) baseline vitals + Charlson CCI        -> R/11_baseline_characterization.R
+#   (l) treatment patterns by LoT             -> R/12_treatment_patterns.R
 #
 # Use this once ARTEMIS is sorted (see README.md) if you already have
 # diagnostics results from run_diagnostics_only.R and just need the
@@ -27,7 +28,7 @@
 
 for (p in c("DatabaseConnector", "SqlRender", "CohortGenerator", "CirceR",
             "ARTEMIS", "dplyr", "tibble", "readr", "cli", "rlang", "stringr",
-            "jsonlite")) {
+            "jsonlite", "ggplot2", "scales")) {
   if (!requireNamespace(p, quietly = TRUE))
     stop("Required package not installed: ", p, call. = FALSE)
 }
@@ -134,6 +135,7 @@ source("R/08_covariates.R")         # covariate overlap with 1A (comorbidities +
 source("R/09_outcomes.R")           # outcomes: DTI / OS / TTNT / TTD / TFI
 source("R/10_adherence.R")          # guideline relevance + adherence roll-up
 source("R/11_baseline_characterization.R") # weight/height/BMI + Charlson CCI
+source("R/12_treatment_patterns.R") # treatment patterns by line of therapy
 
 message("\n=== Done. Results under ", settings$outputFolder, "/eligibility/ ===")
 
