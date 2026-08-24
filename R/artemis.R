@@ -395,7 +395,9 @@ buildEpisodeTable <- function(processedEras,
       episode_id = startEpisodeId + dplyr::row_number() - 1L
     ) |>
     dplyr::mutate(
-      person_id                 = as.integer(.data$personID),
+      # kept character, not as.integer(): some sites' person_id exceeds int32
+      # and silently becomes NA -- retyped to BIGINT in writeArtemisEpisodes()
+      person_id                 = .data$personID,
       episode_concept_id        = 32941L,
       episode_start_date        = .data$refDate + as.integer(.data$t_start),
       episode_start_datetime    = NA_real_,
@@ -436,7 +438,9 @@ buildEpisodeTable <- function(processedEras,
 #' @param connection A `DatabaseConnector` connection object.
 #' @param executionSettings A [OsmExecutionSettings][createExecutionSettings()]
 #'   object with `artemisSettings` configured.
-#' @param episodes A data frame of episodes in OMOP format.
+#' @param episodes A data frame of episodes in OMOP format. `person_id` is
+#'   character (see [buildEpisodeTable()]) and is retyped to `BIGINT` in the
+#'   database as part of writing it, not narrowed in R beforehand.
 #' @param dropExisting If `TRUE` (default), drops the existing episode table
 #'   before writing.
 #'
@@ -459,20 +463,51 @@ writeArtemisEpisodes <- function(connection,
   if (!is.data.frame(episodes))
     stop("`episodes` must be a data frame.", call. = FALSE)
 
+  stageTable <- paste0(executionSettings$artemisSettings$episodeTable, "_staging")
+
+  # stage as character, then rebuild with person_id CAST to BIGINT
   DatabaseConnector::insertTable(
     connection     = connection,
     databaseSchema = executionSettings$workDatabaseSchema,
-    tableName      = executionSettings$artemisSettings$episodeTable,
+    tableName      = stageTable,
     data           = as.data.frame(episodes),
-    dropTableIfExists = dropExisting,
+    dropTableIfExists = TRUE,
     createTable       = TRUE,
     camelCaseToSnakeCase = FALSE
   )
 
+  episodeCols <- paste(
+    "episode_id", "CAST(person_id AS BIGINT) AS person_id",
+    "episode_concept_id", "episode_start_date", "episode_start_datetime",
+    "episode_end_date", "episode_end_datetime", "episode_parent_id",
+    "episode_number", "episode_object_concept_id", "episode_type_concept_id",
+    "episode_source_value", "episode_source_concept_id",
+    sep = ", ")
+
+  sql <- if (dropExisting) {
+    "DROP TABLE IF EXISTS @schema.@final;
+     SELECT @cols INTO @schema.@final FROM @schema.@stage;"
+  } else {
+    "INSERT INTO @schema.@final
+       (episode_id, person_id, episode_concept_id, episode_start_date,
+        episode_start_datetime, episode_end_date, episode_end_datetime,
+        episode_parent_id, episode_number, episode_object_concept_id,
+        episode_type_concept_id, episode_source_value, episode_source_concept_id)
+     SELECT @cols FROM @schema.@stage;"
+  }
+  sql <- paste(sql, "DROP TABLE @schema.@stage;")
+  sql <- SqlRender::render(sql,
+                           schema = executionSettings$workDatabaseSchema,
+                           final  = executionSettings$artemisSettings$episodeTable,
+                           stage  = stageTable, cols = episodeCols,
+                           warnOnMissingParameters = FALSE)
+  sql <- SqlRender::translate(sql, targetDialect = .getDbms(connection))
+  DatabaseConnector::executeSql(connection, sql)
+
   cli::cli_alert_success(
     "Wrote {nrow(episodes)} episodes to \\
      {executionSettings$workDatabaseSchema}.\\
-     {executionSettings$artemisSettings$episodeTable}"
+     {executionSettings$artemisSettings$episodeTable} (person_id retyped to BIGINT)"
   )
 
   invisible(NULL)
@@ -526,7 +561,7 @@ writeArtemisEpisodes <- function(connection,
 .emptyEpisodeTable <- function() {
   tibble::tibble(
     episode_id                = integer(0),
-    person_id                 = integer(0),
+    person_id                 = character(0),  # matches buildEpisodeTable()'s populated case
     episode_concept_id        = integer(0),
     episode_start_date        = as.Date(character(0)),
     episode_start_datetime    = numeric(0),
