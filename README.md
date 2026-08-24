@@ -163,14 +163,15 @@ To see what you already have first:
 
 ```r
 for (p in c("DatabaseConnector", "CirceR", "CohortGenerator", "SqlRender",
-            "dplyr", "tibble", "readr", "cli", "rlang", "stringr", "ARTEMIS"))
+            "dplyr", "tibble", "readr", "cli", "rlang", "stringr", "ARTEMIS",
+            "jsonlite", "ggplot2", "scales"))
   cat(sprintf("%-18s %s\n", p,
       tryCatch(as.character(packageVersion(p)), error = function(e) "MISSING")))
 ```
 
-`run.R` checks all eleven are present and stops with a clear message if any is
-missing. (ARTEMIS is the exception to "newer is fine": use the commit above,
-which is the tested one — see the ARTEMIS note.)
+`run.R` checks all fourteen are present and stops with a clear message if any
+is missing. (ARTEMIS is the exception to "newer is fine": use the commit
+above, which is the tested one — see the ARTEMIS note.)
 
 Either way, install a database driver (above) and set up Python ≥ 3.12 for
 ARTEMIS.
@@ -252,8 +253,19 @@ At the end of a run, results are packaged into two archives:
 | `04_lab_ranges.R` | (d) lab-value distribution + per-unit QC summary on the main cohorts. |
 | `05_eligibility_coverage.R` | eligibility-table counts and each input crossed with Target 1A (tested / passed). |
 | `06_artemis_assessment.R` | ARTEMIS assessment: alignment stats, patient/exposure coverage, per-drug and per-regimen frequencies, uncaptured exposures — all from the in-memory `artemisResult`. |
+| `07_demographics.R` | Per-cohort demographic strata (age group / sex / index year, with `pct`) + continuous age summary. |
+| `08_covariates.R` | Comorbidity + performance-status overlap with Target 1A; also generates the comorbidity cohorts step (k) scores as Charlson CCI components. |
+| `09_outcomes.R` | Outcomes: DTI (Target 1A), OS (every cohort), TTNT/TTD/TTD-LoT2/TFI (treatment-initiated cohorts) — KM + 1/2/3-yr milestones, stratified by age group / sex / index year. |
+| `10_adherence.R` | Guideline relevance (per-cohort % of Cohort 1) + adherence roll-up (per eligibility leaf: adherent / alt-guideline / indicated-other / non-indicated / no-treatment). |
+| `11_baseline_characterization.R` | Weight/height/BMI (per cohort) + Charlson Comorbidity Index (Cohort 1). |
+| `12_treatment_patterns.R` | Regimen + classification-category distribution by line of therapy, % untreated, Sankey-ready LoT1→LoT2→LoT3 pathway counts. |
 | `helpers.R` | Cohort-generation + SQL helpers (thin wrappers over CirceR/CohortGenerator/SqlRender). |
 | `artemis.R` | The ARTEMIS pipeline wrapper: `runArtemis()`, `buildEpisodeTable()`, `writeArtemisEpisodes()`. (Coverage/uncaptured analytics are computed in `06_artemis_assessment.R`.) |
+| `timeToEvent.R` | Generic time-to-event engine (ported from `onco-study-modules`): `computeTimeToEvent()` (KM via `survival`/`broom`) + `computeTimeDiffStats()` (non-censored descriptive stats). Used by step 09. |
+| `survivalMilestones.R` | `extractSurvivalMilestones()` — reads KM survival probabilities at fixed day milestones (365/730/1095). Used by step 09. |
+| `eventBuilders.R` | Per-outcome event tibbles for step 09/12: `fetchDeathEvents()` (OS), `buildLineOfTherapyEvents()` (TTNT/TTD/TTD-LoT2, from ARTEMIS episodes), `buildDtiEvents()` (DTI), `anchorEpisodes()` (restricts episode ranking to on/after each subject's own index — see Known gaps), `combineEarliestEvent()` (death-aware TTNT/TTD/TFI). |
+| `guidelineAdherence.R` | `computeGuidelineRelevance()` / `computeAdherenceRollup()` — pure set-math for step 10; see that file's header for why the set logic differs from `onco-study-modules`' original. |
+| `charlsonScore.R` | `computeCharlsonScore()` / `charlsonComponents()`, ported from `onco-study-modules` (pure math, no DB dependency). Used by step 11. |
 | `vendor_utils.R` | `.getDbms()` + `%||%` (helpers used by the ARTEMIS code). |
 | `setup.R` | **Do not edit.** Validates the `run.R` CONFIG block and builds the derived paths + `executionSettings` object the steps read. |
 
@@ -270,18 +282,40 @@ At the end of a run, results are packaged into two archives:
 | `lab_cohort_counts.sql` | Whole-population counts of `bc_lab_cohort` per test-id. |
 | `eligibility_input_coverage.sql` | Each input × Target 1A: `n_tested` (measured) + `n_passed` (criterion met). |
 | `n_target1a.sql` | Target 1A denominator. |
+| `outcome_target_data.sql` | Cohort membership + index/end dates for a given cohort-id list. Used by steps 09/10/11/12 (generic — the `@target_cohort_ids` list is whatever the caller needs). |
+| `outcome_strata.sql` | Per-subject age group / sex / index year (row-level counterpart of `demographics.sql`'s bucketing). Used by step 09. |
+| `fetch_death_events.sql` | Death dates for subjects in a set of cohorts. Used by `fetchDeathEvents()` (step 09, OS outcome). |
+| `demographics_continuous.sql` | Per-cohort continuous age summary (mean/SD/median/IQR/min/max), portable percentile technique (no `PERCENTILE_CONT`, same as `lab_value_distribution_portable.sql`). Used by step 07. |
+| `baseline_vitals.sql` | Weight (kg) / height (cm) / BMI, closest measurement to each cohort's index within `settings$vitalsWindowDays`. Used by step 11. |
+| `metastasis_marker.sql` | Subjects with a metastasis measurement among a given concept-id list (used with `Target_1A.json`'s own metastasis ConceptSet, not a hardcoded list). Used by step 11 for Charlson's `metastatic_solid_tumor`. |
 
 ### `cohorts/` — cohort artefacts
-`00_ARTEMIS/` scan cohort · `01_Target/` Target 1A + the L01 comparison cohort · `02_Covariate/`
-the ECOG cohorts (`ECOG_0`, `ECOG_1`, `ECOG_2`, `ECOG_3plus`) and condition cohorts
-(`Peripheral_Neuropathy`, `Significant_Skin_Disorders`, `Audiometric_Hearing_Loss`,
-`Polyuria`, `Polydipsia`, `Anticoagulant_Therapy`, `Liver_Metastasis`,
-`Gilberts_Syndrome`) · `extras/` `regimen_reference.csv`, `trial_reference.yaml`.
+`00_ARTEMIS/` scan cohort · `01_Target/` Target 1A + the L01 comparison cohort ·
+`02_Covariate/` two groups of JSONs, both read by `08_covariates.R`:
+- **Eligibility-input covariates** (feed `bc_lab_cohort` test-id slots, step (b)):
+  the ECOG cohorts (`ECOG_0`, `ECOG_1`, `ECOG_2`, `ECOG_3plus`) and condition
+  cohorts (`Peripheral_Neuropathy`, `Significant_Skin_Disorders`,
+  `Audiometric_Hearing_Loss`, `Polyuria`, `Polydipsia`, `Anticoagulant_Therapy`,
+  `Liver_Metastasis`, `Gilberts_Syndrome`).
+- **Comorbidity covariates** (feed `covariate_overlap.csv` +, for a subset,
+  Charlson CCI scoring in step (k) — see `08_covariates.R`'s `comorbMap`):
+  `Type_2_Diabetes`, `Hypertension`, `Cardiovascular_Disease`, `Stroke`,
+  `Venous_Thrombotic_Events`, `Renal_Disease`, `Dementia`, and — added for
+  Charlson CCI, sourced from Fortin/Reps/Ryan 2022/2023 (see Known gaps) —
+  `Myocardial_Infarction`, `Congestive_Heart_Failure`,
+  `Peripheral_Vascular_Disease`, `Chronic_Pulmonary_Disease`,
+  `Rheumatic_Disease`, `Peptic_Ulcer_Disease`, `Diabetes_With_Complications`,
+  `Hemiplegia_Paraplegia`, `AIDS_HIV`,
+  `Liver_Disease` (mild tier) and `Liver_Disease_Severe` (moderate/severe
+  tier — `Liver_Disease.json`'s concept set was corrected against the same
+  source; it previously used an ad hoc 3-concept list that didn't match the
+  standard Charlson mild-liver-disease definition). `Metastatic_Solid_Tumor`
+  also exists (feeds `covariate_overlap.csv`) but is **not** used for CCI's
+  `metastatic_solid_tumor` — see Known gaps for why step (k) derives that
+  one from `Target_1A.json`'s own metastasis marker instead.
 
-Only the eligibility-input covariates are kept here; the pure comorbidity /
-characterisation covariates (e.g. hypertension, diabetes, smoking, metastasis
-sites) were removed — characterisation is a downstream stage this project does
-not run.
+`extras/` `regimen_reference.csv`, `trial_reference.yaml` (unused — see Known
+gaps, generalizability).
 
 ### `results/` — outputs (`diagnostics/`, `eligibility/`, git-ignored)
 
@@ -289,7 +323,7 @@ not run.
 
 ## Outputs (`results/eligibility/`)
 
-A full run writes **fourteen CSVs** to `results/eligibility/` (created on first
+A full run writes several dozen CSVs to `results/eligibility/` (created on first
 write; the folder is git-ignored). These aggregate tables are the only
 artefacts the main pipeline exports — no row-level data is written. Every file
 is UTF-8, comma-separated,
@@ -322,7 +356,22 @@ Quick index (detailed schema for each below):
 | `artemis_episodes_per_patient.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A | cohort × episode-count value |
 | `artemis_uncaptured_drugs.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A | cohort × anticancer ingredient (uncaptured) |
 | `demographics.csv` | `07_demographics.R` | Per cohort | cohort × characteristic × stratum |
+| `demographics_age_continuous.csv` | `07_demographics.R` | Per cohort | cohort (n/mean/SD/median/IQR/min/max of age) |
 | `covariate_overlap.csv` | `08_covariates.R` | Target 1A | covariate (comorbidity / PS stratum) × cohort 1A |
+| `outcome_dti_summary.csv` / `_histogram.csv` | `09_outcomes.R` | Target 1A | stratum type × stratum value (+ time bin for histogram) |
+| `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_summary.csv` / `_histogram.csv` | `09_outcomes.R` | os: every cohort (T1/T2a-e/T3a-e/T4-6a-f); ttnt/ttd/ttd_lot2/tfi: treatment-initiated cohorts only (T3a-e/T4-6a-f) | cohort × stratum type × stratum value (+ time bin for histogram) |
+| `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_km.csv` | `09_outcomes.R` | same as above | cohort × stratum type × stratum value × KM step |
+| `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_median_survival.csv` | `09_outcomes.R` | same as above | cohort × stratum type × stratum value |
+| `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_milestones.csv` | `09_outcomes.R` | same as above | cohort × stratum type × stratum value × milestone (365/730/1095d) |
+| `guideline_relevance.csv` | `10_adherence.R` | T1/T2a-e/T3a-e/T4-6a-f | cohort |
+| `guideline_adherence.csv` | `10_adherence.R` | Eligible (T2) subjects per leaf | leaf × category (adherent/alt-guideline/indicated-other/non-indicated/no-treatment) |
+| `baseline_vitals.csv` | `11_baseline_characterization.R` | Per cohort | cohort × variable (weight_kg/height_cm/bmi) |
+| `charlson_cci.csv` | `11_baseline_characterization.R` | Target 1A | CCI category (0 / 1-2 / 3-4 / >=5) |
+| `treatment_pattern_untreated.csv` | `12_treatment_patterns.R` | Target 1A | single row |
+| `treatment_pattern_regimen.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | line of therapy × regimen name |
+| `treatment_pattern_category.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | classification lens × line of therapy × category (a-f) |
+| `treatment_pathways.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | LoT1 × LoT2 × LoT3 category combination (`class_eau`, capped at 3 lines) |
+| `treatment_pattern_by_year.csv` | `12_treatment_patterns.R` | Per treated cohort ("mBC initiated base", T3a-e, T4-6a-f) | cohort × lot × index year × lens category × stratum (overall/age_group/sex) |
 
 ### Privacy censoring (applies to every file)
 
@@ -519,7 +568,20 @@ cohort × characteristic × stratum (long/tidy). Age is at `cohort_start_date`
 | `cohort_name` | Cohort name from the run manifest. |
 | `characteristic` | `age_group`, `sex`, or `index_year`. |
 | `stratum` | Category within the characteristic (e.g. `>65`, `Female`, `2019`). |
-| `n_subjects` | Subjects in that cohort × stratum (censored). % is not emitted — derive it against the cohort N (`cohort_counts.csv`, or sum the strata). |
+| `n_subjects` | Subjects in that cohort × stratum (censored). |
+| `pct` | % of that cohort's total N within `characteristic` (e.g. sex's three strata sum to ~100%), computed on the raw pre-censoring count so one censored row doesn't distort the others' denominator; blanked whenever `n_subjects` is censored. |
+
+### `demographics_age_continuous.csv`
+Companion to `demographics.csv`'s categorical `age_group`: age at index as a
+continuous variable per cohort, per the protocol's "mean (SD), minimum,
+maximum, median and IQR."
+
+| Column | Meaning |
+|---|---|
+| `cohort_definition_id`, `cohort_name` | As above. |
+| `n` | Subjects in that cohort (censored). |
+| `mean_age`, `sd_age` | Mean and SD of age at index (blanked when `n` censored). |
+| `min_age`, `lq_age`, `median_age`, `uq_age`, `max_age` | Min, quartiles, median, max (blanked when `n` censored). |
 
 ### `covariate_overlap.csv`
 Descriptive covariates **not** used by the main cohort tree, reported as an
@@ -534,15 +596,278 @@ design (`PS 0-2` includes `PS1`/`PS2`). Comorbidity cohorts are generated into
 
 | Column | Meaning |
 |---|---|
-| `code` | Short code: PS strata (`PS1`, `PS2`, `PS2+`, `PS 0-2`, `PS 0-1`) or comorbidity (`T2DM`, `HTN`, `CVD`, `Stroke`, `VTE`, `LiverDx`, `RenalDx`, `Dementia`). |
+| `code` | Short code: PS strata (`PS1`, `PS2`, `PS2+`, `PS 0-2`, `PS 0-1`) or comorbidity — see `08_covariates.R`'s `comorbMap` for the full list (`T2DM`, `HTN`, `CVD`, `Stroke`, `VTE`, `LiverDx`, `RenalDx`, `Dementia`, plus the Charlson-only additions `MI`, `CHF`, `PVD`, `COPD`, `RheumDx`, `PUD`, `DMComplic`, `Hemiplegia`, `AIDS`, `LiverDxSevere`, `MetSolidTumor`). |
 | `label` | Human-readable description. |
 | `n_1a` | Subjects in cohort 1A (the denominator). |
 | `n_overlap` | 1A subjects meeting the covariate (censored). % is not emitted — it is `n_overlap / n_1a`. |
+
+**Outcome files (all `outcome_*` files, step 09).** DTI runs on Target 1A
+only; OS runs on every main-tree cohort; TTNT/TTD/TTD-LoT2/TFI run only on
+the treatment-initiated cohorts (T3a–e, T4–6a–f), since they are defined
+relative to a line-of-therapy start or discontinuation. Every outcome is run
+once "overall" and once per protocol stratum (age group / sex / index year) —
+one dimension at a time, not crossed. Every file carries
+`cohort_definition_id`, `cohort_name` (Target 1A only for the DTI files), and
+`stratum_type` (`overall`/`age_group`/`sex`/`index_year`) plus the grouping
+column itself when `stratum_type` isn't `overall` (e.g. an `age_group` column
+holding `>65`/`<=65`). Time units are days throughout.
+
+Episode ranking for every line-of-therapy-based event (DTI, TTNT, TTD,
+TTD-LoT2, TFI) is anchored to the relevant index date before ranking
+(`anchorEpisodes()`, `R/eventBuilders.R`) — see Known gaps for why. TTNT, TTD,
+TTD-LoT2, and TFI are all death-aware (`combineEarliestEvent()`): the
+protocol defines each as "... or death, whichever occurs first."
+
+### `outcome_dti_summary.csv`, `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_summary.csv`
+Descriptive statistics of time-to-event, among those with the event (DTI: time
+to first LoT; the rest: censored survival time from `computeTimeToEvent()`).
+
+| Column | Meaning |
+|---|---|
+| `count` | Subjects in that cohort × stratum (censored). |
+| `n_event` | Subjects with the event observed (DTI has none — every DTI row already requires a first LoT). |
+| `min_time`, `c10_time`, `q25_time`/`lq_time`, `median_time`, `q75_time`/`uq_time`, `c90_time`, `max_time` | Time-to-event distribution among events, in days (blanked when `count`/`n_event` is censored). |
+
+### `outcome_dti_histogram.csv`, `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_histogram.csv`
+Binned time-to-event counts (breaks: ⩽−365, −180, −90, −60, −30, 0, 30, 60,
+90, 180, 365, ⩾365 days).
+
+| Column | Meaning |
+|---|---|
+| `time_bin` | Day-range bucket. |
+| `count` | Subjects in that bucket (censored). |
+
+### `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_km.csv`
+Tidy Kaplan-Meier step curve (one row per event/censoring time), from
+`survival::survfit()` via `broom::tidy()`.
+
+| Column | Meaning |
+|---|---|
+| `time` | Days since index. |
+| `estimate`, `conf.low`, `conf.high` | KM survival probability + 95% CI at that step. |
+| `n.risk`, `n.event`, `n.censor` | At-risk / event / censoring counts at that step (censored). |
+| `strata` | `survival`'s own stratum label for the fit (e.g. `age_group=>65`, or `All` when unstratified). |
+
+### `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_median_survival.csv`
+Median survival time with 95% CI, from `summary(survfit(...))$table`.
+
+| Column | Meaning |
+|---|---|
+| `strata` | `survival`'s own stratum label (or `All`). |
+| `n` | Subjects in the fit (censored). |
+| `median`, `lower`, `upper` | Median survival time + 95% CI, in days (blanked when `n` is censored or the median is unreached). |
+
+### `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_milestones.csv`
+KM survival probability read off the step curve at fixed day milestones
+(365/730/1095 — the protocol's 1/2/3-year estimates).
+
+| Column | Meaning |
+|---|---|
+| `strata` | KM stratum label (or `All`). |
+| `milestone` | `365`, `730`, or `1095` (days). |
+| `surv_prob`, `lower`, `upper` | Survival probability + 95% CI at that milestone (blanked when `n_at_risk` is censored). |
+| `n_at_risk` | Subjects still at risk at that milestone (censored). |
+
+### `guideline_relevance.csv`
+Per-cohort population size as a fraction of Cohort 1 — the protocol's
+"relevance" statistic.
+
+| Column | Meaning |
+|---|---|
+| `cohort_definition_id`, `cohort_name` | As elsewhere. |
+| `n` | Subjects in that cohort (censored). |
+| `pct_of_base` | % of Cohort 1 (blanked when `n` censored). |
+
+### `guideline_adherence.csv`
+Per eligibility leaf (a–e), the eligible population partitioned into five
+disjoint categories via explicit set-differences (`computeAdherenceRollup()`,
+`R/guidelineAdherence.R` — see that file's header for why this repo can't use
+`onco-study-modules`' original set logic as-is).
+
+| Column | Meaning |
+|---|---|
+| `leaf` | `a`–`e`. |
+| `category` | `adherent` (received the recommended regimen), `alt_guideline` (a different EAU-recommended regimen), `indicated_other` (a HemOnc mBC-indicated regimen), `non_indicated` (any other regimen), or `no_treatment`. |
+| `n` | Subjects in that leaf × category (censored). |
+| `eligible_n` | Total eligible for that leaf (censored; the denominator — the five categories' `n` sum to this). |
+| `pct_of_eligible` | % of `eligible_n` (blanked when `n` censored). |
+
+### `baseline_vitals.csv`
+Per-cohort weight/height/BMI, closest measurement to index within
+`settings$vitalsWindowDays` (default ±90 days).
+
+| Column | Meaning |
+|---|---|
+| `cohort_definition_id`, `cohort_name` | As elsewhere. |
+| `variable` | `weight_kg`, `height_cm`, or `bmi`. |
+| `n` | Subjects with that measurement near index (censored). |
+| `mean`, `sd`, `median`, `lq`, `uq`, `min`, `max` | Distribution (blanked when `n` censored). |
+
+### `charlson_cci.csv`
+Charlson Comorbidity Index category distribution, Cohort 1 only. 16 of 19
+canonical components are wired (see Known gaps for which three aren't, and
+why the score is still a slight understatement for a small subset of
+patients).
+
+| Column | Meaning |
+|---|---|
+| `cohort_definition_id`, `cohort_name` | Cohort 1 only. |
+| `cci_category` | `0`, `1-2`, `3-4`, or `>=5`. |
+| `n` | Subjects in that category (censored). |
+
+### `treatment_pattern_untreated.csv`
+Single row: how many of Cohort 1 never initiated any systemic regimen.
+
+| Column | Meaning |
+|---|---|
+| `n_t1` | Cohort 1 denominator. |
+| `n_treated`, `n_untreated` | Censored counts. |
+| `pct_untreated` | % of `n_t1` (blanked if either count above is censored). |
+
+### `treatment_pattern_regimen.csv`
+Regimen distribution by line of therapy, among Cohort 1 members who
+initiated treatment (episodes anchored to each subject's own index — see
+Known gaps).
+
+| Column | Meaning |
+|---|---|
+| `lot_number` | 1, 2, 3, ... (chronological ARTEMIS episode rank, no cap). |
+| `regName` | Regimen name (`episode_source_value`). |
+| `n_patients` | Subjects on that regimen at that LoT (censored). |
+| `lot_n` | Total subjects reaching that LoT (denominator). |
+| `pct_of_lot` | % of `lot_n` (blanked when `n_patients` censored). |
+
+### `treatment_pattern_category.csv`
+Same as above, but grouped by classification-lens category instead of raw
+regimen name — one block per lens.
+
+| Column | Meaning |
+|---|---|
+| `lens` | `eau`, `hemonc_mbc`, or `any` (`cohorts/extras/regimen_reference.csv`'s three independent lenses — see Known gaps re: cohorts 4/5/6). |
+| `lot_number`, `category` (a–f), `n_patients`, `lot_n`, `pct_of_lot` | As `treatment_pattern_regimen.csv`. |
+
+### `treatment_pathways.csv`
+Sankey-**ready** LoT1→LoT2→LoT3 flow data (`class_eau` category per line) —
+data only, not itself a rendered plot.
+
+| Column | Meaning |
+|---|---|
+| `lot1`, `lot2`, `lot3` | `class_eau` category at that line (`NA` if the subject didn't reach it). |
+| `n_patients` | Subjects following that exact pathway (censored). |
+
+### `treatment_pattern_by_year.csv`
+Regimen-category share by calendar year, **per treated cohort** (not pooled
+like the tables above) — the protocol's ask to track "the shift in treatment
+patterns... with the introduction of enfortumab" over time. Includes
+`"mBC initiated base"` itself (the whole unsplit treated population — the
+only slice here that can show a real regimen *mix*, since every single-arm
+T4/T5/T6 cohort is 100% one category by construction and T3a-e are further
+restricted to eligible-and-adherent), plus T3a-e and T4-6a-f individually.
+Stratified one dimension at a time (overall / age_group / sex), same
+marginal convention as the outcome files, via `sql/outcome_strata.sql` (the
+same per-subject lookup `R/09_outcomes.R` uses) — not crossed with
+`treatment_year`, which is always its own axis regardless of `stratum_type`.
+`treatment_share_by_year_plot()` (`R/12_treatment_patterns.R`) renders any
+one cohort/LoT/lens/stratum slice of this as a stacked bar chart (ggplot2) —
+callable interactively, not run automatically for every combination.
+
+| Column | Meaning |
+|---|---|
+| `stratum_type` | `overall`, `age_group`, or `sex`. |
+| `lens` | `eau`, `hemonc_mbc`, or `any`. |
+| `cohort_definition_id`, `cohort_name` | The specific treated cohort. |
+| `lot_number` | Line of therapy (no cap). |
+| `treatment_year` | Calendar year of that line's `episode_start_date`. |
+| `age_group`, `sex` | Present only on the matching `stratum_type`'s rows (`NA` otherwise). |
+| `category` | Lens category (a–f). |
+| `n_patients` | Subjects on that category, in that cohort × lot × year × stratum level (censored). |
+| `year_lot_n` | Denominator — total subjects in that cohort × lot × year × stratum level. |
+| `pct_of_year_lot` | % of `year_lot_n` (blanked when `n_patients` censored). |
 
 ---
 
 ## Known gaps / assumptions
 
+- **Cohort 1 entry criteria: three confirmed deviations from the protocol
+  text, deferred for now (not yet fixed, not yet confirmed intentional).**
+  Flagged during the 2026-08-24 protocol gap-analysis session; revisit before
+  relying on absolute (non-relative) cohort sizes or cross-site aggregation.
+  - `Target_1A.json`'s `ObservationWindow.PriorDays` is `0` — the protocol's
+    universal population requirement of "≥365 days of prior observation" is
+    currently **not enforced at all**.
+  - No filter excludes patients entering the cohort within 6 months of each
+    database's latest available date — the protocol requires this buffer so
+    the last-entered patient still gets follow-up.
+  - No global `2010-01-01` study-period floor is enforced anywhere.
+  - Possible separate bug: Cohort 1's "no other cancer" `InclusionRule` is
+    *named* "(ever prior to 30d after)" but its actual `StartWindow` is bounded
+    to 365 days before index, not unbounded, though the protocol says "at any
+    time prior."
+- **Quality assurance (Achilles / DQD / the oncology-specific QC query /
+  full OHDSI CohortDiagnostics) is out of this repo's scope for now.** The
+  protocol treats these as a hard prerequisite before the study package runs
+  at a site; this repo substitutes a CD-free custom attrition report
+  (`03_main_cohorts.R`'s Circe inclusion-rule stats) instead of running the
+  actual CohortDiagnostics package. Deferred by explicit call, not an
+  oversight.
+- **TFI and LoT-2 TTD are now implemented** (`outcome_tfi_*`,
+  `outcome_ttd_lot2_*`) **without a new cohort** — both are built in-memory
+  from data step 09 already has (re-indexing a treated cohort's own rows onto
+  `ttntEvents`/`ttdEvents`), unlike `onco-study-modules`, which deferred TFI
+  because it assumed a materialized DB cohort was required. LoT-3+
+  TFI/TTNT/TTD remain out of scope, matching the protocol's own stated scope
+  ("first and second LoT" in the research questions).
+- **Episode-ranking bug fixed, and it changed previously-reported TTNT/TTD
+  numbers.** `buildLineOfTherapyEvents()`/`buildDtiEvents()` used to rank a
+  person's ARTEMIS episodes across their *whole* history, but the protocol
+  allows prior systemic therapy into a treated cohort if it was >12 months
+  before the mBC index — such a patient can have an older, unrelated episode
+  that was silently mis-ranked as "line 1," shifting every later line's
+  numbering. Fixed via `anchorEpisodes()` (`R/eventBuilders.R`): episodes are
+  now restricted to on/after the relevant index (Cohort 1's own index for
+  DTI; the treated cohort's own qualifying-episode start for
+  TTNT/TTD/TTD-LoT2/TFI) before any ranking happens. Also, TTNT/TTD/TFI are
+  now **death-aware** (`combineEarliestEvent()`) — the protocol defines each
+  as "... or death, whichever occurs first," but the event previously only
+  used the ARTEMIS episode boundary, never merging in death.
+- **Guideline adherence/relevance roll-up is implemented** (`R/10_adherence.R`,
+  `R/guidelineAdherence.R`) — **with corrected set logic**, not a straight
+  port of `onco-study-modules`' `computeGuidelineAdherence()`: that function
+  assumes cohorts 4/5/6 already exclude one another (the protocol's literal
+  cohort definitions), but this repo's cohorts 4/5/6(a-f) are three
+  *independent* regimen-classification lenses (confirmed via
+  `regimen_reference.csv`: e.g. 166 regimens are `class_eau=other` /
+  `class_hemonc_mbc=other` but `class_any=cisplatin`) — flagged as a
+  deviation to revisit in an earlier session, and now resolved by computing
+  each adherence bucket as an explicit residual (excluding every
+  already-counted bucket) instead of a raw intersection. The same
+  non-exclusivity is why `treatment_pattern_category.csv` reports the three
+  lenses as separate blocks rather than one combined breakdown.
+- **Generalizability vs. trial populations (SMD) is not implemented.**
+  `cohorts/extras/trial_reference.yaml` is still an empty skeleton — no real
+  trial-population reference data was available this pass. Unbuilt anywhere,
+  including in `onco-study-modules` (its own Phase 6 TODO).
+- **Charlson CCI is 16 of 19 components** (`R/11_baseline_characterization.R`,
+  `R/charlsonScore.R`), sourced from Fortin/Reps/Ryan, *"Adaptation and
+  validation of a coding algorithm for the Charlson Comorbidity Index in
+  administrative claims data using the SNOMED CT standardized vocabulary,"*
+  BMC Med Inform Decis Mak 22:225 (2022), correction 23:110 (2023) — the
+  standard OHDSI-authored SNOMED translation of the Quan 2005 Charlson
+  coding algorithm. `leukemia` and `lymphoma` are NOT wired: the same
+  source's coding algorithm merges them (and other non-hematologic tumors)
+  into one 716-concept "malignancy except skin neoplasms" bucket with no
+  citable leukemia-only/lymphoma-only split, so the score slightly
+  *understates* the true CCI for anyone with a hematologic malignancy.
+  `any_malignancy` is also unwired but immaterial here — every Cohort 1
+  member has `metastatic_solid_tumor` (weight 6), which always supersedes
+  `any_malignancy` (weight 2) in the scoring hierarchy. Note
+  `metastatic_solid_tumor` itself is **not** sourced from the generic
+  Charlson concept list: it's derived from `Target_1A.json`'s own
+  measurement-domain metastasis marker (AJCC/UICC Stage 4, AJCC/UICC M1,
+  Metastasis — `sql/metastasis_marker.sql`), since that's the single source
+  of truth for "is this subject metastatic" and a real smoke-test run found
+  the generic claims-oriented SNOMED list firing for 0 of 504 T1 subjects on
+  the test CDM.
 - **NYHA, PD-L1, comorbidity-grade** are *ignored* for now (assume-pass / `1 = 1`);
   templates kept in `eligibility_2*.sql` with notes. 2d passes without a real
   PD-L1 check.
