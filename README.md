@@ -786,103 +786,53 @@ callable interactively, not run automatically for every combination.
 
 ---
 
-## Known gaps / assumptions
+## Known limitations
 
-- **Cohort 1 entry criteria: three confirmed deviations from the protocol
-  text, deferred for now (not yet fixed, not yet confirmed intentional).**
-  Flagged during the 2026-08-24 protocol gap-analysis session; revisit before
-  relying on absolute (non-relative) cohort sizes or cross-site aggregation.
-  - `Target_1A.json`'s `ObservationWindow.PriorDays` is `0` — the protocol's
-    universal population requirement of "≥365 days of prior observation" is
-    currently **not enforced at all**.
-  - No filter excludes patients entering the cohort within 6 months of each
-    database's latest available date — the protocol requires this buffer so
-    the last-entered patient still gets follow-up.
-  - No global `2010-01-01` study-period floor is enforced anywhere.
-  - Possible separate bug: Cohort 1's "no other cancer" `InclusionRule` is
-    *named* "(ever prior to 30d after)" but its actual `StartWindow` is bounded
-    to 365 days before index, not unbounded, though the protocol says "at any
-    time prior."
-- **Quality assurance (Achilles / DQD / the oncology-specific QC query /
-  full OHDSI CohortDiagnostics) is out of this repo's scope for now.** The
-  protocol treats these as a hard prerequisite before the study package runs
-  at a site; this repo substitutes a CD-free custom attrition report
-  (`03_main_cohorts.R`'s Circe inclusion-rule stats) instead of running the
-  actual CohortDiagnostics package. Deferred by explicit call, not an
-  oversight.
-- **TFI and LoT-2 TTD are now implemented** (`outcome_tfi_*`,
-  `outcome_ttd_lot2_*`) **without a new cohort** — both are built in-memory
-  from data step 09 already has (re-indexing a treated cohort's own rows onto
-  `ttntEvents`/`ttdEvents`), unlike `onco-study-modules`, which deferred TFI
-  because it assumed a materialized DB cohort was required. LoT-3+
-  TFI/TTNT/TTD remain out of scope, matching the protocol's own stated scope
-  ("first and second LoT" in the research questions).
-- **Episode-ranking bug fixed, and it changed previously-reported TTNT/TTD
-  numbers.** `buildLineOfTherapyEvents()`/`buildDtiEvents()` used to rank a
-  person's ARTEMIS episodes across their *whole* history, but the protocol
-  allows prior systemic therapy into a treated cohort if it was >12 months
-  before the mBC index — such a patient can have an older, unrelated episode
-  that was silently mis-ranked as "line 1," shifting every later line's
-  numbering. Fixed via `anchorEpisodes()` (`R/eventBuilders.R`): episodes are
-  now restricted to on/after the relevant index (Cohort 1's own index for
-  DTI; the treated cohort's own qualifying-episode start for
-  TTNT/TTD/TTD-LoT2/TFI) before any ranking happens. Also, TTNT/TTD/TFI are
-  now **death-aware** (`combineEarliestEvent()`) — the protocol defines each
-  as "... or death, whichever occurs first," but the event previously only
-  used the ARTEMIS episode boundary, never merging in death.
-- **Guideline adherence/relevance roll-up is implemented** (`R/10_adherence.R`,
-  `R/guidelineAdherence.R`) — **with corrected set logic**, not a straight
-  port of `onco-study-modules`' `computeGuidelineAdherence()`: that function
-  assumes cohorts 4/5/6 already exclude one another (the protocol's literal
-  cohort definitions), but this repo's cohorts 4/5/6(a-f) are three
-  *independent* regimen-classification lenses (confirmed via
-  `regimen_reference.csv`: e.g. 166 regimens are `class_eau=other` /
-  `class_hemonc_mbc=other` but `class_any=cisplatin`) — flagged as a
-  deviation to revisit in an earlier session, and now resolved by computing
-  each adherence bucket as an explicit residual (excluding every
-  already-counted bucket) instead of a raw intersection. The same
-  non-exclusivity is why `treatment_pattern_category.csv` reports the three
-  lenses as separate blocks rather than one combined breakdown.
-- **Generalizability vs. trial populations (SMD) is not implemented.**
-  `cohorts/extras/trial_reference.yaml` is still an empty skeleton — no real
-  trial-population reference data was available this pass. Unbuilt anywhere,
-  including in `onco-study-modules` (its own Phase 6 TODO).
-- **Charlson CCI is 16 of 19 components** (`R/11_baseline_characterization.R`,
-  `R/charlsonScore.R`), sourced from Fortin/Reps/Ryan, *"Adaptation and
-  validation of a coding algorithm for the Charlson Comorbidity Index in
-  administrative claims data using the SNOMED CT standardized vocabulary,"*
-  BMC Med Inform Decis Mak 22:225 (2022), correction 23:110 (2023) — the
-  standard OHDSI-authored SNOMED translation of the Quan 2005 Charlson
-  coding algorithm. `leukemia` and `lymphoma` are NOT wired: the same
-  source's coding algorithm merges them (and other non-hematologic tumors)
-  into one 716-concept "malignancy except skin neoplasms" bucket with no
-  citable leukemia-only/lymphoma-only split, so the score slightly
-  *understates* the true CCI for anyone with a hematologic malignancy.
-  `any_malignancy` is also unwired but immaterial here — every Cohort 1
-  member has `metastatic_solid_tumor` (weight 6), which always supersedes
-  `any_malignancy` (weight 2) in the scoring hierarchy. Note
-  `metastatic_solid_tumor` itself is **not** sourced from the generic
-  Charlson concept list: it's derived from `Target_1A.json`'s own
-  measurement-domain metastasis marker (AJCC/UICC Stage 4, AJCC/UICC M1,
-  Metastasis — `sql/metastasis_marker.sql`), since that's the single source
-  of truth for "is this subject metastatic" and a real smoke-test run found
-  the generic claims-oriented SNOMED list firing for 0 of 504 T1 subjects on
-  the test CDM.
-- **NYHA, PD-L1, comorbidity-grade** are *ignored* for now (assume-pass / `1 = 1`);
-  templates kept in `eligibility_2*.sql` with notes. 2d passes without a real
-  PD-L1 check.
-- **Conditions are exclusions** — the "present" concept sets act as the
-  "significant / grade ≥2" proxy (`NOT EXISTS`).
-- **Combo coag limb is `(INR OR PT) AND aPTT`** (per the guideline logic; INR is
-  the normalised form of PT, so either satisfies the extrinsic limb). aPTT is
-  still separately required — confirm it exists in your CDM (absent at HUS), else
-  2a–2c stay ~0.
-- **Composite panels** (Cr, TBil, AST, ALT, INR/PT) appear in the coverage only
-  as their atomic components, not as combined rows.
-- **Gilbert's (test 29)** not encoded → the `TBil ≤3× ULN` branch is currently
-  ungated (slightly *over*-permissive). Left deliberately — it excludes no-one.
-- *Wired since:* liver-mets (28), anticoagulant exception (31), and the carbo
-  neuropathy≥2/hearing≥2 inclusions.
+- **Universal eligibility criteria are only partially enforced.** Prior
+  observation (≥365 days), the 6-month follow-up buffer before each
+  database's latest date, and a 2010-01-01 study-period floor are not
+  currently applied. Treat absolute cohort sizes and cross-site comparisons
+  with that in mind.
+- **No formal data-quality assessment** (Achilles / DQD / CohortDiagnostics)
+  runs as part of this pipeline; `03_main_cohorts.R`'s Circe inclusion-rule
+  stats stand in as a lighter-weight attrition report.
+- **TFI and second-line TTD are implemented; third-line-and-beyond outcomes
+  are out of scope**, matching the protocol's stated first/second-line
+  focus. TTNT/TTD/TFI/DTI events are anchored to the relevant cohort's own
+  index before ranking, and are death-aware.
+- **Guideline adherence buckets are computed as non-overlapping residuals**,
+  since cohorts 4/5/6 are independent regimen-classification lenses rather
+  than mutually exclusive tiers (see below) — a patient can appear in more
+  than one.
+- **Generalizability vs. trial populations (SMD) is not implemented** —
+  `cohorts/extras/trial_reference.yaml` has no reference data yet.
+- **Charlson CCI covers 16 of 19 components** (Fortin/Reps/Ryan SNOMED
+  coding algorithm, *BMC Med Inform Decis Mak* 22:225 (2022), correction
+  23:110 (2023)). `leukemia`/`lymphoma` aren't separable under this coding
+  scheme, so CCI is slightly understated for hematologic malignancies.
+- **NYHA, PD-L1, and comorbidity-grade criteria are not evaluated**
+  (assume-pass).
+- **Condition-based criteria use "present" concept sets** as a proxy for
+  significant/grade≥2 disease.
+- **Combination anticoagulation is defined as `(INR OR PT) AND aPTT`**;
+  confirm aPTT exists in your CDM (absent at HUS).
+- **Composite lab panels** (Cr, TBil, AST, ALT, INR/PT) appear only as
+  atomic components, not combined rows.
+- **Gilbert's syndrome (test 29) is not encoded**, so the TBil ≤3× ULN
+  branch is left ungated (over-permissive; excludes no one).
+- **Eligibility window is ±14/7 days around the Cohort 1 index** for lab
+  criteria — an intentional PI decision, not the protocol's literal 90-day
+  window. Non-lab condition criteria inherit the same window by
+  construction.
+- **The treatment-initiated cohort's regimen-start window is
+  `[index − 30, index + 90]`**, an author-chosen window rather than a
+  literal transcription of the protocol text.
+- **Cohorts 4/5/6(a–f) are three independent, non-exclusive regimen
+  classifications** (`class_eau` / `class_hemonc_mbc` / `class_any`), not
+  the protocol's exclusive tiers.
+
+See `DEVELOPMENT.md` (gitignored, local) for the full reasoning behind each
+of these and other in-progress notes.
 
 The `sql/` templates and `R/` steps carry inline documentation of the cohort
 logic, test-id allocation, and generation order; start from `run.R` and the
