@@ -34,8 +34,21 @@ loadState <- function(name, producedBy, path = NULL) {
 
 # --- read JSON cohort definitions from a directory tree --------------------
 # Manifest name = filename with "_" -> " " (matches the study convention).
+# cohortId is assigned by row order here (see buildCohortSet()), and a
+# directory can hold more than one JSON cohort (cohorts/01_Target/ has both
+# Target_1A.json and Target_1A_PC_allowed.json) - so the order list.files()
+# returns them in determines which cohort gets which id downstream.
+# list.files() sorts using the session's LC_COLLATE locale, which is NOT the
+# same across every machine this runs on (e.g. a bare/C-locale Docker image
+# vs. a desktop OS's language locale can order "Target_1A.json" vs.
+# "Target_1A_PC_allowed.json" differently, since they diverge on "." vs "_"
+# right after the shared "Target_1A" prefix). Re-sort explicitly with the
+# "radix" method, which is locale-independent (effectively C-locale byte
+# order), so cohortId assignment is deterministic regardless of where this
+# is run.
 readJsonCohorts <- function(dir) {
   files <- list.files(dir, pattern = "[.]json$", recursive = TRUE, full.names = TRUE)
+  files <- sort(files, method = "radix")
   tibble::tibble(
     cohortName = gsub("_", " ", tools::file_path_sans_ext(basename(files))),
     json       = vapply(files, function(f) readr::read_file(f), character(1)),
