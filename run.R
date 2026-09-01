@@ -63,6 +63,16 @@ suppressMessages(library(ARTEMIS))
 #     Server = "...", Database = "...", Encrypt = "yes",
 #     TrustServerCertificate = "No",
 #     attributes = list("azure_token" = token$credentials$access_token))
+#
+# Example (Snowflake / RSA key-pair auth, e.g. IQVIA Posit Workbench):
+#   connectionDetails <- DatabaseConnector::createConnectionDetails(
+#     dbms = "snowflake",
+#     user = Sys.getenv("SNOWFLAKE_USER"),          # e.g. "u12345678"
+#     connectionString = paste0(
+#       "jdbc:snowflake://<account>.snowflakecomputing.com/",
+#       "?warehouse=<WAREHOUSE>&db=<DATABASE>&schema=<CDM_SCHEMA>",
+#       "&role=<ROLE>",
+#       "&private_key_file=", Sys.getenv("PRIV_KEY_FILE")))
 
 connectionDetails <- NULL   # <-- REPLACE with your connection
 
