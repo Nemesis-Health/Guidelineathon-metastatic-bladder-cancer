@@ -32,7 +32,9 @@ results/
 # === JDBC drivers / credentials ===
 *.jar
 .jdbc_drivers/
+db_config.yaml
 config/
+results_live/
 
 # === renv — commit renv.lock only; the restored library is machine-local ===
 renv/library/
