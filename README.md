@@ -445,26 +445,33 @@ per-criterion (`test_id`) fan-out is collapsed to distinct measurements first.
 | `median_value`, `lq_value`, `uq_value` | Median, lower (25th) and upper (75th) quartile (blanked when censored). |
 
 ### `lab_timing_to_index.csv`
-Row per **Target 1A / Target 1A PC allowed subject × lab (cat) × direction** —
-how many days from the cohort index (the metastasis-marker date) to the
-closest recorded measurement of each of the 14 labs, searching a subject's
-**entire** measurement history (not the `labWindowBeforeDays`/`labWindowAfterDays`
-eligibility window `lab_value_distribution.csv` restricts to). `direction`
-is one of `before` (closest on/before index), `after` (closest on/after
-index), or `any` (closest in either direction); a same-day measurement
-(0 days) counts as the closest for all three. Restricted to Target 1A and
-its PC-allowed variant — the metastasis index isn't meaningful for the
+Row per **Target 1A / Target 1A PC allowed × lab (cat) × direction** — how far
+from the cohort index (the metastasis-marker date) subjects' recorded
+measurements of each of the 14 labs fall, searching a subject's **entire**
+measurement history (not the `labWindowBeforeDays`/`labWindowAfterDays`
+eligibility window `lab_value_distribution.csv` restricts to). `direction` is
+one of `before` (closest on/before index), `after` (closest on/after index),
+or `any` (closest in either direction); a same-day measurement (0 days)
+counts as the closest for all three. Restricted to Target 1A and its
+PC-allowed variant — the metastasis index isn't meaningful for the
 treatment-initiated cohorts (T3-6, L01-anchored), which index on treatment
 start instead.
+
+Two kinds of columns: **coverage buckets** (`n_0_14` … `n_ever`), cumulative
+counts of subjects whose closest measurement in that direction falls within
+N days of index (not disjoint bins — `n_0_30` includes everyone already
+counted in `n_0_14`); and **percentiles** of days-to-closest among subjects
+counted in `n_ever` (i.e. conditional on having a measurement at all in that
+direction).
 
 | Column | Meaning |
 |---|---|
 | `cohort_definition_id` | Cohort id (Target 1A or Target 1A PC allowed). |
 | `cat` | Lab category / analyte code (one of the 14 in `sql/lab_cohorts.sql`). |
 | `direction` | `before`, `after`, or `any`. |
-| `n_with_lab` | Subjects with a qualifying measurement in that direction (censored). |
-| `mean_days`, `sd_days` | Mean and standard deviation of days-to-closest (blanked when censored). |
-| `median_days`, `lq_days`, `uq_days` | Median, lower (25th) and upper (75th) quartile of days-to-closest (blanked when censored). |
+| `n_0_14`, `n_0_30`, `n_0_60`, `n_0_90`, `n_0_180` | Subjects whose closest measurement in that direction is within 14/30/60/90/180 days of index (each censored independently). |
+| `n_ever` | Subjects with a measurement in that direction at all, no day cap (censored). |
+| `p5_days` … `p95_days` | 5th/10th/25th/50th/75th/90th/95th percentile of days-to-closest, among `n_ever` subjects (blanked when `n_ever` is censored). |
 
 ### `lab_results_summary.csv`
 QC / unit-resolution sanity check on the raw normalised table

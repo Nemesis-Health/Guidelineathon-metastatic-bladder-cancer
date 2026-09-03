@@ -2,31 +2,45 @@
 -- and lab (cat), how far from the cohort index (cohort_start_date, the
 -- metastasis-marker date) is the closest recorded measurement -- looking at
 -- a subject's ENTIRE measurement history, not the +/- 14/7-day eligibility
--- window lab_value_distribution_portable.sql restricts to. Reports the
--- distribution of days-to-closest in three directions:
+-- window lab_value_distribution_portable.sql restricts to. Reports, in three
+-- directions:
 --   before -- closest measurement on/before index (days = index - date, >= 0)
 --   after  -- closest measurement on/after index  (days = date - index, >= 0)
 --   any    -- closest measurement in either direction (min absolute distance)
 -- A same-day measurement (days = 0) is the closest for all three directions.
 --
--- Median/quartiles use ROW_NUMBER()/COUNT(*)/FLOOR instead of
--- PERCENTILE_CONT ... WITHIN GROUP ... OVER (same interpolation as
--- lab_value_distribution_portable.sql -- see that file's header for the
--- R quantile-type-7 formula this reproduces).
+-- Two kinds of output per (cohort, cat, direction):
+--   1. Coverage buckets -- how many subjects have their closest measurement
+--      within N days, for N = 14/30/60/90/180, plus n_ever (no day cap at
+--      all -- everyone with a measurement in that direction, at any time).
+--      Cumulative from 0, not disjoint bins (n_0_30 includes everyone
+--      counted in n_0_14).
+--   2. Percentiles (p5/p10/p25/p50/p75/p90/p95) of days-to-closest, among
+--      subjects counted in n_ever (i.e. conditional on having a
+--      measurement at all in that direction).
+--
+-- Percentiles use ROW_NUMBER()/COUNT(*)/FLOOR instead of
+-- PERCENTILE_CONT ... WITHIN GROUP ... OVER, which SqlRender leaves
+-- untranslated (breaks PostgreSQL / BigQuery / SQLite / Spark / Hive /
+-- Impala). Interpolation reproduces PERCENTILE_CONT exactly (R quantile
+-- type 7): pos = p * (n - 1) (zero-based), k = FLOOR(pos), frac = pos - k;
+-- percentile = v[k] * (1 - frac) + v[k+1] * frac, so ranked rows rn = k+1
+-- and rn = k+2 contribute weights (1-frac) and frac.
 --
 -- Expects @raw_lab_results_table populated by lab_cohorts.sql
 -- (normalised rows: person_id, measurement_date, cat, std_value, …).
 --
 -- Output columns:
---   cohort_definition_id, cat, direction, n_with_lab,
---   mean_days, sd_days, median_days, lq_days, uq_days
+--   cohort_definition_id, cat, direction,
+--   n_0_14, n_0_30, n_0_60, n_0_90, n_0_180, n_ever,
+--   p5_days, p10_days, p25_days, p50_days, p75_days, p90_days, p95_days
 --
 -- SqlRender parameters:
 --   @target_database_schema
 --   @target_cohort_table
 --   @raw_lab_results_table
 --   @cohort_definition_ids   comma-separated cohort_definition_id list
---   @min_cell_count          privacy floor for n_with_lab (e.g. 5)
+--   @min_cell_count          privacy floor for every n_* column (e.g. 5)
 -- =============================================================================
 
 WITH target_cohorts AS (
@@ -105,44 +119,70 @@ lab_stats AS (
   SELECT direction,
          cohort_definition_id,
          cat,
-         COUNT(*)                          AS n_with_lab,
-         AVG(CAST(day_diff AS FLOAT))      AS mean_days,
-         STDEV(CAST(day_diff AS FLOAT))    AS sd_days,
-         SUM(CASE WHEN rn = FLOOR(0.50 * (n - 1)) + 1
-                  THEN day_diff * (1.0 - (0.50 * (n - 1) - FLOOR(0.50 * (n - 1))))
-                  WHEN rn = FLOOR(0.50 * (n - 1)) + 2
-                  THEN day_diff * (0.50 * (n - 1) - FLOOR(0.50 * (n - 1)))
-                  ELSE 0 END)              AS median_days,
+         COUNT(*)                                             AS n_ever,
+         SUM(CASE WHEN day_diff <= 14  THEN 1 ELSE 0 END)      AS n_0_14,
+         SUM(CASE WHEN day_diff <= 30  THEN 1 ELSE 0 END)      AS n_0_30,
+         SUM(CASE WHEN day_diff <= 60  THEN 1 ELSE 0 END)      AS n_0_60,
+         SUM(CASE WHEN day_diff <= 90  THEN 1 ELSE 0 END)      AS n_0_90,
+         SUM(CASE WHEN day_diff <= 180 THEN 1 ELSE 0 END)      AS n_0_180,
+         SUM(CASE WHEN rn = FLOOR(0.05 * (n - 1)) + 1
+                  THEN day_diff * (1.0 - (0.05 * (n - 1) - FLOOR(0.05 * (n - 1))))
+                  WHEN rn = FLOOR(0.05 * (n - 1)) + 2
+                  THEN day_diff * (0.05 * (n - 1) - FLOOR(0.05 * (n - 1)))
+                  ELSE 0 END)                                  AS p5_days,
+         SUM(CASE WHEN rn = FLOOR(0.10 * (n - 1)) + 1
+                  THEN day_diff * (1.0 - (0.10 * (n - 1) - FLOOR(0.10 * (n - 1))))
+                  WHEN rn = FLOOR(0.10 * (n - 1)) + 2
+                  THEN day_diff * (0.10 * (n - 1) - FLOOR(0.10 * (n - 1)))
+                  ELSE 0 END)                                  AS p10_days,
          SUM(CASE WHEN rn = FLOOR(0.25 * (n - 1)) + 1
                   THEN day_diff * (1.0 - (0.25 * (n - 1) - FLOOR(0.25 * (n - 1))))
                   WHEN rn = FLOOR(0.25 * (n - 1)) + 2
                   THEN day_diff * (0.25 * (n - 1) - FLOOR(0.25 * (n - 1)))
-                  ELSE 0 END)              AS lq_days,
+                  ELSE 0 END)                                  AS p25_days,
+         SUM(CASE WHEN rn = FLOOR(0.50 * (n - 1)) + 1
+                  THEN day_diff * (1.0 - (0.50 * (n - 1) - FLOOR(0.50 * (n - 1))))
+                  WHEN rn = FLOOR(0.50 * (n - 1)) + 2
+                  THEN day_diff * (0.50 * (n - 1) - FLOOR(0.50 * (n - 1)))
+                  ELSE 0 END)                                  AS p50_days,
          SUM(CASE WHEN rn = FLOOR(0.75 * (n - 1)) + 1
                   THEN day_diff * (1.0 - (0.75 * (n - 1) - FLOOR(0.75 * (n - 1))))
                   WHEN rn = FLOOR(0.75 * (n - 1)) + 2
                   THEN day_diff * (0.75 * (n - 1) - FLOOR(0.75 * (n - 1)))
-                  ELSE 0 END)              AS uq_days
+                  ELSE 0 END)                                  AS p75_days,
+         SUM(CASE WHEN rn = FLOOR(0.90 * (n - 1)) + 1
+                  THEN day_diff * (1.0 - (0.90 * (n - 1) - FLOOR(0.90 * (n - 1))))
+                  WHEN rn = FLOOR(0.90 * (n - 1)) + 2
+                  THEN day_diff * (0.90 * (n - 1) - FLOOR(0.90 * (n - 1)))
+                  ELSE 0 END)                                  AS p90_days,
+         SUM(CASE WHEN rn = FLOOR(0.95 * (n - 1)) + 1
+                  THEN day_diff * (1.0 - (0.95 * (n - 1) - FLOOR(0.95 * (n - 1))))
+                  WHEN rn = FLOOR(0.95 * (n - 1)) + 2
+                  THEN day_diff * (0.95 * (n - 1) - FLOOR(0.95 * (n - 1)))
+                  ELSE 0 END)                                  AS p95_days
     FROM ranked
    GROUP BY direction, cohort_definition_id, cat
 )
 SELECT cohort_definition_id,
        cat,
        direction,
-       -- Privacy: censor cells with 0 < n_with_lab < @min_cell_count
-       -- (count -> -@min_cell_count, distribution stats -> NULL), matching
+       -- Privacy: censor each bucket independently (0 < count < @min_cell_count
+       -- -> -@min_cell_count sentinel; a true 0 stays 0), matching
        -- censorCounts() so standalone runs are censored like the pipeline.
-       CASE WHEN n_with_lab > 0 AND n_with_lab < @min_cell_count
-            THEN -1 * @min_cell_count ELSE n_with_lab END      AS n_with_lab,
-       CASE WHEN n_with_lab > 0 AND n_with_lab < @min_cell_count
-            THEN NULL ELSE mean_days   END                     AS mean_days,
-       CASE WHEN n_with_lab > 0 AND n_with_lab < @min_cell_count
-            THEN NULL ELSE sd_days     END                     AS sd_days,
-       CASE WHEN n_with_lab > 0 AND n_with_lab < @min_cell_count
-            THEN NULL ELSE median_days END                     AS median_days,
-       CASE WHEN n_with_lab > 0 AND n_with_lab < @min_cell_count
-            THEN NULL ELSE lq_days     END                     AS lq_days,
-       CASE WHEN n_with_lab > 0 AND n_with_lab < @min_cell_count
-            THEN NULL ELSE uq_days     END                     AS uq_days
+       -- Percentiles are blanked whenever the n_ever population itself is
+       -- censored (they're computed over that same population).
+       CASE WHEN n_0_14  > 0 AND n_0_14  < @min_cell_count THEN -1 * @min_cell_count ELSE n_0_14  END AS n_0_14,
+       CASE WHEN n_0_30  > 0 AND n_0_30  < @min_cell_count THEN -1 * @min_cell_count ELSE n_0_30  END AS n_0_30,
+       CASE WHEN n_0_60  > 0 AND n_0_60  < @min_cell_count THEN -1 * @min_cell_count ELSE n_0_60  END AS n_0_60,
+       CASE WHEN n_0_90  > 0 AND n_0_90  < @min_cell_count THEN -1 * @min_cell_count ELSE n_0_90  END AS n_0_90,
+       CASE WHEN n_0_180 > 0 AND n_0_180 < @min_cell_count THEN -1 * @min_cell_count ELSE n_0_180 END AS n_0_180,
+       CASE WHEN n_ever  > 0 AND n_ever  < @min_cell_count THEN -1 * @min_cell_count ELSE n_ever  END AS n_ever,
+       CASE WHEN n_ever > 0 AND n_ever < @min_cell_count THEN NULL ELSE p5_days  END AS p5_days,
+       CASE WHEN n_ever > 0 AND n_ever < @min_cell_count THEN NULL ELSE p10_days END AS p10_days,
+       CASE WHEN n_ever > 0 AND n_ever < @min_cell_count THEN NULL ELSE p25_days END AS p25_days,
+       CASE WHEN n_ever > 0 AND n_ever < @min_cell_count THEN NULL ELSE p50_days END AS p50_days,
+       CASE WHEN n_ever > 0 AND n_ever < @min_cell_count THEN NULL ELSE p75_days END AS p75_days,
+       CASE WHEN n_ever > 0 AND n_ever < @min_cell_count THEN NULL ELSE p90_days END AS p90_days,
+       CASE WHEN n_ever > 0 AND n_ever < @min_cell_count THEN NULL ELSE p95_days END AS p95_days
   FROM lab_stats
  ORDER BY cohort_definition_id, cat, direction;
