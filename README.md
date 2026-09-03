@@ -369,11 +369,11 @@ Quick index (detailed schema for each below):
 | `guideline_adherence.csv` | `10_adherence.R` | Eligible (T2) subjects per leaf | stratum type × stratum value × leaf × category (adherent/alt-guideline/indicated-other/non-indicated/no-treatment) |
 | `baseline_vitals.csv` | `11_baseline_characterization.R` | Per cohort | cohort × variable (weight_kg/height_cm/bmi) × stratum type × stratum value |
 | `charlson_cci.csv` | `11_baseline_characterization.R` | Target 1A | CCI category (0 / 1-2 / 3-4 / >=5) |
-| `treatment_pattern_untreated.csv` | `12_treatment_patterns.R` | Target 1A | single row |
-| `treatment_pattern_regimen.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | line of therapy × regimen name |
-| `treatment_pattern_category.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | classification lens × line of therapy × category (a-f) |
-| `treatment_pathways.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | LoT1 × LoT2 × LoT3 category combination (`class_eau`, capped at 3 lines) |
-| `treatment_pattern_by_year.csv` | `12_treatment_patterns.R` | Per treated cohort ("mBC initiated base", T3a-e, T4-6a-f) | cohort × lot × index year × lens category × stratum (overall/age_group/sex) |
+| `treatment_pattern_untreated.csv` | `12_treatment_patterns.R` | Target 1A | stratum (overall/age_group/sex/age_sex) |
+| `treatment_pattern_regimen.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | stratum × line of therapy × regimen name |
+| `treatment_pattern_category.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | stratum × classification lens × line of therapy × category (a-f) |
+| `treatment_pathways.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | stratum × LoT1 × LoT2 × LoT3 category combination (`class_eau`, capped at 3 lines) |
+| `treatment_pattern_by_year.csv` | `12_treatment_patterns.R` | Per treated cohort ("mBC initiated base", T3a-e, T4-6a-f) | cohort × lot × index year × lens category × stratum (overall/age_group/sex/age_sex) |
 
 ### Privacy censoring (applies to every file)
 
@@ -387,6 +387,20 @@ group of fewer than `minCellCount` (default **5**) subjects:
   are **blanked** (empty cell).
 - A genuine zero stays `0`; a censored small count is the negative sentinel — so
   the two are distinguishable downstream.
+
+### Age/sex stratification (applies to every stratified file)
+
+Most per-cohort outputs below break down age (`age_group`: `<=65`/`>65`,
+relative to that cohort's own index date), `sex`, and the age × sex cross
+(`age_sex`) alongside the pooled `overall` row, via one shared query,
+`sql/subject_strata.sql`.
+
+Which of these views actually get computed and written is controlled by a
+single setting, **`settings$strataColumns`** in `run.R`'s CONFIG block
+(default `c("age_group", "sex", "age_sex")`). A site that wants no
+stratification at all sets it to `character(0)`; a site that only wants,
+say, sex breakdowns sets it to `c("sex")`. `overall` is always produced
+regardless. This is the one place to change it — no per-file toggles.
 
 ---
 
@@ -799,12 +813,23 @@ patients).
 | `cci_category` | `0`, `1-2`, `3-4`, or `>=5`. |
 | `n` | Subjects in that category (censored). |
 
+All four of these are stratified one dimension at a time (overall /
+age_group / sex), plus the age × sex crossed view, via
+`sql/subject_strata.sql` anchored to each subject's Cohort 1 index — same
+marginal convention as `treatment_pattern_by_year.csv` and the outcome files.
+Which stratum views are populated is controlled centrally by
+`settings$strataColumns` (see "Age/sex stratification" above) — a partner
+can disable stratification for these (and every other stratified output)
+in one place rather than per-file.
+
 ### `treatment_pattern_untreated.csv`
-Single row: how many of Cohort 1 never initiated any systemic regimen.
+Per stratum: how many of Cohort 1 never initiated any systemic regimen.
 
 | Column | Meaning |
 |---|---|
-| `n_t1` | Cohort 1 denominator. |
+| `stratum_type` | `overall`, `age_group`, `sex`, or `age_sex`. |
+| `stratum_value` | The specific bucket (`overall` for the `overall` row). |
+| `n_t1` | Cohort 1 denominator, within that stratum. |
 | `n_treated`, `n_untreated` | Censored counts. |
 | `pct_untreated` | % of `n_t1` (blanked if either count above is censored). |
 
@@ -815,10 +840,11 @@ Known gaps).
 
 | Column | Meaning |
 |---|---|
+| `stratum_type`, `stratum_value` | As `treatment_pattern_untreated.csv`. |
 | `lot_number` | 1, 2, 3, ... (chronological ARTEMIS episode rank, no cap). |
 | `regName` | Regimen name (`episode_source_value`). |
-| `n_patients` | Subjects on that regimen at that LoT (censored). |
-| `lot_n` | Total subjects reaching that LoT (denominator). |
+| `n_patients` | Subjects on that regimen at that LoT, within that stratum (censored). |
+| `lot_n` | Total subjects reaching that LoT within that stratum (denominator). |
 | `pct_of_lot` | % of `lot_n` (blanked when `n_patients` censored). |
 
 ### `treatment_pattern_category.csv`
@@ -827,6 +853,7 @@ regimen name — one block per lens.
 
 | Column | Meaning |
 |---|---|
+| `stratum_type`, `stratum_value` | As `treatment_pattern_untreated.csv`. |
 | `lens` | `eau`, `hemonc_mbc`, or `any` (`cohorts/extras/regimen_reference.csv`'s three independent lenses — see Known gaps re: cohorts 4/5/6). |
 | `lot_number`, `category` (a–f), `n_patients`, `lot_n`, `pct_of_lot` | As `treatment_pattern_regimen.csv`. |
 
@@ -836,8 +863,9 @@ data only, not itself a rendered plot.
 
 | Column | Meaning |
 |---|---|
+| `stratum_type`, `stratum_value` | As `treatment_pattern_untreated.csv`. |
 | `lot1`, `lot2`, `lot3` | `class_eau` category at that line (`NA` if the subject didn't reach it). |
-| `n_patients` | Subjects following that exact pathway (censored). |
+| `n_patients` | Subjects following that exact pathway, within that stratum (censored). |
 
 ### `treatment_pattern_by_year.csv`
 Regimen-category share by calendar year, **per treated cohort** (not pooled
