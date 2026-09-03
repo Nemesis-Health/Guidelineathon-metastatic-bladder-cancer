@@ -17,16 +17,39 @@
 #
 # COHORT STRATA: every output carries a leading `cohort` column and is emitted
 # once per stratum, stacked in the same CSV:
-#   scan_cohort — the full ARTEMIS scan cohort (as before).
-#   target_1a   — restricted to the "T1 Metastatic bladder cancer" cohort
-#                 (== cohort1Id; step 05's Target-1A coverage denominator).
-# Since every ARTEMIS frame is keyed by person_id, a stratum is just a person-id
-# filter; coverage/uncaptured recompute correctly on the subset because capture
-# is a per-exposure test.
+#   scan_cohort        — the full ARTEMIS scan cohort (as before).
+#   target_1a          — restricted to the "T1 Metastatic bladder cancer" cohort
+#                        (== cohort1Id; step 05's Target-1A coverage denominator).
+#                        This is "the metastatic subset".
+#   target_1a_post_met — the metastatic subset restricted to the STUDY PERIOD OF
+#                        INTEREST: only exposures / episodes dated on or after the
+#                        patient's metastasis date. Target 1A indexes on the first
+#                        metastasis measurement, so its cohort_start_date IS the
+#                        metastasis date. Day 0 counts as post-metastasis, matching
+#                        the pre-study diagnostics convention (chunks 29/40).
+# Since every ARTEMIS frame is keyed by person_id, the first two strata are just a
+# person-id filter; the third adds a per-person date floor.
+#
+# WHAT THE DATE FLOOR APPLIES TO (target_1a_post_met only):
+#   * exposures (conDF / validDrugExposures) — kept when
+#     drug_exposure_start_date >= metastasis date.
+#   * episodes — kept when episode_start_date >= metastasis date. So the regimen
+#     list, the episodes-per-patient distribution and the patient-level coverage
+#     all describe regimens STARTED after metastasis.
+#   * raw alignments — ARTEMIS stores these as day OFFSETS (t_start) from each
+#     patient's first valid exposure, not as dates, so they are re-dated the same
+#     way buildEpisodeTable() does (refDate + t_start) before the floor is applied.
+#   * the CAPTURE TEST is deliberately NOT date-floored: a post-metastasis
+#     exposure is tested against ALL of that patient's episodes, including one that
+#     started before metastasis. Otherwise a dose 10 days after metastasis, covered
+#     by a regimen that started 20 days before it, would be reported as uncaptured
+#     — an artefact of the window, not a data gap. Exposure-level coverage and
+#     artemis_uncaptured_drugs stay exact complements of each other.
 #
 # Outputs (results/csv/):
 #   artemis_summary.csv          — patients + records per pipeline stage
-#   artemis_coverage.csv         — patient- & exposure-level coverage
+#   artemis_coverage.csv         — cohort-, patient- & exposure-level coverage
+#                                  (incl. % of the cohort with >=1 aligned regimen)
 #   artemis_drug_exposures.csv   — anticancer exposures per ingredient (freq desc)
 #   artemis_regimens_aligned.csv — aligned episodes per regimen (freq desc)
 #   artemis_episodes_per_patient.csv — episode-count distribution per patient
@@ -122,45 +145,107 @@ if (!exists("artemisResult")) {
   regIngredients <- regimenIngredientMap(artemisResult$regimens)
 
   # --- cohort strata: subject sets from the generated cohort table ----------
-  querySubjects <- function(cohortDefId) {
-    if (length(cohortDefId) != 1L || is.na(cohortDefId)) return(character(0))
+  # Returns one row per subject: person_id (character — some sites' person_id
+  # exceeds int32) and index_date, the EARLIEST cohort_start_date for that
+  # subject. Target 1A limits to the first metastasis so there is one entry per
+  # subject anyway; MIN() just makes the date floor deterministic if a cohort
+  # ever emits several.
+  queryCohortSubjects <- function(cohortDefId) {
+    empty <- data.frame(person_id = character(0),
+                        index_date = as.Date(character(0)),
+                        stringsAsFactors = FALSE)
+    if (length(cohortDefId) != 1L || is.na(cohortDefId)) return(empty)
     df <- DatabaseConnector::querySql(connection, SqlRender::translate(
       SqlRender::render(
-        "SELECT DISTINCT subject_id FROM @work.@tbl WHERE cohort_definition_id = @id",
+        "SELECT subject_id, MIN(cohort_start_date) AS index_date
+           FROM @work.@tbl
+          WHERE cohort_definition_id = @id
+          GROUP BY subject_id",
         work = settings$workDatabaseSchema, tbl = settings$cohortTable,
         id = as.integer(cohortDefId)),
       targetDialect = .getDbms(connection)))
-    as.character(df[[1]])
+    names(df) <- tolower(names(df))
+    data.frame(person_id  = as.character(df$subject_id),
+               index_date = as.Date(df$index_date),
+               stringsAsFactors = FALSE)
   }
+  # person_id -> index date, as a named Date vector for O(1) lookup by id
+  indexDateMap <- function(df) {
+    v <- as.Date(df$index_date); names(v) <- df$person_id; v
+  }
+
   target1aId   <- cohortIdByName(mainManifest, "T1 Metastatic bladder cancer")
-  t1aSubjects  <- querySubjects(target1aId)
-  scanSubjects <- if (exists("artemisCohortId")) querySubjects(artemisCohortId) else character(0)
-  message("  strata: scan_cohort (", length(scanSubjects), " subj) + target_1a (",
-          length(t1aSubjects), " subj)")
+  t1a          <- queryCohortSubjects(target1aId)
+  t1aSubjects  <- t1a$person_id
+  t1aMetDate   <- indexDateMap(t1a)   # Target 1A indexes on first metastasis
+  scanSubjects <- if (exists("artemisCohortId"))
+    queryCohortSubjects(artemisCohortId)$person_id else character(0)
+  message("  strata: scan_cohort (", length(scanSubjects), " subj) + target_1a / ",
+          "target_1a_post_met (", length(t1aSubjects), " subj)")
+
+  # Raw alignments carry day OFFSETS (t_start) from each patient's first VALID
+  # exposure, not dates — buildEpisodeTable() re-dates them as refDate + t_start.
+  # Reproduce refDate here (from the UNRESTRICTED validDrugExposures, exactly as
+  # runArtemis() did) so the post-met stratum can date-floor them the same way.
+  raRefDate <- NULL
+  {
+    ve0 <- artemisResult$validDrugExposures
+    if (is.data.frame(ve0) && nrow(ve0) > 0L) {
+      r <- tapply(as.integer(as.Date(ve0$drug_exposure_start_date)),
+                  as.character(ve0$person_id), min)
+      raRefDate <- structure(as.Date(as.integer(r), origin = "1970-01-01"),
+                             names = names(r))
+    }
+  }
 
   # Compute all six tables for one stratum. persons = NULL -> full cohort (no
   # filter, byte-identical to the unstratified output); a character vector ->
   # restrict every frame to those person_ids. scanN = the "scan cohort subjects"
-  # summary count for this stratum.
-  assessStratum <- function(persons, label, scanN) {
-    filt <- function(df, pcol = "person_id") {
+  # summary count for this stratum. cohortN = the stratum's own denominator (all
+  # subjects of the defining cohort, whether or not ARTEMIS ever scanned them) —
+  # used for the "cohort_subject" coverage level. indexDates = NULL for the
+  # whole-history strata; a named Date vector (person_id -> metastasis date) adds
+  # a per-person date floor, keeping only records on or after that date.
+  assessStratum <- function(persons, label, scanN, cohortN = NA_integer_,
+                            indexDates = NULL) {
+    # person filter, then (when indexDates is given and the frame has `dateCol`)
+    # the on-or-after-metastasis date floor. Day 0 is kept (>=), matching the
+    # pre-study diagnostics convention.
+    filt <- function(df, dateCol = NULL, pcol = "person_id") {
       if (is.null(persons)) return(df)
       if (!is.data.frame(df)) return(df)
       if (!(pcol %in% names(df)) || nrow(df) == 0L) return(df[0, , drop = FALSE])
-      df[as.character(df[[pcol]]) %in% persons, , drop = FALSE]
+      df <- df[as.character(df[[pcol]]) %in% persons, , drop = FALSE]
+      if (is.null(dateCol)) return(df)
+      restrictToOnOrAfter(df, dateCol, indexDates, pcol)
     }
-    cdf <- filt(conDF); vex <- filt(validExp); eps <- filt(episodes)
-    ra  <- if (is.null(persons)) rawAlign
-           else if (is.data.frame(rawAlign) && nrow(rawAlign) && !is.na(raPcol))
-             rawAlign[as.character(rawAlign[[raPcol]]) %in% persons, , drop = FALSE]
-           else if (is.data.frame(rawAlign)) rawAlign[0, , drop = FALSE]
-           else rawAlign
+    cdf <- filt(conDF,   "drug_exposure_start_date")
+    vex <- filt(validExp, "drug_exposure_start_date")
+    eps <- filt(episodes, "episode_start_date")
+    # Episodes for the CAPTURE TEST are person-filtered but NOT date-floored: a
+    # post-metastasis dose covered by a regimen that started before metastasis is
+    # captured, not a data gap (see the WHAT THE DATE FLOOR APPLIES TO note above).
+    epsForCapture <- if (is.null(indexDates)) eps else filt(episodes)
+
+    ra <- if (is.null(persons)) rawAlign
+          else if (is.data.frame(rawAlign) && nrow(rawAlign) && !is.na(raPcol))
+            rawAlign[as.character(rawAlign[[raPcol]]) %in% persons, , drop = FALSE]
+          else if (is.data.frame(rawAlign)) rawAlign[0, , drop = FALSE]
+          else rawAlign
+    # date-floor the raw alignments by re-dating their t_start day offset
+    if (!is.null(indexDates) && is.data.frame(ra) && nrow(ra) > 0L &&
+        !is.na(raPcol) && "t_start" %in% names(ra) && !is.null(raRefDate)) {
+      ra$.alignDate <- raRefDate[as.character(ra[[raPcol]])] +
+        as.integer(ra$t_start)
+      ra <- restrictToOnOrAfter(ra, ".alignDate", indexDates, raPcol)
+      ra$.alignDate <- NULL
+    }
     raPat <- if (is.data.frame(ra) && !is.na(raPcol) && raPcol %in% names(ra))
       dplyr::n_distinct(ra[[raPcol]]) else NA_integer_
 
     # capture: exposure start within a grace window of an episode of a regimen
     # containing that ingredient (see capturedExposureRids in artemis_uncaptured.R)
-    capturedRids <- capturedExposureRids(vex, eps, regIngredients)
+    capturedRids <- capturedExposureRids(vex, epsForCapture, regIngredients)
 
     # 1. summary — entity counts per pipeline stage
     summaryTbl <- censorPair(tibble::tibble(
@@ -174,14 +259,27 @@ if (!exists("artemisResult")) {
       n_records  = c(NA_integer_, nrec(cdf), nrec(vex), nrec(ra), nrec(eps))),
       "n_patients", "n_records")
 
-    # 2. coverage — patient- and exposure-level (CSV carries counts, not %)
-    totPat <- npat(vex); covPat <- npat(eps)
+    # 2. coverage — cohort-, patient- and exposure-level (CSV carries counts, not %)
+    #    cohort_subject  : share of the WHOLE defining cohort with >=1 aligned
+    #                      regimen episode — i.e. "% of the metastatic subset that
+    #                      has at least one regimen". Patients ARTEMIS never
+    #                      scanned stay in the denominator, so this is the
+    #                      treatment-capture rate for the cohort as designed.
+    #    scanned_subject : same numerator over the subjects ARTEMIS actually
+    #                      scanned — the alignment success rate, with the
+    #                      never-scanned patients taken out of the denominator.
+    #                      The two differ only when the cohort isn't a subset of
+    #                      the ARTEMIS scan cohort.
+    #    patient         : share of patients WITH a valid anticancer exposure.
+    #    exposure        : share of valid anticancer exposures that are captured.
+    nWithRegimen <- npat(eps)
+    totPat <- npat(vex); covPat <- nWithRegimen
     totExp <- nrec(vex); covExp <- length(capturedRids)
     coverageTbl <- tibble::tibble(
       cohort    = label,
-      level     = c("patient", "exposure"),
-      n_covered = censorN(c(covPat, covExp)),
-      n_total   = censorN(c(totPat, totExp)))
+      level     = c("cohort_subject", "scanned_subject", "patient", "exposure"),
+      n_covered = censorN(c(nWithRegimen, nWithRegimen, covPat, covExp)),
+      n_total   = censorN(c(cohortN, scanN, totPat, totExp)))
 
     # 3. valid anticancer exposures per ingredient
     drugTbl <- tibble::tibble()
@@ -241,7 +339,8 @@ if (!exists("artemisResult")) {
     }
 
     message("    ", label, ": ", nrec(vex), " valid exp (", npat(vex),
-            " pts) -> ", nrec(eps), " episodes; coverage patient ",
+            " pts) -> ", nrec(eps), " episodes; >=1 regimen ", pct(nWithRegimen, cohortN),
+            "% of cohort (n=", cohortN, "); coverage patient ",
             pct(covPat, totPat), "%, exposure ", pct(covExp, totExp), "%")
     list(summary = summaryTbl, coverage = coverageTbl, drug = drugTbl,
          reg = regTbl, perPat = perPatientTbl, uncap = uncapTbl)
@@ -250,15 +349,25 @@ if (!exists("artemisResult")) {
   # Target-1A scan count = 1A subjects actually present in the ARTEMIS scan set.
   scanN1a <- if (length(scanSubjects))
     length(intersect(t1aSubjects, scanSubjects)) else length(t1aSubjects)
-  full <- assessStratum(NULL, "scan_cohort", nScan)
-  t1a  <- assessStratum(t1aSubjects, "target_1a", scanN1a)
+  # The metastatic subset's own denominator: every Target-1A subject, scanned or not.
+  cohortN1a <- length(t1aSubjects)
 
-  writeResultCsv(dplyr::bind_rows(full$summary,  t1a$summary),  "artemis_summary")
-  writeResultCsv(dplyr::bind_rows(full$coverage, t1a$coverage), "artemis_coverage")
-  writeResultCsv(dplyr::bind_rows(full$drug,     t1a$drug),     "artemis_drug_exposures")
-  writeResultCsv(dplyr::bind_rows(full$reg,      t1a$reg),      "artemis_regimens_aligned")
-  writeResultCsv(dplyr::bind_rows(full$perPat,   t1a$perPat),   "artemis_episodes_per_patient")
-  writeResultCsv(dplyr::bind_rows(full$uncap,    t1a$uncap),    "artemis_uncaptured_drugs")
+  full <- assessStratum(NULL, "scan_cohort", nScan, cohortN = nScan)
+  t1a  <- assessStratum(t1aSubjects, "target_1a", scanN1a, cohortN = cohortN1a)
+  # Same subset, restricted to the period of interest: on or after metastasis.
+  t1aP <- assessStratum(t1aSubjects, "target_1a_post_met", scanN1a,
+                        cohortN = cohortN1a, indexDates = t1aMetDate)
 
-  message("  artemis_* written with cohort strata (scan_cohort, target_1a)")
+  stack <- function(field)
+    dplyr::bind_rows(full[[field]], t1a[[field]], t1aP[[field]])
+
+  writeResultCsv(stack("summary"),  "artemis_summary")
+  writeResultCsv(stack("coverage"), "artemis_coverage")
+  writeResultCsv(stack("drug"),     "artemis_drug_exposures")
+  writeResultCsv(stack("reg"),      "artemis_regimens_aligned")
+  writeResultCsv(stack("perPat"),   "artemis_episodes_per_patient")
+  writeResultCsv(stack("uncap"),    "artemis_uncaptured_drugs")
+
+  message("  artemis_* written with cohort strata (scan_cohort, target_1a, ",
+          "target_1a_post_met)")
 }

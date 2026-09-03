@@ -75,6 +75,32 @@ capturedExposureRids <- function(validExp, episodes, regIngredients,
   sort(unique(j$.rid[inReg]))
 }
 
+#' Restrict a person-keyed frame to records on or after each person's index date
+#'
+#' The "period of interest" filter behind the `target_1a_post_met` stratum in
+#' R/06_artemis_assessment.R. Target 1A indexes on the first metastasis
+#' measurement, so its `cohort_start_date` IS the metastasis date and this
+#' becomes an on-or-after-metastasis floor. Day 0 is KEPT (`>=`), matching the
+#' pre-study diagnostics convention (chunks 29/40).
+#'
+#' Persons absent from `indexDates` are dropped, not kept: with no index date
+#' there is no way to place their records relative to metastasis, so keeping them
+#' would silently mix un-windowed records into a windowed result.
+#'
+#' @param df         data frame with a person-id column and a date column
+#' @param dateCol    name of the date column to test
+#' @param indexDates named Date vector, person_id -> index date (names are the
+#'   person ids as character). NULL returns `df` unchanged.
+#' @param pcol       name of the person-id column (default "person_id")
+#' @return `df` with only the rows on or after that person's index date
+restrictToOnOrAfter <- function(df, dateCol, indexDates, pcol = "person_id") {
+  if (is.null(indexDates) || !is.data.frame(df) || nrow(df) == 0L) return(df)
+  if (!(pcol %in% names(df)) || !(dateCol %in% names(df))) return(df)
+  idx  <- indexDates[as.character(df[[pcol]])]
+  keep <- !is.na(idx) & as.Date(df[[dateCol]]) >= idx
+  df[keep, , drop = FALSE]
+}
+
 #' Patients with an uncaptured exposure of a given ingredient
 #'
 #' @param artemisResult list from runArtemis() (needs $validDrugExposures,

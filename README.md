@@ -251,7 +251,7 @@ At the end of a run, results are packaged into two archives:
 | `03_main_cohorts.R` | (c) build the full manifest (Target 1A, covariates, ARTEMIS + SQL templates: initiated base, 4/5/6, 2a–2e, 3a–3e) and generate it. |
 | `04_lab_ranges.R` | (d) lab-value distribution + per-unit QC summary on the main cohorts. |
 | `05_eligibility_coverage.R` | eligibility-table counts and each input crossed with Target 1A (tested / passed). |
-| `06_artemis_assessment.R` | ARTEMIS assessment: alignment stats, patient/exposure coverage, per-drug and per-regimen frequencies, uncaptured exposures — all from the in-memory `artemisResult`. |
+| `06_artemis_assessment.R` | ARTEMIS assessment: alignment stats, cohort/patient/exposure coverage (incl. the share of the metastatic subset with ≥1 aligned regimen), per-drug and per-regimen frequencies, uncaptured exposures — each emitted for the whole scan cohort, the metastatic subset, and the metastatic subset restricted to on-or-after metastasis. All from the in-memory `artemisResult`. |
 | `helpers.R` | Cohort-generation + SQL helpers (thin wrappers over CirceR/CohortGenerator/SqlRender). |
 | `artemis.R` | The ARTEMIS pipeline wrapper: `runArtemis()`, `buildEpisodeTable()`, `writeArtemisEpisodes()`. (Coverage/uncaptured analytics are computed in `06_artemis_assessment.R`.) |
 | `vendor_utils.R` | `.getDbms()` + `%||%` (helpers used by the ARTEMIS code). |
@@ -315,12 +315,12 @@ Quick index (detailed schema for each below):
 | `lab_value_distribution.csv` | `04_lab_ranges.R` | Per main cohort | cohort × lab (cat) |
 | `lab_results_summary.csv` | `04_lab_ranges.R` | **Whole population** | cat × measurement concept × unit × status × ambiguity |
 | `lab_results_rollup.csv` | `04_lab_ranges.R` | **Whole population** | cat × ambiguity (standard unit; QC columns) |
-| `artemis_summary.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A | cohort × ARTEMIS pipeline stage |
-| `artemis_coverage.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A | cohort × coverage level (patient / exposure) |
-| `artemis_drug_exposures.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A | cohort × anticancer ingredient |
-| `artemis_regimens_aligned.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A | cohort × aligned regimen |
-| `artemis_episodes_per_patient.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A | cohort × episode-count value |
-| `artemis_uncaptured_drugs.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A | cohort × anticancer ingredient (uncaptured) |
+| `artemis_summary.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A + Target 1A post-metastasis | cohort × ARTEMIS pipeline stage |
+| `artemis_coverage.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A + Target 1A post-metastasis | cohort × coverage level (cohort_subject / scanned_subject / patient / exposure) |
+| `artemis_drug_exposures.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A + Target 1A post-metastasis | cohort × anticancer ingredient |
+| `artemis_regimens_aligned.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A + Target 1A post-metastasis | cohort × aligned regimen |
+| `artemis_episodes_per_patient.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A + Target 1A post-metastasis | cohort × episode-count value |
+| `artemis_uncaptured_drugs.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A + Target 1A post-metastasis | cohort × anticancer ingredient (uncaptured) |
 | `demographics.csv` | `07_demographics.R` | Per cohort | cohort × characteristic × stratum |
 | `covariate_overlap.csv` | `08_covariates.R` | Target 1A | covariate (comorbidity / PS stratum) × cohort 1A |
 
@@ -440,11 +440,43 @@ health is carried as QC columns instead of extra rows.
 | `min_value`, `lq_value`, `median_value`, `uq_value`, `max_value` | Min, quartiles, median, max of `std_value` (blanked when censored). |
 
 **Cohort strata (all six `artemis_*` files).** Each carries a leading `cohort`
-column and is emitted once per stratum, stacked: `scan_cohort` = the full ARTEMIS
-scan cohort; `target_1a` = restricted to the "T1 Metastatic bladder cancer"
-cohort (`cohort1Id`, step 05's Target-1A denominator). Every metric below is
-computed within the stratum. Counts are censored per stratum, so a small
-`target_1a` cell can be masked while its `scan_cohort` counterpart is not.
+column and is emitted once per stratum, stacked:
+
+| `cohort` | Population | Time window |
+|---|---|---|
+| `scan_cohort` | The full ARTEMIS scan cohort. | Whole recorded history. |
+| `target_1a` | The **metastatic subset** — the "T1 Metastatic bladder cancer" cohort (`cohort1Id`, step 05's Target-1A denominator). | Whole recorded history. |
+| `target_1a_post_met` | The same metastatic subset. | **The period of interest: on or after that patient's metastasis date.** |
+
+Every metric below is computed within the stratum. Counts are censored per
+stratum, so a small `target_1a` cell can be masked while its `scan_cohort`
+counterpart is not.
+
+**The `target_1a_post_met` window.** Target 1A indexes on the first metastasis
+measurement, so its `cohort_start_date` *is* the metastasis date; the stratum
+keeps records dated `>=` that date, per patient. Day 0 — a record on the
+metastasis date itself — counts as post-metastasis, matching the pre-study
+diagnostics convention (chunks 29/40). What the floor applies to:
+
+* **Exposures** (`artemis_drug_exposures.csv`, and both exposure stages of
+  `artemis_summary.csv`) — kept when `drug_exposure_start_date >=` the
+  metastasis date.
+* **Episodes** (`artemis_regimens_aligned.csv`,
+  `artemis_episodes_per_patient.csv`, and the patient/cohort coverage levels) —
+  kept when `episode_start_date >=` the metastasis date. So the post-met regimen
+  list answers "which regimens were **started** after metastasis"; a regimen
+  that began before metastasis and ran into the window is not in it.
+* **Raw alignments** — ARTEMIS stores these as day *offsets* (`t_start`) from
+  each patient's first valid exposure rather than as dates, so they are re-dated
+  the way `buildEpisodeTable()` does (`refDate + t_start`) before the floor is
+  applied.
+* **Not the capture test.** A post-metastasis exposure is tested against *all*
+  of that patient's episodes, including one that started before metastasis.
+  Otherwise a dose 10 days after metastasis, covered by a regimen that started
+  20 days before it, would be reported as uncaptured — an artefact of the
+  window, not a data gap. This keeps `artemis_coverage.csv`'s `exposure` row and
+  `artemis_uncaptured_drugs.csv` exact complements of each other in every
+  stratum.
 
 ### `artemis_summary.csv`
 Row per cohort × ARTEMIS pipeline stage — the funnel from scan cohort to aligned
@@ -452,56 +484,95 @@ episodes. Written only if the ARTEMIS step (a) ran this session.
 
 | Column | Meaning |
 |---|---|
-| `cohort` | Stratum: `scan_cohort` or `target_1a` (see note above). |
+| `cohort` | Stratum: `scan_cohort`, `target_1a`, or `target_1a_post_met` (see note above). |
 | `metric` | Stage name: `ARTEMIS scan cohort (subjects)` → `Ingredient-level drug exposures` → `Valid anticancer drug exposures` → `Raw alignments (pre-processing)` → `Regimen episodes aligned`. For `target_1a` the first stage counts 1A subjects present in the scan cohort. |
 | `n_patients` | Distinct patients at that stage (censored; scan-cohort record count is N/A). |
 | `n_records` | Records at that stage (blanked when the patient count is censored). |
 
 ### `artemis_coverage.csv`
-Two rows — patient-level and exposure-level alignment coverage. An exposure is
-"captured" if its start date falls inside any aligned episode window for the
-same patient (start-date containment; no exposure end date is available).
+Four rows per stratum — two cohort-level regimen-availability measures and two
+alignment-coverage measures. `n_covered / n_total` is the percentage; the CSV
+carries the counts so that censoring stays honest.
+
+An exposure is "captured" if its start date falls within a 30-day grace window
+of an aligned episode **of a regimen that contains that ingredient** (see
+`R/artemis_uncaptured.R`): the grace window absorbs ARTEMIS's fragmentation of
+one course into short eras with gaps, and the ingredient test stops a
+Gemcitabine-monotherapy era from "capturing" a cisplatin dose. Coverage is
+start-date only — the extraction SQL selects no `drug_exposure_end_date`.
+
+| `level` | `n_covered` | `n_total` | Answers |
+|---|---|---|---|
+| `cohort_subject` | Subjects with ≥1 aligned regimen episode. | **All** subjects of the stratum's defining cohort, whether or not ARTEMIS ever scanned them. | **"What share of the metastatic subset has at least one regimen?"** — for `target_1a_post_met`, at least one regimen *started after metastasis*. |
+| `scanned_subject` | Same numerator. | Cohort subjects present in the ARTEMIS scan cohort. | The alignment success rate with never-scanned patients taken out of the denominator. Differs from `cohort_subject` only when the cohort is not a subset of the scan cohort. |
+| `patient` | Patients with ≥1 aligned episode. | Patients with ≥1 valid anticancer exposure. | Of the patients who have anticancer drug records at all, how many got a regimen assigned. |
+| `exposure` | Captured exposures. | Valid anticancer exposures. | Share of drug records ARTEMIS folded into a regimen. The complement is `artemis_uncaptured_drugs.csv`. |
 
 | Column | Meaning |
 |---|---|
-| `level` | `patient` or `exposure`. |
-| `n_covered` | Covered patients / exposures (censored). |
-| `n_total` | Total valid patients / exposures (censored). % is not emitted — it is `n_covered / n_total`. |
+| `cohort` | Stratum: `scan_cohort`, `target_1a`, or `target_1a_post_met`. |
+| `level` | One of the four rows above. |
+| `n_covered` | Numerator (censored). |
+| `n_total` | Denominator (censored). % is not emitted — it is `n_covered / n_total`. |
 
 ### `artemis_drug_exposures.csv`
-Valid anticancer exposures per ingredient, most frequent first.
+Valid anticancer exposures per ingredient, most frequent first — **the list of
+drugs** seen in each stratum. In `target_1a_post_met` only exposures dated on or
+after metastasis are counted.
 
 | Column | Meaning |
 |---|---|
+| `cohort` | Stratum: `scan_cohort`, `target_1a`, or `target_1a_post_met`. |
 | `drug_concept_id` | Ingredient (ancestor) concept id. |
 | `drug_name` | Ingredient name. |
 | `n_records` | Exposure records (blanked when `n_patients` censored). |
 | `n_patients` | Distinct patients (censored). |
 
 ### `artemis_regimens_aligned.csv`
-Aligned regimen episodes per regimen, most frequent first.
+Aligned regimen episodes per regimen, most frequent first — i.e. **the list of
+regimens** seen in each stratum. In `target_1a_post_met` this is the list of
+regimens *started* on or after metastasis.
 
 | Column | Meaning |
 |---|---|
+| `cohort` | Stratum: `scan_cohort`, `target_1a`, or `target_1a_post_met`. |
 | `regimen` | Regimen name (`episode_source_value`). |
 | `n_episodes` | Aligned episodes (blanked when `n_patients` censored). |
 | `n_patients` | Distinct patients (censored). |
 
 ### `artemis_episodes_per_patient.csv`
-Distribution of how many aligned episodes each patient has.
+Distribution of how many aligned episodes each patient has. Patients with zero
+episodes are not a row here — read that off `artemis_coverage.csv`'s
+`cohort_subject` level instead.
 
 | Column | Meaning |
 |---|---|
+| `cohort` | Stratum: `scan_cohort`, `target_1a`, or `target_1a_post_met`. |
 | `n_episodes` | Episode count value. |
 | `n_patients` | Patients with exactly that many episodes (censored). |
 
 ### `artemis_uncaptured_drugs.csv`
-Valid anticancer exposures that overlap **no** aligned episode, per ingredient,
-most frequent first — the complement of the coverage analysis. Same columns as
+**The drugs ARTEMIS did not capture** — valid anticancer exposures that no
+aligned regimen episode accounts for, per ingredient, most frequent first. The
+exact complement of `artemis_coverage.csv`'s `exposure` row. Same columns as
 `artemis_drug_exposures.csv`.
+
+Two reasons an exposure lands here, and they mean different things: the drug sits
+outside every episode window (a treatment ARTEMIS has no regimen for, or a
+course it failed to align), or it falls inside a window but the era's regimen
+does not contain that ingredient (an off-protocol addition, or a mis-picked
+regimen). `uncapturedExposures()` in `R/artemis_uncaptured.R` drills any
+ingredient down to the patient level, and `plotUncapturedAlignment()` draws
+those patients' doses against their regimen bars so the two cases are visible.
+
+In `target_1a_post_met` the exposures are restricted to on-or-after metastasis
+but the episodes they are tested against are **not** (see the stratum note
+above), so a row here is a genuine gap in the period of interest rather than a
+regimen that merely started before the window opened.
 
 | Column | Meaning |
 |---|---|
+| `cohort` | Stratum: `scan_cohort`, `target_1a`, or `target_1a_post_met`. |
 | `drug_concept_id` | Ingredient (ancestor) concept id. |
 | `drug_name` | Ingredient name. |
 | `n_records` | Uncaptured exposure records (blanked when `n_patients` censored). |
