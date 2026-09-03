@@ -49,6 +49,12 @@ if (is.null(settings$stateFolder))
   settings$stateFolder <- file.path(".cache", basename(settings$outputFolder))
 dir.create(settings$stateFolder, recursive = TRUE, showWarnings = FALSE)
 
+# One README.md per results/eligibility/<category>/ subfolder, excerpted
+# verbatim from this repo's own README.md (writeCategoryReadmes(), R/helpers.R)
+# -- written once up front so the folders are self-documenting even before
+# any step writes a CSV into them.
+writeCategoryReadmes()
+
 # executionSettings object compatible with the vendored runArtemis()
 # (it reads cdm/vocab/work schema, cohortTable, connectionDetails, artemisSettings
 #  and checks class "OsmExecutionSettings").

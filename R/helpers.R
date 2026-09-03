@@ -200,11 +200,42 @@ activeStrataSpecs <- function() {
   specs[activeStrataTypes()]
 }
 
-# --- write a result data frame to results/eligibility ----------------------
-writeResultCsv <- function(df, name) {
-  d <- file.path(settings$outputFolder, "eligibility")
+# --- write a result data frame to results/eligibility/<category> -----------
+# Every writeResultCsv() call names one of these; keep in sync with
+# README.md's <!-- category:... --> markers (writeCategoryReadmes() below).
+resultCategories <- c("characterization", "labs", "artemis", "outcomes",
+                      "guideline", "treatment_patterns")
+
+writeResultCsv <- function(df, name, category) {
+  stopifnot(category %in% resultCategories)
+  d <- file.path(settings$outputFolder, "eligibility", category)
   dir.create(d, recursive = TRUE, showWarnings = FALSE)
   readr::write_csv(df, file.path(d, paste0(name, ".csv")), na = "")
+}
+
+# --- per-category README, excerpted verbatim from this repo's own README.md
+# So the folder doc and the real documentation can never drift apart: each
+# results/eligibility/<category>/README.md is exactly the text between
+# README.md's <!-- category:X --> ... <!-- /category:X --> markers, copied
+# as-is. Silently skips a category whose markers are missing/duplicated
+# (e.g. running from a checkout without README.md) rather than failing the
+# run over documentation.
+writeCategoryReadmes <- function() {
+  readmePath <- file.path(projectRoot, "README.md")
+  if (!file.exists(readmePath)) return(invisible(NULL))
+  lines <- readLines(readmePath, warn = FALSE)
+  for (category in resultCategories) {
+    startIdx <- which(lines == paste0("<!-- category:", category, " -->"))
+    endIdx   <- which(lines == paste0("<!-- /category:", category, " -->"))
+    if (length(startIdx) != 1L || length(endIdx) != 1L || endIdx <= startIdx) {
+      warning("README.md markers for category '", category, "' missing or ",
+              "duplicated -- skipping its README.md.", call. = FALSE)
+      next
+    }
+    d <- file.path(settings$outputFolder, "eligibility", category)
+    dir.create(d, recursive = TRUE, showWarnings = FALSE)
+    writeLines(lines[(startIdx + 1L):(endIdx - 1L)], file.path(d, "README.md"))
+  }
 }
 
 # --- id lookup for a generated cohort by manifest name ---------------------
