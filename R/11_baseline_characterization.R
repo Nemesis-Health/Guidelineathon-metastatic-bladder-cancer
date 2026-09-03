@@ -63,10 +63,25 @@ vitals <- querySqlFile(connection, "baseline_vitals.sql",
 names(vitals) <- tolower(names(vitals))
 vitals$cohort_definition_id <- as.integer(vitals$cohort_definition_id)
 
-summarizeVital <- function(df, valueCol, minCellCount) {
+# subject_strata.sql is the single source of truth for age_group/sex/age_sex
+# bucketing (shared with demographics.sql, R/04_lab_ranges.R,
+# R/09_outcomes.R, R/12_treatment_patterns.R). Aggregation here happens in R
+# (not SQL), so the stratification join is a plain left_join + an extra
+# grouping column, not a UNION-ALL rewrite of the SQL file.
+strataTbl <- querySqlFile(connection, "subject_strata.sql",
+  work_database_schema = settings$workDatabaseSchema,
+  cohort_table         = settings$cohortTable,
+  cdm_database_schema  = settings$cdmDatabaseSchema)
+names(strataTbl) <- tolower(names(strataTbl))
+strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
+vitals <- dplyr::left_join(vitals, strataTbl,
+  by = c("cohort_definition_id", "subject_id"))
+
+summarizeVital <- function(df, valueCol, minCellCount, stratumType, groupCol = NULL) {
+  grp <- c("cohort_definition_id", groupCol)
   agg <- df |>
     dplyr::filter(!is.na(.data[[valueCol]])) |>
-    dplyr::group_by(.data$cohort_definition_id) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(grp))) |>
     dplyr::summarise(
       n      = dplyr::n(),
       mean   = mean(.data[[valueCol]]),
@@ -83,7 +98,12 @@ summarizeVital <- function(df, valueCol, minCellCount) {
   agg[statCols] <- lapply(agg[statCols], function(x) ifelse(small, NA_real_, as.double(x)))
   agg$n <- ifelse(small, -as.integer(minCellCount), as.integer(agg$n))
   agg$variable <- valueCol
-  dplyr::relocate(agg, "variable", .after = "cohort_definition_id")
+  agg$stratum_type <- stratumType
+  agg$stratum_value <- if (is.null(groupCol)) "overall" else agg[[groupCol]]
+  dplyr::relocate(agg, "variable", "stratum_type", "stratum_value",
+                  .after = "cohort_definition_id")[
+    c("cohort_definition_id", "variable", "stratum_type", "stratum_value",
+      "n", statCols)]
 }
 
 if (nrow(vitals) == 0L) {
@@ -92,11 +112,12 @@ if (nrow(vitals) == 0L) {
 
 } else {
 
-  vitalsOut <- dplyr::bind_rows(
-      summarizeVital(vitals, "weight_kg", settings$minCellCount),
-      summarizeVital(vitals, "height_cm", settings$minCellCount),
-      summarizeVital(vitals, "bmi",       settings$minCellCount)
-    ) |>
+  strataViews <- list(overall = NULL, age_group = "age_group",
+                      sex = "sex", age_sex = "age_sex")
+  vitalsOut <- dplyr::bind_rows(lapply(c("weight_kg", "height_cm", "bmi"), function(v) {
+      dplyr::bind_rows(lapply(names(strataViews), function(st)
+        summarizeVital(vitals, v, settings$minCellCount, st, strataViews[[st]])))
+    })) |>
     dplyr::left_join(nameMap, by = "cohort_definition_id") |>
     dplyr::relocate("cohort_name", .after = "cohort_definition_id")
   writeResultCsv(vitalsOut, "baseline_vitals")
