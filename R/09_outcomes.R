@@ -6,7 +6,8 @@
 # fed by the event builders in R/eventBuilders.R:
 #
 #   dti      — T1 only.       first LoT start - Cohort 1 index. Median (IQR).
-#   os       — every cohort    (T1, T2a-e, T3a-e, T4-6a-f). Index -> death, KM.
+#   os       — every cohort    (T1, T2a-e, T3a-e, T4-6a-f, plus the L01-
+#              anchored initiated cohorts). Index -> death, KM.
 #   ttnt     — treated cohorts (T3a-e, T4-6a-f; indexed at LoT1 start). KM to
 #              LoT2 start (or death, whichever first).
 #   ttd      — treated cohorts. KM to LoT1 discontinuation (episode end, or
@@ -65,8 +66,16 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
   t3Ids   <- idsByCodes(paste0("T3", letters[1:5]))
   t456Ids <- idsByCodes(c(paste0("T4", letters[1:6]), paste0("T5", letters[1:6]),
                            paste0("T6", letters[1:6])))
+  # L01-anchored initiated cohorts (R/03_main_cohorts.R): not part of the
+  # cohortNames T-code map, so resolved directly by their assigned name.
+  # OS-only (see file header) -- they have no lens-split, so they're left out
+  # of treatedTargetCohortIds/TTNT/TTD/TFI, which need the ARTEMIS-episode
+  # machinery those splits are built from.
+  l01Ids  <- as.integer(stats::na.omit(c(
+    cohortIdByName(mainManifest, "mBC initiated base (L01)"),
+    cohortIdByName(mainManifest, "mBC initiated base (L01, PC allowed)"))))
 
-  allTargetCohortIds     <- as.integer(stats::na.omit(c(t1Id, t2Ids, t3Ids, t456Ids)))
+  allTargetCohortIds     <- as.integer(stats::na.omit(c(t1Id, t2Ids, t3Ids, t456Ids, l01Ids)))
   treatedTargetCohortIds <- as.integer(stats::na.omit(c(t3Ids, t456Ids)))
 
   outcomeCohortIds <- list(
