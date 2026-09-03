@@ -21,6 +21,7 @@ docs/reference/
 # === Results (aggregate outputs — regenerated per run) ===
 results/
 !results/.gitkeep
+results_*/
 
 # === R session / RStudio ===
 .Rproj.user/
