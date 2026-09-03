@@ -51,6 +51,35 @@ nT1a <- querySqlFile(connection, "n_target1a.sql",
   cohort_table = settings$cohortTable, cohort1_id = cohort1Id)
 nT1a <- as.integer(nT1a[[1]][1])
 
+# subject_strata.sql is the single source of truth for age_group/sex/age_sex
+# bucketing (shared with demographics.sql, R/04_lab_ranges.R,
+# R/09_outcomes.R, R/12_treatment_patterns.R). Reused here both to
+# stratify the coverage query itself and to build the matching per-stratum
+# n_target1a denominators (a stratum's "n_target1a" is T1 members in that
+# stratum, not T1's whole N).
+strataFragment <- renderSqlFile("subject_strata.sql",
+  work_database_schema = settings$workDatabaseSchema,
+  cohort_table         = settings$cohortTable,
+  cdm_database_schema  = settings$cdmDatabaseSchema)
+
+strataTbl <- querySqlFile(connection, "subject_strata.sql",
+  work_database_schema = settings$workDatabaseSchema,
+  cohort_table         = settings$cohortTable,
+  cdm_database_schema  = settings$cdmDatabaseSchema)
+names(strataTbl) <- tolower(names(strataTbl))
+t1Strata <- strataTbl[as.integer(strataTbl$cohort_definition_id) == cohort1Id, ]
+denomFor <- function(stratumType, col = NULL) {
+  if (is.null(col)) {
+    tibble::tibble(stratum_type = "overall", stratum_value = "overall", n_target1a = nrow(t1Strata))
+  } else {
+    dplyr::count(t1Strata, stratum_value = .data[[col]], name = "n_target1a") |>
+      dplyr::mutate(stratum_type = stratumType, .before = 1)
+  }
+}
+denomTbl <- dplyr::bind_rows(
+  denomFor("overall"), denomFor("age_group", "age_group"),
+  denomFor("sex", "sex"), denomFor("age_sex", "age_sex"))
+
 cov <- querySqlFile(connection, "eligibility_input_coverage.sql",
   work_database_schema  = settings$workDatabaseSchema,
   cohort_table          = settings$cohortTable,
@@ -58,14 +87,15 @@ cov <- querySqlFile(connection, "eligibility_input_coverage.sql",
   raw_lab_results_table = settings$rawLabResultsTable,
   cohort1_id            = cohort1Id,
   lab_window_before_days = settings$labWindowBeforeDays,
-  lab_window_after_days  = settings$labWindowAfterDays)
+  lab_window_after_days  = settings$labWindowAfterDays,
+  subject_strata_sql     = strataFragment)
 names(cov) <- tolower(names(cov))
-cov$label      <- label(cov$test_id)
-cov$n_target1a <- if (nrow(cov) > 0) nT1a else integer(0)
-cov$n_tested   <- censor(cov$n_tested)
-cov$n_passed   <- censor(cov$n_passed)
-cov <- cov[c("test_id","label","n_target1a","n_tested","n_passed")]
-cov <- cov[order(cov$test_id), ]
+cov$label <- label(cov$test_id)
+cov <- dplyr::left_join(cov, denomTbl, by = c("stratum_type", "stratum_value"))
+cov$n_tested <- censor(cov$n_tested)
+cov$n_passed <- censor(cov$n_passed)
+cov <- cov[c("stratum_type","stratum_value","test_id","label","n_target1a","n_tested","n_passed")]
+cov <- cov[order(cov$stratum_type, cov$stratum_value, cov$test_id), ]
 writeResultCsv(cov, "eligibility_input_coverage")
 message("  eligibility_input_coverage: ", nrow(cov),
         " inputs crossed with T1 mBC (n=", nT1a, ")")
