@@ -147,11 +147,6 @@ settings <- list(
   outputFolder        = file.path("results")
 )
 
-# --- Optional pre-study export settings ------------------------------------
-# The bundled pre-study query assets live in this repository, so the export
-# uses the current repository root by default.
-settings$preStudyArchiveName <- settings$preStudyArchiveName %||% "prestudy_queries.zip"
-
 # ===========================================================================
 # Run  —  do not edit below
 # ===========================================================================

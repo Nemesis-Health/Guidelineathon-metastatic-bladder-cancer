@@ -46,7 +46,7 @@ sqlDir      <- file.path(projectRoot, "sql")
 dir.create(settings$outputFolder, recursive = TRUE, showWarnings = FALSE)
 
 source("R/vendor_utils.R")   # .getDbms, %||%
-source("R/00_prestudy_queries.R")   # runPreStudyDiagnostics() + exports/zips prestudy_queries on source
+source("R/00_prestudy_queries.R")   # runPreStudyDiagnostics()
 
 # helpers.R also defines cohort-generation functions that need
 # CohortGenerator/CirceR, but those packages are only required if those

@@ -12,8 +12,8 @@ A full run has two main steps, in order:
    queries against the OMOP CDM. This functionality is ported from the external
    [`onco-pre-study`](https://github.com/Nemesis-Health/onco-pre-study/tree/fb30995fa0c776e4681e92a9e640812a9e4e88df)
    repo (pinned at commit `fb30995`): its query assets and SQL Server templates
-   are mirrored into this repository (`sql/prestudy/`, `results/prestudy_queries/`)
-   so the study can run standalone, without a separate checkout of that project.
+   are mirrored into this repository (`sql/prestudy/`) so the study can run
+   standalone, without a separate checkout of that project.
    See [What it does — the diagnostics stage](#what-it-does--the-diagnostics-stage)
    and [Pre-study queries & result packaging](#pre-study-queries--result-packaging).
 2. **Eligibility** (`results/eligibility/`) — the main cohort-creation
