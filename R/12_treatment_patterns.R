@@ -177,11 +177,11 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     nameMapTP <- dplyr::select(mainManifest, cohort_definition_id = "cohortId",
                                cohort_name = "cohortName")
 
-    # Per-subject age group / sex (sql/outcome_strata.sql — the same lookup
+    # Per-subject age group / sex (sql/subject_strata.sql — the same lookup
     # R/09_outcomes.R uses), so this table can be sliced the same way every
     # other stratified output in this pipeline is: one dimension at a time
     # (overall / age_group / sex), not crossed.
-    strataTbl <- querySqlFile(connection, "outcome_strata.sql",
+    strataTbl <- querySqlFile(connection, "subject_strata.sql",
       work_database_schema = settings$workDatabaseSchema,
       cohort_table         = settings$cohortTable,
       cdm_database_schema  = settings$cdmDatabaseSchema)

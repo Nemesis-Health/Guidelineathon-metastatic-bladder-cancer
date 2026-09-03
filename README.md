@@ -283,7 +283,7 @@ At the end of a run, results are packaged into two archives:
 | `eligibility_input_coverage.sql` | Each input × Target 1A: `n_tested` (measured) + `n_passed` (criterion met). |
 | `n_target1a.sql` | Target 1A denominator. |
 | `outcome_target_data.sql` | Cohort membership + index/end dates for a given cohort-id list. Used by steps 09/10/11/12 (generic — the `@target_cohort_ids` list is whatever the caller needs). |
-| `outcome_strata.sql` | Per-subject age group / sex / index year (row-level counterpart of `demographics.sql`'s bucketing). Used by step 09. |
+| `subject_strata.sql` | Per-subject age group / sex / index year — single source of truth for this bucketing, shared by `demographics.sql` (injected as its `coh` CTE), `R/03_main_cohorts.R`'s age/sex sub-cohort splits, step 09, and step 12. |
 | `fetch_death_events.sql` | Death dates for subjects in a set of cohorts. Used by `fetchDeathEvents()` (step 09, OS outcome). |
 | `demographics_continuous.sql` | Per-cohort continuous age summary (mean/SD/median/IQR/min/max), portable percentile technique (no `PERCENTILE_CONT`, same as `lab_value_distribution_portable.sql`). Used by step 07. |
 | `baseline_vitals.sql` | Weight (kg) / height (cm) / BMI, closest measurement to each cohort's index within `settings$vitalsWindowDays`. Used by step 11. |
@@ -794,7 +794,7 @@ only slice here that can show a real regimen *mix*, since every single-arm
 T4/T5/T6 cohort is 100% one category by construction and T3a-e are further
 restricted to eligible-and-adherent), plus T3a-e and T4-6a-f individually.
 Stratified one dimension at a time (overall / age_group / sex), same
-marginal convention as the outcome files, via `sql/outcome_strata.sql` (the
+marginal convention as the outcome files, via `sql/subject_strata.sql` (the
 same per-subject lookup `R/09_outcomes.R` uses) — not crossed with
 `treatment_year`, which is always its own axis regardless of `stratum_type`.
 `treatment_share_by_year_plot()` (`R/12_treatment_patterns.R`) renders any

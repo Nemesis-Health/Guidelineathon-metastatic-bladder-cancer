@@ -160,6 +160,18 @@ querySqlFile <- function(connection, file, ...) {
   DatabaseConnector::querySql(connection, sql)
 }
 
+# --- render (no translate, no execute) a .sql file --------------------------
+# For assembling one file's fully-resolved text as a fragment injected into
+# another template (e.g. subject_strata.sql's body becomes demographics.sql's
+# `coh` CTE, or a stratifyTemplate's strata subquery) -- resolve the source
+# fragment's own placeholders here FIRST, so the two files' parameters can't
+# collide when the outer template is rendered.
+renderSqlFile <- function(file, ...) {
+  .checkSqlRenderParams(file, list(...))
+  sql <- paste(readLines(file.path(sqlDir, file), warn = FALSE), collapse = "\n")
+  SqlRender::render(sql, ..., warnOnMissingParameters = FALSE)
+}
+
 # --- write a result data frame to results/eligibility ----------------------
 writeResultCsv <- function(df, name) {
   d <- file.path(settings$outputFolder, "eligibility")

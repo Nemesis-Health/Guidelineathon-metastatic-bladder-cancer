@@ -1,16 +1,26 @@
 -- ===========================================================================
--- outcome_strata.sql — per-subject strata for outcomes (age group / sex / index year)
+-- subject_strata.sql — per-subject strata (age group / sex / index year)
 -- ===========================================================================
 -- One row per (cohort_definition_id, subject_id) in @cohort_table, carrying
 -- the three protocol stratification columns:
---   age_group   >65 / <=65   (age = year(index) - year_of_birth)
+--   age_group   >65 / <=65   (age = year(index) - year_of_birth; protocol:
+--               "age groups (<=65 and >65 years old)")
 --   sex         Male / Female / Other-Unknown
 --   index_year  year of cohort_start_date
 --
--- Row-level counterpart of demographics.sql's `coh` CTE (same bucketing, kept
--- consistent with it) — that file aggregates to counts per stratum; this one
--- stays per-subject so R/09_outcomes.R can left-join it onto targetData and
--- stratify computeTimeToEvent()/computeTimeDiffStats() calls.
+-- SINGLE SOURCE OF TRUTH for this bucketing logic -- every other consumer
+-- builds on this file's exact text instead of re-deriving the CASE
+-- expressions, so the buckets can't drift apart:
+--   R/09_outcomes.R              — queried directly, left-joined onto
+--                                   targetData to stratify
+--                                   computeTimeToEvent()/computeTimeDiffStats().
+--   R/12_treatment_patterns.R    — queried directly, same left-join pattern.
+--   demographics.sql             — this file's text is rendered first and
+--                                   injected as its `coh` CTE body (see that
+--                                   file's header), then aggregated to counts.
+--   R/03_main_cohorts.R          — same injection, filtered to one root
+--                                   cohort, to materialize the age/sex
+--                                   sub-cohorts (T1 (Age>65), etc.).
 --
 -- SqlRender parameters: @work_database_schema @cohort_table @cdm_database_schema
 -- ===========================================================================
