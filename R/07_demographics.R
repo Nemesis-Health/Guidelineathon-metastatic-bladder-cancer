@@ -65,7 +65,7 @@ if (nrow(demo) == 0L) {
   demo <- demo[order(demo$cohort_definition_id, demo$characteristic, demo$sort_key),
                c("cohort_definition_id", "cohort_name", "characteristic",
                  "stratum", "n_subjects", "pct")]
-  writeResultCsv(demo, "demographics")
+  writeResultCsv(demo, "demographics", "characterization")
   message("  demographics: ", nrow(demo), " rows across ",
           dplyr::n_distinct(demo$cohort_definition_id), " cohorts")
 }
@@ -91,6 +91,6 @@ if (nrow(ageCont) == 0L) {
 
   ageCont <- ageCont[order(ageCont$cohort_definition_id),
                      c("cohort_definition_id", "cohort_name", "n", statCols)]
-  writeResultCsv(ageCont, "demographics_age_continuous")
+  writeResultCsv(ageCont, "demographics_age_continuous", "characterization")
   message("  demographics_age_continuous: ", nrow(ageCont), " cohort(s)")
 }

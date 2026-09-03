@@ -253,12 +253,12 @@ if (!exists("artemisResult")) {
   full <- assessStratum(NULL, "scan_cohort", nScan)
   t1a  <- assessStratum(t1aSubjects, "target_1a", scanN1a)
 
-  writeResultCsv(dplyr::bind_rows(full$summary,  t1a$summary),  "artemis_summary")
-  writeResultCsv(dplyr::bind_rows(full$coverage, t1a$coverage), "artemis_coverage")
-  writeResultCsv(dplyr::bind_rows(full$drug,     t1a$drug),     "artemis_drug_exposures")
-  writeResultCsv(dplyr::bind_rows(full$reg,      t1a$reg),      "artemis_regimens_aligned")
-  writeResultCsv(dplyr::bind_rows(full$perPat,   t1a$perPat),   "artemis_episodes_per_patient")
-  writeResultCsv(dplyr::bind_rows(full$uncap,    t1a$uncap),    "artemis_uncaptured_drugs")
+  writeResultCsv(dplyr::bind_rows(full$summary,  t1a$summary),  "artemis_summary", "artemis")
+  writeResultCsv(dplyr::bind_rows(full$coverage, t1a$coverage), "artemis_coverage", "artemis")
+  writeResultCsv(dplyr::bind_rows(full$drug,     t1a$drug),     "artemis_drug_exposures", "artemis")
+  writeResultCsv(dplyr::bind_rows(full$reg,      t1a$reg),      "artemis_regimens_aligned", "artemis")
+  writeResultCsv(dplyr::bind_rows(full$perPat,   t1a$perPat),   "artemis_episodes_per_patient", "artemis")
+  writeResultCsv(dplyr::bind_rows(full$uncap,    t1a$uncap),    "artemis_uncaptured_drugs", "artemis")
 
   message("  artemis_* written with cohort strata (scan_cohort, target_1a)")
 }

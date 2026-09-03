@@ -121,7 +121,7 @@ if (nrow(vitals) == 0L) {
     })) |>
     dplyr::left_join(nameMap, by = "cohort_definition_id") |>
     dplyr::relocate("cohort_name", .after = "cohort_definition_id")
-  writeResultCsv(vitalsOut, "baseline_vitals")
+  writeResultCsv(vitalsOut, "baseline_vitals", "characterization")
   message("  baseline_vitals: ", nrow(vitalsOut), " row(s)")
 }
 
@@ -240,7 +240,7 @@ if (is.null(covSet) || nrow(covSet) == 0L) {
     cciOut <- dplyr::left_join(cciOut, nameMap, by = "cohort_definition_id") |>
       dplyr::relocate(c("cohort_definition_id", "cohort_name"), .before = "cci_category")
 
-    writeResultCsv(cciOut, "charlson_cci")
+    writeResultCsv(cciOut, "charlson_cci", "characterization")
     message("  charlson_cci: ", nrow(components), " subject(s), ",
             nrow(flagIds) + 1L, " of 19 component(s) wired")
   }

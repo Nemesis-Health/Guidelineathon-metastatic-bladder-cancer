@@ -121,5 +121,5 @@ small <- !is.na(out$n_overlap) & out$n_overlap > 0 & out$n_overlap < settings$mi
 out$n_overlap <- ifelse(small, -settings$minCellCount, out$n_overlap)
 
 out <- out[c("code", "label", "n_1a", "n_overlap")]
-writeResultCsv(out, "covariate_overlap")
+writeResultCsv(out, "covariate_overlap", "characterization")
 message("  covariate_overlap: ", nrow(out), " covariates x 1A (n=", nT1, ")")

@@ -52,7 +52,7 @@ names(labDist) <- tolower(names(labDist))
 # which stratum views actually reach the CSV -- the SQL always computes all
 # four (cheap), a site that wants fewer/none just filters here.
 labDist <- labDist[labDist$stratum_type %in% activeStrataTypes(), ]
-writeResultCsv(labDist, "lab_value_distribution")
+writeResultCsv(labDist, "lab_value_distribution", "labs")
 message("  lab_value_distribution: ", nrow(labDist), " rows")
 
 # Timing-to-index: Target 1A + Target 1A PC allowed only (not the full T1-T6
@@ -72,7 +72,7 @@ labTiming <- querySqlFile(connection, "lab_timing_to_index_portable.sql",
   subject_strata_sql     = strataFragment)
 names(labTiming) <- tolower(names(labTiming))
 labTiming <- labTiming[labTiming$stratum_type %in% activeStrataTypes(), ]
-writeResultCsv(labTiming, "lab_timing_to_index")
+writeResultCsv(labTiming, "lab_timing_to_index", "labs")
 message("  lab_timing_to_index: ", nrow(labTiming), " rows")
 
 labSummary <- querySqlFile(connection, "lab_results_summary_portable.sql",
@@ -81,7 +81,7 @@ labSummary <- querySqlFile(connection, "lab_results_summary_portable.sql",
   vocabulary_database_schema = settings$vocabDatabaseSchema,
   min_cell_count             = settings$minCellCount)
 names(labSummary) <- tolower(names(labSummary))
-writeResultCsv(labSummary, "lab_results_summary")
+writeResultCsv(labSummary, "lab_results_summary", "labs")
 message("  lab_results_summary: ", nrow(labSummary), " rows")
 
 labRollup <- querySqlFile(connection, "lab_results_rollup_portable.sql",
@@ -91,7 +91,7 @@ labRollup <- querySqlFile(connection, "lab_results_rollup_portable.sql",
   vocabulary_database_schema = settings$vocabDatabaseSchema,
   min_cell_count             = settings$minCellCount)
 names(labRollup) <- tolower(names(labRollup))
-writeResultCsv(labRollup, "lab_results_rollup")
+writeResultCsv(labRollup, "lab_results_rollup", "labs")
 message("  lab_results_rollup: ", nrow(labRollup), " rows")
 
 message("\nResults written under: ",

@@ -42,7 +42,7 @@ labCohortCounts$n_subjects <- censor(labCohortCounts$n_subjects)
 labCohortCounts$n_records  <- ifelse(labCohortCounts$n_subjects < 0, NA,
                                      labCohortCounts$n_records)
 labCohortCounts <- labCohortCounts[c("test_id","label","n_subjects","n_records")]
-writeResultCsv(labCohortCounts, "lab_cohort_counts")
+writeResultCsv(labCohortCounts, "lab_cohort_counts", "labs")
 message("  lab_cohort_counts: ", nrow(labCohortCounts), " test-id slots")
 
 # --- coverage (tested / passed per input), every cohort in the main tree ---
@@ -103,6 +103,6 @@ cov$n_passed <- censor(cov$n_passed)
 cov <- cov[c("cohort_definition_id","cohort_name","stratum_type","stratum_value",
              "test_id","label","n_cohort","n_tested","n_passed")]
 cov <- cov[order(cov$cohort_definition_id, cov$stratum_type, cov$stratum_value, cov$test_id), ]
-writeResultCsv(cov, "eligibility_input_coverage")
+writeResultCsv(cov, "eligibility_input_coverage", "labs")
 message("  eligibility_input_coverage: ", nrow(cov), " rows across ",
         dplyr::n_distinct(cov$cohort_definition_id), " cohorts")

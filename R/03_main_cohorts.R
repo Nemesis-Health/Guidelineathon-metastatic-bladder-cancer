@@ -234,7 +234,7 @@ cohortCountsOut <- cohortCountsOut[order(cohortCountsOut$cohort_definition_id,
                                          cohortCountsOut$stratum_type,
                                          cohortCountsOut$stratum_value), ]
 
-writeResultCsv(cohortCountsOut, "cohort_counts")
+writeResultCsv(cohortCountsOut, "cohort_counts", "characterization")
 print(tibble::as_tibble(cohortCountsOut), n = Inf)
 
 # --- standard OHDSI inclusion-rule attrition (01_Target JSON cohorts) -------
@@ -310,5 +310,5 @@ attrition$personCount[.smallAttr] <- -settings$minCellCount
 .smallRem <- attrition$remaining > 0 & attrition$remaining < settings$minCellCount
 attrition$remaining[.smallRem] <- -settings$minCellCount
 
-writeResultCsv(attrition, "attrition_target_1a")
+writeResultCsv(attrition, "attrition_target_1a", "characterization")
 print(tibble::as_tibble(attrition), n = Inf)

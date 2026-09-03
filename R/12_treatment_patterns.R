@@ -179,25 +179,25 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     }
 
     untreated <- dplyr::bind_rows(untreatedList)
-    writeResultCsv(untreated, "treatment_pattern_untreated")
+    writeResultCsv(untreated, "treatment_pattern_untreated", "treatment_patterns")
 
     regimenCounts <- dplyr::bind_rows(regimenList)
     small <- regimenCounts$n_patients > 0 & regimenCounts$n_patients < settings$minCellCount
     regimenCounts$pct_of_lot <- ifelse(small, NA_real_, regimenCounts$pct_of_lot)
     regimenCounts$n_patients <- ifelse(small, -settings$minCellCount, regimenCounts$n_patients)
-    writeResultCsv(regimenCounts, "treatment_pattern_regimen")
+    writeResultCsv(regimenCounts, "treatment_pattern_regimen", "treatment_patterns")
 
     catCounts <- dplyr::bind_rows(catList)
     small <- catCounts$n_patients > 0 & catCounts$n_patients < settings$minCellCount
     catCounts$pct_of_lot <- ifelse(small, NA_real_, catCounts$pct_of_lot)
     catCounts$n_patients <- ifelse(small, -settings$minCellCount, catCounts$n_patients)
-    writeResultCsv(catCounts, "treatment_pattern_category")
+    writeResultCsv(catCounts, "treatment_pattern_category", "treatment_patterns")
 
     pathways <- dplyr::bind_rows(pathwaysList) |>
       dplyr::arrange(.data$stratum_type, .data$stratum_value, dplyr::desc(.data$n_patients))
     small <- pathways$n_patients > 0 & pathways$n_patients < settings$minCellCount
     pathways$n_patients <- ifelse(small, -settings$minCellCount, pathways$n_patients)
-    writeResultCsv(pathways, "treatment_pathways")
+    writeResultCsv(pathways, "treatment_pathways", "treatment_patterns")
 
     # --- treatment share by cohort x line x calendar year -------------------
     idsByCodes <- function(codes)
@@ -274,7 +274,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     small <- yearCatCounts$n_patients > 0 & yearCatCounts$n_patients < settings$minCellCount
     yearCatCounts$pct_of_year_lot <- ifelse(small, NA_real_, yearCatCounts$pct_of_year_lot)
     yearCatCounts$n_patients      <- ifelse(small, -settings$minCellCount, yearCatCounts$n_patients)
-    writeResultCsv(yearCatCounts, "treatment_pattern_by_year")
+    writeResultCsv(yearCatCounts, "treatment_pattern_by_year", "treatment_patterns")
 
     # nT1/nTreated inside the loop above are per-stratum-value locals (R's
     # for-loop leaves them holding the LAST iteration's values, not the

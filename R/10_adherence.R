@@ -108,11 +108,11 @@ if (nrow(membership) == 0L) {
     dplyr::left_join(nameMap, by = "cohort_definition_id") |>
     dplyr::relocate("cohort_name", .after = "cohort_definition_id") |>
     dplyr::relocate("stratum_type", "stratum_value", .after = "cohort_name")
-  writeResultCsv(relevance, "guideline_relevance")
+  writeResultCsv(relevance, "guideline_relevance", "guideline")
 
   adherence <- dplyr::bind_rows(adherenceList) |>
     dplyr::relocate("stratum_type", "stratum_value", .before = "leaf")
-  writeResultCsv(adherence, "guideline_adherence")
+  writeResultCsv(adherence, "guideline_adherence", "guideline")
 
   message("  relevance: ", nrow(relevance), " cohort(s); adherence: ",
           nrow(adherence), " leaf x category row(s)")

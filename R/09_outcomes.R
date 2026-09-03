@@ -231,7 +231,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
         if (nrow(tbl) == 0L) return(invisible())
         tbl <- dplyr::left_join(tbl, nameMap, by = "cohort_definition_id") |>
           dplyr::relocate("cohort_name", .after = "cohort_definition_id")
-        writeResultCsv(tbl, paste0("outcome_", nm, "_", suffix))
+        writeResultCsv(tbl, paste0("outcome_", nm, "_", suffix), "outcomes")
       }
 
       writeOutcomeCsv(summaryParts, "summary")
