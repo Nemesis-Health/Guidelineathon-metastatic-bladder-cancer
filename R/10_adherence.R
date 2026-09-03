@@ -52,6 +52,22 @@ names(membership) <- tolower(names(membership))
 membership$cohort_definition_id <- as.integer(membership$cohort_definition_id)
 membership$subject_id           <- as.integer(membership$subject_id)
 
+# subject_strata.sql is the single source of truth for age_group/sex/age_sex
+# bucketing (shared with demographics.sql, R/04/05/09/12). Both
+# computeGuidelineRelevance()/computeAdherenceRollup() work purely off
+# subject-id sets filtered from `membership`, so stratifying just means
+# pre-filtering membership to a stratum's subjects before calling them --
+# no change needed in guidelineAdherence.R itself.
+strataTbl <- querySqlFile(connection, "subject_strata.sql",
+  work_database_schema = settings$workDatabaseSchema,
+  cohort_table         = settings$cohortTable,
+  cdm_database_schema  = settings$cdmDatabaseSchema)
+names(strataTbl) <- tolower(names(strataTbl))
+strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
+strataTbl$subject_id           <- as.integer(strataTbl$subject_id)
+membership <- dplyr::left_join(membership, strataTbl,
+  by = c("cohort_definition_id", "subject_id"))
+
 nameMap <- dplyr::select(mainManifest, cohort_definition_id = "cohortId",
                          cohort_name = "cohortName")
 
@@ -61,19 +77,40 @@ if (nrow(membership) == 0L) {
 
 } else {
 
-  relevance <- computeGuidelineRelevance(membership, t1Id, relevantIds,
-    minCellCount = settings$minCellCount) |>
+  stratumSpecs <- list(overall = NULL, age_group = "age_group",
+                       sex = "sex", age_sex = "age_sex")
+  relevanceList <- adherenceList <- list()
+  for (stratumType in names(stratumSpecs)) {
+    col  <- stratumSpecs[[stratumType]]
+    vals <- if (is.null(col)) "overall" else sort(unique(stats::na.omit(membership[[col]])))
+    for (val in vals) {
+      m <- if (is.null(col)) membership else membership[membership[[col]] == val, ]
+
+      rel <- computeGuidelineRelevance(m, t1Id, relevantIds,
+        minCellCount = settings$minCellCount)
+      rel$stratum_type <- stratumType; rel$stratum_value <- val
+      relevanceList[[length(relevanceList) + 1L]] <- rel
+
+      adh <- computeAdherenceRollup(m,
+        eligibleIds     = t2Ids,
+        adherentIds     = t3Ids,
+        altGuidelineIds = t4Ids,
+        indicatedIds    = t5Ids,
+        nonIndicatedIds = t6Ids,
+        minCellCount    = settings$minCellCount)
+      adh$stratum_type <- stratumType; adh$stratum_value <- val
+      adherenceList[[length(adherenceList) + 1L]] <- adh
+    }
+  }
+
+  relevance <- dplyr::bind_rows(relevanceList) |>
     dplyr::left_join(nameMap, by = "cohort_definition_id") |>
-    dplyr::relocate("cohort_name", .after = "cohort_definition_id")
+    dplyr::relocate("cohort_name", .after = "cohort_definition_id") |>
+    dplyr::relocate("stratum_type", "stratum_value", .after = "cohort_name")
   writeResultCsv(relevance, "guideline_relevance")
 
-  adherence <- computeAdherenceRollup(membership,
-    eligibleIds     = t2Ids,
-    adherentIds     = t3Ids,
-    altGuidelineIds = t4Ids,
-    indicatedIds    = t5Ids,
-    nonIndicatedIds = t6Ids,
-    minCellCount    = settings$minCellCount)
+  adherence <- dplyr::bind_rows(adherenceList) |>
+    dplyr::relocate("stratum_type", "stratum_value", .before = "leaf")
   writeResultCsv(adherence, "guideline_adherence")
 
   message("  relevance: ", nrow(relevance), " cohort(s); adherence: ",
