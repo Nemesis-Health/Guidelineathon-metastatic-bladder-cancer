@@ -91,61 +91,111 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     censorN <- function(x)
       ifelse(!is.na(x) & x > 0 & x < settings$minCellCount, -settings$minCellCount, x)
 
-    nT1      <- dplyr::n_distinct(t1Members$subject_id)
-    nTreated <- dplyr::n_distinct(treatedPatients$person_id)
+    # subject_strata.sql is the single source of truth for age_group/sex/
+    # age_sex bucketing, anchored to T1's own index (same as everywhere
+    # else). Joined onto both t1Members (the untreated-% denominator) and a
+    # separate tpT1Strata (everything else below) so each can be filtered
+    # per stratum value -- kept off `treatedPatients` itself, since that
+    # variable is reused as-is by the treatment_pattern_by_year.csv section
+    # further down, which does its own (per-treated-cohort, not T1-only)
+    # strata join and would collide with these same column names otherwise.
+    # Fetched once here and reused there too (see that section). Which
+    # views actually run is settings$strataColumns (run.R CONFIG, via
+    # activeStrataSpecs()) -- one setting, not per-file logic.
+    strataTbl <- querySqlFile(connection, "subject_strata.sql",
+      work_database_schema = settings$workDatabaseSchema,
+      cohort_table         = settings$cohortTable,
+      cdm_database_schema  = settings$cdmDatabaseSchema)
+    names(strataTbl) <- tolower(names(strataTbl))
+    strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
+    strataTbl$subject_id           <- as.integer(strataTbl$subject_id)
+    t1Strata <- strataTbl[strataTbl$cohort_definition_id == t1Id,
+                          c("subject_id", "age_group", "sex", "age_sex")]
 
-    # --- untreated % -----------------------------------------------------
-    untreated <- tibble::tibble(
-      n_t1          = nT1,
-      n_treated     = censorN(nTreated),
-      n_untreated   = censorN(nT1 - nTreated),
-      pct_untreated = round((nT1 - nTreated) / nT1 * 100, 2))
-    if (untreated$n_treated < 0 || untreated$n_untreated < 0)
-      untreated$pct_untreated <- NA_real_
-    writeResultCsv(untreated, "treatment_pattern_untreated")
+    t1Members  <- dplyr::left_join(t1Members, t1Strata, by = "subject_id")
+    tpT1Strata <- dplyr::left_join(treatedPatients,
+      dplyr::rename(t1Strata, person_id = "subject_id"), by = "person_id")
 
-    # --- regimen distribution by LoT --------------------------------------
-    lotTotals <- dplyr::count(treatedPatients, .data$lot_number, name = "lot_n")
-
-    regimenCounts <- treatedPatients |>
-      dplyr::count(.data$lot_number, .data$episode_source_value, name = "n_patients") |>
-      dplyr::rename(regName = "episode_source_value") |>
-      dplyr::left_join(lotTotals, by = "lot_number") |>
-      dplyr::mutate(pct_of_lot = round(.data$n_patients / .data$lot_n * 100, 2))
-    small <- regimenCounts$n_patients > 0 & regimenCounts$n_patients < settings$minCellCount
-    regimenCounts$pct_of_lot <- ifelse(small, NA_real_, regimenCounts$pct_of_lot)
-    regimenCounts$n_patients <- ifelse(small, -settings$minCellCount, regimenCounts$n_patients)
-    writeResultCsv(regimenCounts, "treatment_pattern_regimen")
-
-    # --- category distribution by LoT, one block per classification lens --
     lensCols <- c(eau = "class_eau", hemonc_mbc = "class_hemonc_mbc", any = "class_any")
-    catCounts <- dplyr::bind_rows(lapply(names(lensCols), function(lens) {
-      treatedPatients |>
-        dplyr::count(.data$lot_number, category = .data[[lensCols[[lens]]]],
-                     name = "n_patients") |>
-        dplyr::mutate(lens = lens, .before = 1)
-    })) |>
-      dplyr::left_join(lotTotals, by = "lot_number") |>
-      dplyr::mutate(pct_of_lot = round(.data$n_patients / .data$lot_n * 100, 2))
-    small <- catCounts$n_patients > 0 & catCounts$n_patients < settings$minCellCount
-    catCounts$pct_of_lot <- ifelse(small, NA_real_, catCounts$pct_of_lot)
-    catCounts$n_patients <- ifelse(small, -settings$minCellCount, catCounts$n_patients)
-    writeResultCsv(catCounts, "treatment_pattern_category")
 
-    # --- pathways (Sankey-ready): lot1/lot2/lot3 class_eau -> count --------
-    lotSlice <- function(n) {
-      out <- dplyr::filter(treatedPatients, .data$lot_number == n)
+    lotSlice <- function(tp, n) {
+      out <- dplyr::filter(tp, .data$lot_number == n)
       out <- dplyr::select(out, "person_id", "class_eau")
       names(out)[2] <- paste0("lot", n)
       out
     }
 
-    wide <- lotSlice(1L) |>
-      dplyr::full_join(lotSlice(2L), by = "person_id") |>
-      dplyr::full_join(lotSlice(3L), by = "person_id")
+    untreatedList <- regimenList <- catList <- pathwaysList <- list()
+    strataSpecs <- activeStrataSpecs()
+    for (stratumType in names(strataSpecs)) {
+      col  <- strataSpecs[[stratumType]]
+      vals <- if (is.null(col)) "overall" else sort(unique(stats::na.omit(t1Strata[[col]])))
+      for (val in vals) {
+        t1M <- if (is.null(col)) t1Members else t1Members[t1Members[[col]] == val, ]
+        tp  <- if (is.null(col)) tpT1Strata else tpT1Strata[tpT1Strata[[col]] == val, ]
 
-    pathways <- dplyr::count(wide, .data$lot1, .data$lot2, .data$lot3, name = "n_patients") |>
-      dplyr::arrange(dplyr::desc(.data$n_patients))
+        # --- untreated % ---------------------------------------------------
+        nT1      <- dplyr::n_distinct(t1M$subject_id)
+        nTreated <- dplyr::n_distinct(tp$person_id)
+        untreatedRow <- tibble::tibble(
+          stratum_type  = stratumType, stratum_value = val,
+          n_t1          = nT1,
+          n_treated     = censorN(nTreated),
+          n_untreated   = censorN(nT1 - nTreated),
+          pct_untreated = round((nT1 - nTreated) / nT1 * 100, 2))
+        if (untreatedRow$n_treated < 0 || untreatedRow$n_untreated < 0)
+          untreatedRow$pct_untreated <- NA_real_
+        untreatedList[[length(untreatedList) + 1L]] <- untreatedRow
+
+        # --- regimen distribution by LoT ------------------------------------
+        lotTotals <- dplyr::count(tp, .data$lot_number, name = "lot_n")
+
+        regimenList[[length(regimenList) + 1L]] <- tp |>
+          dplyr::count(.data$lot_number, .data$episode_source_value, name = "n_patients") |>
+          dplyr::rename(regName = "episode_source_value") |>
+          dplyr::left_join(lotTotals, by = "lot_number") |>
+          dplyr::mutate(pct_of_lot = round(.data$n_patients / .data$lot_n * 100, 2),
+                       stratum_type = stratumType, stratum_value = val, .before = 1)
+
+        # --- category distribution by LoT, one block per classification lens
+        catList[[length(catList) + 1L]] <- dplyr::bind_rows(lapply(names(lensCols), function(lens) {
+          tp |>
+            dplyr::count(.data$lot_number, category = .data[[lensCols[[lens]]]],
+                        name = "n_patients") |>
+            dplyr::mutate(lens = lens, .before = 1)
+        })) |>
+          dplyr::left_join(lotTotals, by = "lot_number") |>
+          dplyr::mutate(pct_of_lot = round(.data$n_patients / .data$lot_n * 100, 2),
+                       stratum_type = stratumType, stratum_value = val, .before = 1)
+
+        # --- pathways (Sankey-ready): lot1/lot2/lot3 class_eau -> count -----
+        wide <- lotSlice(tp, 1L) |>
+          dplyr::full_join(lotSlice(tp, 2L), by = "person_id") |>
+          dplyr::full_join(lotSlice(tp, 3L), by = "person_id")
+
+        pathwaysList[[length(pathwaysList) + 1L]] <- dplyr::count(
+            wide, .data$lot1, .data$lot2, .data$lot3, name = "n_patients") |>
+          dplyr::mutate(stratum_type = stratumType, stratum_value = val, .before = 1)
+      }
+    }
+
+    untreated <- dplyr::bind_rows(untreatedList)
+    writeResultCsv(untreated, "treatment_pattern_untreated")
+
+    regimenCounts <- dplyr::bind_rows(regimenList)
+    small <- regimenCounts$n_patients > 0 & regimenCounts$n_patients < settings$minCellCount
+    regimenCounts$pct_of_lot <- ifelse(small, NA_real_, regimenCounts$pct_of_lot)
+    regimenCounts$n_patients <- ifelse(small, -settings$minCellCount, regimenCounts$n_patients)
+    writeResultCsv(regimenCounts, "treatment_pattern_regimen")
+
+    catCounts <- dplyr::bind_rows(catList)
+    small <- catCounts$n_patients > 0 & catCounts$n_patients < settings$minCellCount
+    catCounts$pct_of_lot <- ifelse(small, NA_real_, catCounts$pct_of_lot)
+    catCounts$n_patients <- ifelse(small, -settings$minCellCount, catCounts$n_patients)
+    writeResultCsv(catCounts, "treatment_pattern_category")
+
+    pathways <- dplyr::bind_rows(pathwaysList) |>
+      dplyr::arrange(.data$stratum_type, .data$stratum_value, dplyr::desc(.data$n_patients))
     small <- pathways$n_patients > 0 & pathways$n_patients < settings$minCellCount
     pathways$n_patients <- ifelse(small, -settings$minCellCount, pathways$n_patients)
     writeResultCsv(pathways, "treatment_pathways")
@@ -181,13 +231,8 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     # same lookup R/09_outcomes.R uses), so this table can be sliced the same
     # way every other stratified output in this pipeline is: one dimension
     # at a time (overall / age_group / sex), plus the age x sex crossed view.
-    strataTbl <- querySqlFile(connection, "subject_strata.sql",
-      work_database_schema = settings$workDatabaseSchema,
-      cohort_table         = settings$cohortTable,
-      cdm_database_schema  = settings$cdmDatabaseSchema)
-    names(strataTbl) <- tolower(names(strataTbl))
-    strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
-    strataTbl$subject_id           <- as.integer(strataTbl$subject_id)
+    # `strataTbl` (full, unfiltered) was already fetched above -- reused
+    # here rather than re-queried.
 
     # fans out one treatedPatients row per treated cohort a subject belongs
     # to (a subject is normally in several at once - one T3 leaf if eligible
@@ -220,12 +265,10 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
                      stratum_type = stratumType, .before = 1)
     }
 
-    yearCatCounts <- dplyr::bind_rows(
-      yearCatCountsFor(byYear, "overall"),
-      yearCatCountsFor(byYear, "age_group", "age_group"),
-      yearCatCountsFor(byYear, "sex", "sex"),
-      yearCatCountsFor(byYear, "age_sex", "age_sex")
-    ) |>
+    # `strataSpecs` (settings$strataColumns, via activeStrataSpecs()) was
+    # already fetched above -- reused here rather than re-derived.
+    yearCatCounts <- dplyr::bind_rows(lapply(names(strataSpecs), function(st)
+        yearCatCountsFor(byYear, st, strataSpecs[[st]]))) |>
       dplyr::left_join(nameMapTP, by = "cohort_definition_id") |>
       dplyr::relocate("cohort_name", .after = "cohort_definition_id")
 
@@ -234,7 +277,12 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     yearCatCounts$n_patients      <- ifelse(small, -settings$minCellCount, yearCatCounts$n_patients)
     writeResultCsv(yearCatCounts, "treatment_pattern_by_year")
 
-    message("  treatment patterns: ", nTreated, " treated of ", nT1, " T1 subject(s)")
+    # nT1/nTreated inside the loop above are per-stratum-value locals (R's
+    # for-loop leaves them holding the LAST iteration's values, not the
+    # overall total) -- recomputed fresh here rather than reused.
+    nT1Overall      <- dplyr::n_distinct(t1Members$subject_id)
+    nTreatedOverall <- dplyr::n_distinct(tpT1Strata$person_id)
+    message("  treatment patterns: ", nTreatedOverall, " treated of ", nT1Overall, " T1 subject(s)")
   }
 }
 
