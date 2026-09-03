@@ -188,15 +188,47 @@ cohortCounts <- generateCohorts(connection, fullSet, dropTables = TRUE)
 mainManifest <<- fullSet
 saveState("mainManifest", mainManifest)
 
+# Stratified counts: subject_strata.sql is the single source of truth for
+# age_group/sex/age_sex bucketing (shared with demographics.sql,
+# R/04_lab_ranges.R, R/05_eligibility_coverage.R, R/09_outcomes.R,
+# R/12_treatment_patterns.R). The "overall" view is CohortGenerator's own
+# getCohortCounts() result (above), reshaped into the same long format
+# rather than re-derived, so it can't drift from the trusted library count.
+strataFragment <- renderSqlFile("subject_strata.sql",
+  work_database_schema = settings$workDatabaseSchema,
+  cohort_table         = settings$cohortTable,
+  cdm_database_schema  = settings$cdmDatabaseSchema)
+strataCounts <- querySqlFile(connection, "cohort_counts_stratified.sql",
+  work_database_schema = settings$workDatabaseSchema,
+  cohort_table         = settings$cohortTable,
+  subject_strata_sql   = strataFragment)
+names(strataCounts) <- tolower(names(strataCounts))
+strataCounts$cohort_definition_id <- as.integer(strataCounts$cohort_definition_id)
+
+overallCounts <- tibble::tibble(
+  stratum_type = "overall", stratum_value = "overall",
+  cohort_definition_id = as.integer(cohortCounts$cohortId),
+  n_entries = as.integer(cohortCounts$cohortEntries),
+  n_subjects = as.integer(cohortCounts$cohortSubjects))
+
+cohortCountsOut <- dplyr::bind_rows(overallCounts, strataCounts) |>
+  dplyr::left_join(dplyr::select(fullSet, cohort_definition_id = "cohortId",
+                                 cohort_name = "cohortName"),
+                   by = "cohort_definition_id") |>
+  dplyr::relocate("cohort_name", .after = "cohort_definition_id")
+
 # Censor small cells (same rule as steps 05/06): subject counts of 1..(minCell-1)
 # -> -minCell, and blank the paired entry count. A true 0 stays 0.
-.small <- cohortCounts$cohortSubjects > 0 &
-          cohortCounts$cohortSubjects < settings$minCellCount
-cohortCounts$cohortEntries[.small]  <- NA_integer_
-cohortCounts$cohortSubjects[.small] <- -settings$minCellCount
+.small <- cohortCountsOut$n_subjects > 0 &
+          cohortCountsOut$n_subjects < settings$minCellCount
+cohortCountsOut$n_entries[.small]  <- NA_integer_
+cohortCountsOut$n_subjects[.small] <- -settings$minCellCount
+cohortCountsOut <- cohortCountsOut[order(cohortCountsOut$cohort_definition_id,
+                                         cohortCountsOut$stratum_type,
+                                         cohortCountsOut$stratum_value), ]
 
-writeResultCsv(cohortCounts, "cohort_counts")
-print(tibble::as_tibble(cohortCounts), n = Inf)
+writeResultCsv(cohortCountsOut, "cohort_counts")
+print(tibble::as_tibble(cohortCountsOut), n = Inf)
 
 # --- standard OHDSI inclusion-rule attrition (01_Target JSON cohorts) -------
 # Every JSON cohort under cohorts/01_Target/ (Target 1A: age>18; prior bladder
