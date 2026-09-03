@@ -280,8 +280,8 @@ At the end of a run, results are packaged into two archives:
 | `lab_results_summary_portable.sql` | Per (cat, concept, unit) QC summary of `bc_raw_lab_results` (unit-resolution sanity check). Used by step (d); `lab_results_summary.sql` is the PERCENTILE_CONT original, kept for comparison. |
 | `lab_results_rollup_portable.sql` | Per-category headline of `bc_raw_lab_results`: one row per (cat, is_ambiguous) in the standard unit, with unit-resolution health as QC columns. Used by step (d); `lab_results_rollup.sql` is the PERCENTILE_CONT original, kept for comparison. |
 | `lab_cohort_counts.sql` | Whole-population counts of `bc_lab_cohort` per test-id. |
-| `eligibility_input_coverage.sql` | Each input × Target 1A × stratum: `n_tested` (measured) + `n_passed` (criterion met). |
-| `n_target1a.sql` | Target 1A denominator (overall; per-stratum denominators are computed in R from `subject_strata.sql` directly). |
+| `eligibility_input_coverage.sql` | Each input × cohort × stratum (every cohort in the main tree): `n_tested` (measured) + `n_passed` (criterion met). |
+| `n_target1a.sql` | Target 1A denominator. Used by step (h) (`covariate_overlap.csv`); `eligibility_input_coverage.csv`'s per-cohort/stratum denominators come from `subject_strata.sql` directly instead. |
 | `cohort_counts_stratified.sql` | Per cohort × stratum (`age_group`/`sex`/`age_sex`) distinct-subject counts; the `overall` view comes from `CohortGenerator::getCohortCounts()` instead, reshaped in R. Used by step (c). |
 | `outcome_target_data.sql` | Cohort membership + index/end dates for a given cohort-id list. Used by steps 09/10/11/12 (generic — the `@target_cohort_ids` list is whatever the caller needs). |
 | `subject_strata.sql` | Per-subject age group / sex / age × sex / index year — single source of truth for this bucketing. See that file's own header for the full list of consumers. |
@@ -346,7 +346,7 @@ Quick index (detailed schema for each below):
 |---|---|---|---|
 | `cohort_counts.csv` | `03_main_cohorts.R` | Each cohort (the tree) | generated cohort × stratum type × stratum value |
 | `lab_cohort_counts.csv` | `05_eligibility_coverage.R` | **Whole population** | eligibility test-id |
-| `eligibility_input_coverage.csv` | `05_eligibility_coverage.R` | Target 1A | stratum type × stratum value × eligibility test-id |
+| `eligibility_input_coverage.csv` | `05_eligibility_coverage.R` | Per main cohort | cohort × stratum type × stratum value × eligibility test-id |
 | `lab_value_distribution.csv` | `04_lab_ranges.R` | Per main cohort | cohort × lab (cat) × stratum type × stratum value |
 | `lab_timing_to_index.csv` | `04_lab_ranges.R` | Target 1A + Target 1A PC allowed | cohort × lab (cat) × direction (before/after/any) |
 | `lab_results_summary.csv` | `04_lab_ranges.R` | **Whole population** | cat × measurement concept × unit × status × ambiguity |
@@ -422,24 +422,35 @@ labs; 24–27 ECOG; 28–40 conditions (test-id reference in the header of `sql/
 | `n_records` | Underlying row count (blanked when `n_subjects` is censored). |
 
 ### `eligibility_input_coverage.csv`
-Row per eligibility test-id **crossed with Target 1A**, once overall and once
-per `subject_strata.sql` stratum (`age_group`, `sex`, `age_sex`) — how many
-mBC patients had each input measured vs. passed it, within the index window
-(`labWindowBeforeDays` before / `labWindowAfterDays` after, default 14 / 7)
-of the Target 1A index date. ECOG/condition slots have no `n_tested` (blank —
-they are not lab measurements). `n_target1a` is the denominator **for that
-stratum** (e.g. the `age_group=">65"` rows' `n_target1a` is >65 T1 members
-only, not all of T1).
+Row per eligibility test-id **crossed with every cohort in the main tree**
+(same scope as `lab_value_distribution.csv` — not just Target 1A), once
+overall and once per `subject_strata.sql` stratum (`age_group`, `sex`,
+`age_sex`) — how many members of that cohort had each input measured vs.
+passed it, within the index window (`labWindowBeforeDays` before /
+`labWindowAfterDays` after, default 14 / 7) of *that cohort's own* index
+date. ECOG/condition slots have no `n_tested` (blank — they are not lab
+measurements). `n_cohort` is the denominator **for that cohort × stratum**
+(e.g. a `cohort_definition_id=T2a, age_group=">65"` row's `n_cohort` is >65
+T2a members only, not all of T2a or all of T1).
+
+Note the overlap with `lab_value_distribution.csv`: for labs specifically,
+`n_tested` is the same fact as that file's `n_with_lab` for the matching
+cat, just duplicated at test-id (threshold) granularity instead of
+cat (lab) granularity — every test-id sharing a cat has an identical
+`n_tested`. Kept as two files deliberately: they answer different
+questions (eligibility coverage vs. value distribution), even though one
+column overlaps.
 
 | Column | Meaning |
 |---|---|
+| `cohort_definition_id`, `cohort_name` | As elsewhere. |
 | `stratum_type` | `overall`, `age_group`, `sex`, or `age_sex`. |
 | `stratum_value` | `overall`; `<=65`/`>65`; `Male`/`Female`/`Other-Unknown`; or the `age_sex` combination. |
 | `test_id` | Eligibility test-id. |
 | `label` | Human label for the test-id. |
-| `n_target1a` | Target 1A denominator, restricted to this row's stratum. |
-| `n_tested` | Target 1A members (in this stratum) who had the measurement at all (labs only; censored). |
-| `n_passed` | Target 1A members (in this stratum) who met the criterion / have the cohort (censored). |
+| `n_cohort` | This cohort's denominator, restricted to this row's stratum. |
+| `n_tested` | Members (in this cohort × stratum) who had the measurement at all (labs only; censored). |
+| `n_passed` | Members (in this cohort × stratum) who met the criterion / have the cohort (censored). |
 
 ### `lab_value_distribution.csv`
 Row per **cohort × lab (cat) × stratum** — the distribution of the

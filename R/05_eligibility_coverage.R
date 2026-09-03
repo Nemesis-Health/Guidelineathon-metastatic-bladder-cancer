@@ -1,11 +1,13 @@
 # ===========================================================================
-# 05_eligibility_coverage.R  —  eligibility-input counts & Target 1A coverage
+# 05_eligibility_coverage.R  —  eligibility-input counts & cohort coverage
 # ===========================================================================
 # Two outputs alongside cohort_counts.csv:
 #   lab_cohort_counts.csv         — raw content of the unified eligibility table
 #                                   (per test-id, whole population).
-#   eligibility_input_coverage.csv — each input crossed with Target 1A:
-#                                   n_target1a, n_tested (performed), n_passed.
+#   eligibility_input_coverage.csv — each input crossed with every cohort in
+#                                   the main tree (same scope as
+#                                   lab_value_distribution.csv): n_cohort,
+#                                   n_tested (performed), n_passed.
 # Counts < minCellCount are censored to -minCellCount.
 # ===========================================================================
 
@@ -30,8 +32,6 @@ censor <- function(x) ifelse(!is.na(x) & x > 0 & x < settings$minCellCount,
                              -settings$minCellCount, x)
 label  <- function(id) unname(inputLabels[as.character(id)])
 
-cohort1Id <- cohortIdByName(mainManifest, "T1 Metastatic bladder cancer")
-
 # --- raw eligibility-table counts (whole population) -----------------------
 labCohortCounts <- querySqlFile(connection, "lab_cohort_counts.sql",
   work_database_schema = settings$workDatabaseSchema,
@@ -45,18 +45,15 @@ labCohortCounts <- labCohortCounts[c("test_id","label","n_subjects","n_records")
 writeResultCsv(labCohortCounts, "lab_cohort_counts")
 message("  lab_cohort_counts: ", nrow(labCohortCounts), " test-id slots")
 
-# --- Target 1A coverage (tested / passed per input) ------------------------
-nT1a <- querySqlFile(connection, "n_target1a.sql",
-  work_database_schema = settings$workDatabaseSchema,
-  cohort_table = settings$cohortTable, cohort1_id = cohort1Id)
-nT1a <- as.integer(nT1a[[1]][1])
+# --- coverage (tested / passed per input), every cohort in the main tree ---
+targetIds <- mainManifest$cohortId
 
 # subject_strata.sql is the single source of truth for age_group/sex/age_sex
 # bucketing (shared with demographics.sql, R/04_lab_ranges.R,
 # R/09_outcomes.R, R/12_treatment_patterns.R). Reused here both to
-# stratify the coverage query itself and to build the matching per-stratum
-# n_target1a denominators (a stratum's "n_target1a" is T1 members in that
-# stratum, not T1's whole N).
+# stratify the coverage query itself and to build the matching per-(cohort,
+# stratum) denominators (a stratum's "n_cohort" is that cohort's members in
+# that stratum, not the cohort's whole N).
 strataFragment <- renderSqlFile("subject_strata.sql",
   work_database_schema = settings$workDatabaseSchema,
   cohort_table         = settings$cohortTable,
@@ -67,12 +64,13 @@ strataTbl <- querySqlFile(connection, "subject_strata.sql",
   cohort_table         = settings$cohortTable,
   cdm_database_schema  = settings$cdmDatabaseSchema)
 names(strataTbl) <- tolower(names(strataTbl))
-t1Strata <- strataTbl[as.integer(strataTbl$cohort_definition_id) == cohort1Id, ]
+strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
 denomFor <- function(stratumType, col = NULL) {
   if (is.null(col)) {
-    tibble::tibble(stratum_type = "overall", stratum_value = "overall", n_target1a = nrow(t1Strata))
+    dplyr::count(strataTbl, cohort_definition_id, name = "n_cohort") |>
+      dplyr::mutate(stratum_type = "overall", stratum_value = "overall", .before = 1)
   } else {
-    dplyr::count(t1Strata, stratum_value = .data[[col]], name = "n_target1a") |>
+    dplyr::count(strataTbl, cohort_definition_id, stratum_value = .data[[col]], name = "n_cohort") |>
       dplyr::mutate(stratum_type = stratumType, .before = 1)
   }
 }
@@ -85,17 +83,22 @@ cov <- querySqlFile(connection, "eligibility_input_coverage.sql",
   cohort_table          = settings$cohortTable,
   lab_cohort_table      = settings$labCohortTable,
   raw_lab_results_table = settings$rawLabResultsTable,
-  cohort1_id            = cohort1Id,
+  cohort_definition_ids = paste(targetIds, collapse = ", "),
   lab_window_before_days = settings$labWindowBeforeDays,
   lab_window_after_days  = settings$labWindowAfterDays,
   subject_strata_sql     = strataFragment)
 names(cov) <- tolower(names(cov))
+cov$cohort_definition_id <- as.integer(cov$cohort_definition_id)
 cov$label <- label(cov$test_id)
-cov <- dplyr::left_join(cov, denomTbl, by = c("stratum_type", "stratum_value"))
+cov <- dplyr::left_join(cov, denomTbl, by = c("cohort_definition_id", "stratum_type", "stratum_value"))
+cov <- dplyr::left_join(cov,
+  dplyr::select(mainManifest, cohort_definition_id = "cohortId", cohort_name = "cohortName"),
+  by = "cohort_definition_id")
 cov$n_tested <- censor(cov$n_tested)
 cov$n_passed <- censor(cov$n_passed)
-cov <- cov[c("stratum_type","stratum_value","test_id","label","n_target1a","n_tested","n_passed")]
-cov <- cov[order(cov$stratum_type, cov$stratum_value, cov$test_id), ]
+cov <- cov[c("cohort_definition_id","cohort_name","stratum_type","stratum_value",
+             "test_id","label","n_cohort","n_tested","n_passed")]
+cov <- cov[order(cov$cohort_definition_id, cov$stratum_type, cov$stratum_value, cov$test_id), ]
 writeResultCsv(cov, "eligibility_input_coverage")
-message("  eligibility_input_coverage: ", nrow(cov),
-        " inputs crossed with T1 mBC (n=", nT1a, ")")
+message("  eligibility_input_coverage: ", nrow(cov), " rows across ",
+        dplyr::n_distinct(cov$cohort_definition_id), " cohorts")
