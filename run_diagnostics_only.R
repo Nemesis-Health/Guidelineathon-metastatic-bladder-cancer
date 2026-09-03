@@ -13,6 +13,13 @@
 # Requires: DatabaseConnector, SqlRender, dplyr, readr  (installed).
 # ===========================================================================
 
+# JAVA: Snowflake's JDBC driver bundles Apache Arrow, which fails on Java 17+
+# ("Failed to initialize MemoryUtil") unless java.nio is opened to it. This must
+# be set BEFORE the JVM starts — i.e. before DatabaseConnector loads — so it has
+# to be the first statement in a FRESH R session. Harmless on other dialects and
+# on older Java versions.
+options(java.parameters = "--add-opens=java.base/java.nio=ALL-UNNAMED")
+
 for (p in c("DatabaseConnector", "SqlRender", "dplyr", "readr")) {
   if (!requireNamespace(p, quietly = TRUE))
     stop("Required package not installed: ", p, call. = FALSE)

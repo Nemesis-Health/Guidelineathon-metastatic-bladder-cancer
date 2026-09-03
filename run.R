@@ -22,6 +22,13 @@
 #           dplyr, tibble, readr  (installed; NOT OncoStudyModules).
 # ===========================================================================
 
+# JAVA: Snowflake's JDBC driver bundles Apache Arrow, which fails on Java 17+
+# ("Failed to initialize MemoryUtil") unless java.nio is opened to it. This must
+# be set BEFORE the JVM starts — i.e. before DatabaseConnector loads — so it has
+# to be the first statement in a FRESH R session. Harmless on other dialects and
+# on older Java versions.
+options(java.parameters = "--add-opens=java.base/java.nio=ALL-UNNAMED")
+
 for (p in c("DatabaseConnector", "SqlRender", "CohortGenerator", "CirceR",
             "ARTEMIS", "dplyr", "tibble", "readr", "cli", "rlang", "stringr")) {
   if (!requireNamespace(p, quietly = TRUE))
@@ -38,6 +45,15 @@ suppressMessages(library(ARTEMIS))
 # CONFIG  [EDIT HERE]
 # ===========================================================================
 
+# --- OPTION A: fill the whole CONFIG block from a .env file -----------------
+# If you keep credentials in a .env file (see README "Running it yourself"),
+# uncomment these three lines and SKIP the rest of this block — configureFromEnv()
+# returns exactly the `connectionDetails` and `settings` built by hand below.
+#   source("R/env_config.R")
+#   cfg <- configureFromEnv()            # reads ./.env
+#   connectionDetails <- cfg$connectionDetails; settings <- cfg$settings
+#
+# --- OPTION B: fill it in by hand ------------------------------------------
 # --- Database connection ----------------------------------------------------
 # Define `connectionDetails` however your site connects — this is left open on
 # purpose. Most JDBC setups use DatabaseConnector::createConnectionDetails(),

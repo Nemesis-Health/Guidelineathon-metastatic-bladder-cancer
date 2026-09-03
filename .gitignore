@@ -43,3 +43,6 @@ renv/sandbox/
 
 # === OS ===
 .DS_Store
+.env
+# DatabaseConnector writes this on a SQL error; may contain schema/SQL details
+errorReportSql.txt
