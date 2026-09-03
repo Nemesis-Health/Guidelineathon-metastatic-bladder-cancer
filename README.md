@@ -320,13 +320,26 @@ gaps, generalizability).
 
 ### `results/` — outputs (`diagnostics/`, `eligibility/`, git-ignored)
 
+### `.cache/` — resumable-state checkpoints, git-ignored, NOT an output
+`saveState()`/`loadState()` (`R/helpers.R`) checkpoint expensive in-memory
+objects (`mainManifest`, `episodes`, `artemis_result.rds`, ...) to
+`.cache/<outputFolder name>/` so a crashed/restarted session can resume a
+later step without recomputing earlier ones. Unlike everything under
+`results*/`, these are **patient-level** (ARTEMIS episodes/alignments,
+drug exposures by `person_id`) — never zip or share this folder alongside
+`diagnostics.zip`/`eligibility_results.zip`. Keyed by the output folder's
+own name, so pointing `settings$outputFolder` at a fresh folder (e.g. for a
+clean re-run) also starts from a fresh cache — nothing carries over silently.
+
 ---
 
 ## Outputs (`results/eligibility/`)
 
 A full run writes several dozen CSVs to `results/eligibility/` (created on first
 write; the folder is git-ignored). These aggregate tables are the only
-artefacts the main pipeline exports — no row-level data is written. Every file
+artefacts the main pipeline exports — no row-level data is written (the
+patient-level `.cache/` checkpoints above are a separate, unshared folder).
+Every file
 is UTF-8, comma-separated,
 with a header row; missing/censored cells are written as **empty strings**
 (`readr::write_csv(..., na = "")`).

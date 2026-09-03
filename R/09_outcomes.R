@@ -48,8 +48,7 @@ message("\n== (i) outcomes (DTI / OS / TTNT / TTD / TFI) ==")
 
 mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
 cohortNames  <- loadState("cohortNames", "R/03_main_cohorts.R")
-episodes     <- loadState("episodes", "R/01_artemis.R",
-                          path = file.path(settings$outputFolder, "episodes.rds"))
+episodes     <- loadState("episodes", "R/01_artemis.R")
 
 if (is.null(episodes) || nrow(episodes) == 0L) {
 

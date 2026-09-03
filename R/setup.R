@@ -38,6 +38,17 @@ cohortsDir  <- file.path(projectRoot, "cohorts")
 extrasDir   <- file.path(cohortsDir, "extras")
 dir.create(settings$outputFolder, recursive = TRUE, showWarnings = FALSE)
 
+# Resumable-state checkpoints (saveState()/loadState(), R/helpers.R) hold
+# patient-level intermediates (ARTEMIS episodes/alignments, drug exposures) --
+# unlike outputFolder's CSVs/zips, which are aggregate and privacy-censored,
+# these are never meant to be shared, so they live in a separate .cache/
+# folder rather than inside the output folder a site would zip up. Keyed by
+# outputFolder's own name so a fresh outputFolder (e.g. a "clean" re-run)
+# never silently resumes from a previous run's cached state.
+if (is.null(settings$stateFolder))
+  settings$stateFolder <- file.path(".cache", basename(settings$outputFolder))
+dir.create(settings$stateFolder, recursive = TRUE, showWarnings = FALSE)
+
 # executionSettings object compatible with the vendored runArtemis()
 # (it reads cdm/vocab/work schema, cohortTable, connectionDetails, artemisSettings
 #  and checks class "OsmExecutionSettings").

@@ -39,7 +39,7 @@ message("\n== ARTEMIS assessment ==")
 # but step (a) persists it to disk too (see R/01_artemis.R), so a session that
 # only re-runs (b)-(e) can reload it here instead of re-running the alignment.
 if (!exists("artemisResult")) {
-  rdsPath <- file.path(settings$outputFolder, "artemis_result.rds")
+  rdsPath <- file.path(settings$stateFolder, "artemis_result.rds")
   if (file.exists(rdsPath)) {
     message("  artemisResult not in scope (ARTEMIS step (a) did not run this ",
             "session) — reloading from ", rdsPath)

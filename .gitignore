@@ -23,6 +23,9 @@ results/
 !results/.gitkeep
 results_*/
 
+# === Resumable-state checkpoints (patient-level; not part of any output) ===
+.cache/
+
 # === R session / RStudio ===
 .Rproj.user/
 .Rhistory

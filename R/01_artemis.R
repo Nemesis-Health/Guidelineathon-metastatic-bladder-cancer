@@ -131,14 +131,16 @@ episodes <- artemisResult$episodes
 message("ARTEMIS produced ", nrow(episodes), " regimen episode(s).")
 
 # Persist the full ARTEMIS output object (all stages, not just episodes) so it
-# can be re-inspected offline without re-running the alignment.
-saveRDS(artemisResult, file.path(settings$outputFolder, "artemis_result.rds"))
+# can be re-inspected offline without re-running the alignment. Patient-level
+# (rawAlignments/validDrugExposures/...), so it lives in settings$stateFolder
+# alongside the other checkpoints, not the shareable output folder.
+saveRDS(artemisResult, file.path(settings$stateFolder, "artemis_result.rds"))
 
 if (nrow(episodes) > 0L) {
   writeArtemisEpisodes(connection = connection,
                        executionSettings = executionSettings,
                        episodes = episodes)
-  saveState("episodes", episodes, path = file.path(settings$outputFolder, "episodes.rds"))
+  saveState("episodes", episodes)
 }
 
 # --- Regimen classification table (lens columns -> work schema for step 03) -

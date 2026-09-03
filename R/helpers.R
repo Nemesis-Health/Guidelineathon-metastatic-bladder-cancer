@@ -16,7 +16,7 @@
 # already in memory (falling back to `producedBy` in the error message when
 # neither the in-memory object nor a checkpoint exists, e.g. an early crash).
 saveState <- function(name, obj, path = NULL) {
-  path <- path %||% file.path(settings$outputFolder, "state", paste0(name, ".rds"))
+  path <- path %||% file.path(settings$stateFolder, paste0(name, ".rds"))
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   saveRDS(obj, path)
 }
@@ -24,7 +24,7 @@ saveState <- function(name, obj, path = NULL) {
 loadState <- function(name, producedBy, path = NULL) {
   if (exists(name, envir = .GlobalEnv, inherits = FALSE))
     return(get(name, envir = .GlobalEnv))
-  path <- path %||% file.path(settings$outputFolder, "state", paste0(name, ".rds"))
+  path <- path %||% file.path(settings$stateFolder, paste0(name, ".rds"))
   if (!file.exists(path))
     stop("`", name, "` isn't in memory and no checkpoint was found at ", path,
          " — make sure ", producedBy, " has been run first.", call. = FALSE)
