@@ -21,9 +21,8 @@ message("\n== demographics (age / sex / index year per cohort) ==")
 mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
 
 # subject_strata.sql is the single source of truth for age_group/sex
-# bucketing (shared with R/09_outcomes.R, R/12_treatment_patterns.R, and
-# R/03_main_cohorts.R's age/sex sub-cohort splits) -- resolve it fully first,
-# then inject as demographics.sql's `coh` CTE body.
+# bucketing (see that file's own header for the full list of consumers) --
+# resolve it fully first, then inject as demographics.sql's `coh` CTE body.
 strataFragment <- renderSqlFile("subject_strata.sql",
   work_database_schema = settings$workDatabaseSchema,
   cohort_table         = settings$cohortTable,

@@ -13,16 +13,19 @@
 --
 -- SINGLE SOURCE OF TRUTH for this bucketing logic -- every other consumer
 -- builds on this file's exact text instead of re-deriving the CASE
--- expressions, so the buckets can't drift apart. The standard consumption
--- pattern (demographics.sql, lab_timing_to_index_portable.sql,
--- R/09_outcomes.R, R/12_treatment_patterns.R): join this file's output onto
--- the analysis's own per-subject data by (cohort_definition_id, subject_id),
--- then compute the SAME metric once overall and once per stratum column
--- (age_group, sex, age_sex) -- either via UNION ALL blocks (demographics.sql
--- and lab_timing_to_index_portable.sql's shape) or an R-side loop over
--- stratum columns (R/09, R/12's shape) -- tagging rows with a
--- stratum_type/stratum_value pair rather than baking the stratum into a
--- name string.
+-- expressions, so the buckets can't drift apart. Consumers, SQL-side (UNION
+-- ALL blocks, this file's text injected as a fragment): demographics.sql,
+-- lab_value_distribution_portable.sql, lab_timing_to_index_portable.sql,
+-- eligibility_input_coverage.sql, cohort_counts_stratified.sql. Consumers,
+-- R-side (queried directly, joined/filtered in R then looped over stratum
+-- columns): R/09_outcomes.R, R/12_treatment_patterns.R,
+-- R/11_baseline_characterization.R (baseline_vitals), R/10_adherence.R
+-- (guideline_relevance/guideline_adherence). The standard pattern either
+-- way: join/filter the analysis's own per-subject data by
+-- (cohort_definition_id, subject_id), then compute the SAME metric once
+-- overall and once per stratum column (age_group, sex, age_sex), tagging
+-- rows with a stratum_type/stratum_value pair rather than baking the
+-- stratum into a name string.
 --
 -- SqlRender parameters: @work_database_schema @cohort_table @cdm_database_schema
 -- ===========================================================================
