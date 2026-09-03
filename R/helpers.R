@@ -172,6 +172,34 @@ renderSqlFile <- function(file, ...) {
   SqlRender::render(sql, ..., warnOnMissingParameters = FALSE)
 }
 
+# --- which subject_strata.sql (age/sex) breakdowns are active ---------------
+# Single control point for settings$strataColumns (run.R CONFIG), so every
+# stratified output reads the same setting instead of hardcoding its own
+# on/off list. Two shapes, for the two ways stratified outputs consume
+# subject_strata.sql:
+#   activeStrataTypes() -- "overall" + whichever of settings$strataColumns
+#     are enabled, e.g. c("overall", "age_group", "sex"). SQL-side outputs
+#     (lab_value_distribution_portable.sql, lab_timing_to_index_portable.sql,
+#     eligibility_input_coverage.sql, cohort_counts_stratified.sql) always
+#     compute all four views (cheap -- a single extra GROUP BY column each);
+#     the caller filters its result to `stratum_type %in% activeStrataTypes()`
+#     before writing, so disabled views never reach the CSV.
+#   activeStrataSpecs() -- named list, stratum_type -> column name to group
+#     by (NULL for "overall"), filtered to the active types. R-side outputs
+#     that loop over stratum columns themselves (R/09_outcomes.R,
+#     R/10_adherence.R, R/11_baseline_characterization.R,
+#     R/12_treatment_patterns.R) iterate this instead of their own literal
+#     list -- disabled strata are never computed there at all, not just
+#     hidden after the fact.
+activeStrataTypes <- function()
+  c("overall", intersect(c("age_group", "sex", "age_sex"), settings$strataColumns))
+
+activeStrataSpecs <- function() {
+  specs <- list(overall = NULL, age_group = "age_group",
+                sex = "sex", age_sex = "age_sex")
+  specs[activeStrataTypes()]
+}
+
 # --- write a result data frame to results/eligibility ----------------------
 writeResultCsv <- function(df, name) {
   d <- file.path(settings$outputFolder, "eligibility")

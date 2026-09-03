@@ -25,6 +25,13 @@ if (is.null(settings$validDrugsRegimenComponents))
 if (is.null(settings$validDrugsAtcClasses))
   settings$validDrugsAtcClasses <- character(0)
 
+# default the age/sex strata columns ON (all three) for configs predating
+# the option -- character(0) (all strata off) is a deliberate site choice,
+# not a missing setting, so only NULL (the field doesn't exist at all) gets
+# defaulted here.
+if (is.null(settings$strataColumns))
+  settings$strataColumns <- c("age_group", "sex", "age_sex")
+
 projectRoot <- normalizePath(".", mustWork = FALSE)
 sqlDir      <- file.path(projectRoot, "sql")
 cohortsDir  <- file.path(projectRoot, "cohorts")

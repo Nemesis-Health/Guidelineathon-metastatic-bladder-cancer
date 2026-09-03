@@ -133,6 +133,17 @@ settings <- list(
   # when stripEndocrineTherapy is FALSE. Set an explicit vector (e.g. c("L01"))
   # to override, or character(0) to keep every recognised ingredient.
   assessmentAtcClasses = NULL,
+  # Which subject_strata.sql (age/sex) breakdowns get reported, on top of
+  # "overall", across every stratified output (lab_value_distribution,
+  # lab_timing_to_index, eligibility_input_coverage, cohort_counts,
+  # demographics, outcomes, guideline_relevance/adherence, baseline_vitals,
+  # treatment_pattern_*). One setting, read by activeStrataTypes()/
+  # activeStrataSpecs() (R/helpers.R) -- no per-step code needed to change
+  # it. DEFAULT c("age_group", "sex", "age_sex") (all three); a smaller
+  # partner whose subgroups censor too heavily to be useful can narrow this
+  # (e.g. c("sex")) or set character(0) to turn stratification off
+  # everywhere and only get "overall" rows.
+  strataColumns = c("age_group", "sex", "age_sex"),
   outputFolder        = file.path("results")
 )
 
