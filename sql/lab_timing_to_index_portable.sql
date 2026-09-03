@@ -9,7 +9,12 @@
 --   any    -- closest measurement in either direction (min absolute distance)
 -- A same-day measurement (days = 0) is the closest for all three directions.
 --
--- Two kinds of output per (cohort, cat, direction):
+-- Also stratified: every (cohort, cat, direction) row is computed four
+-- times -- overall, and split by age_group / sex / age_sex (subject_strata.sql
+-- -- see that file's header for the standard consumption pattern this
+-- follows). stratum_type/stratum_value identify which view a row belongs to.
+--
+-- Two kinds of output per (stratum_type, stratum_value, cohort, cat, direction):
 --   1. Coverage buckets -- how many subjects have their closest measurement
 --      within N days, for N = 14/30/60/90/180, plus n_ever (no day cap at
 --      all -- everyone with a measurement in that direction, at any time).
@@ -27,11 +32,17 @@
 -- percentile = v[k] * (1 - frac) + v[k+1] * frac, so ranked rows rn = k+1
 -- and rn = k+2 contribute weights (1-frac) and frac.
 --
+-- The ranking (ROW_NUMBER/COUNT window functions, partitioned differently
+-- per stratum view) is computed once per view via UNION ALL in `ranked`;
+-- the percentile formulas themselves are written once, in `lab_stats`,
+-- shared across every view via one shared GROUP BY -- adding a future
+-- stratum view means one more `ranked` branch, not a duplicated formula.
+--
 -- Expects @raw_lab_results_table populated by lab_cohorts.sql
 -- (normalised rows: person_id, measurement_date, cat, std_value, …).
 --
 -- Output columns:
---   cohort_definition_id, cat, direction,
+--   stratum_type, stratum_value, cohort_definition_id, cat, direction,
 --   n_0_14, n_0_30, n_0_60, n_0_90, n_0_180, n_ever,
 --   p5_days, p10_days, p25_days, p50_days, p75_days, p90_days, p95_days
 --
@@ -41,6 +52,9 @@
 --   @raw_lab_results_table
 --   @cohort_definition_ids   comma-separated cohort_definition_id list
 --   @min_cell_count          privacy floor for every n_* column (e.g. 5)
+--   subject_strata_sql (pre-rendered fragment, not a plain schema/table
+--   name -- see the `strata` CTE below): subject_strata.sql's own output,
+--   age_group/sex/age_sex per (cohort_definition_id, subject_id)
 -- =============================================================================
 
 WITH target_cohorts AS (
@@ -109,14 +123,58 @@ one_per_subject AS (
   SELECT 'any' AS direction, cohort_definition_id, subject_id, cat, day_diff
     FROM closest_any WHERE rn = 1
 ),
+strata AS (
+  @subject_strata_sql
+),
+tagged AS (
+  SELECT ops.direction, ops.cohort_definition_id, ops.subject_id, ops.cat,
+         ops.day_diff, s.age_group, s.sex, s.age_sex
+    FROM one_per_subject ops
+    JOIN strata s
+      ON s.cohort_definition_id = ops.cohort_definition_id
+     AND s.subject_id           = ops.subject_id
+),
 ranked AS (
-  SELECT direction, cohort_definition_id, cat, day_diff,
-         ROW_NUMBER() OVER (PARTITION BY direction, cohort_definition_id, cat ORDER BY day_diff) AS rn,
-         COUNT(*)     OVER (PARTITION BY direction, cohort_definition_id, cat)                   AS n
-    FROM one_per_subject
+  SELECT 'overall' AS stratum_type, 'overall' AS stratum_value,
+         direction, cohort_definition_id, cat, day_diff,
+         ROW_NUMBER() OVER (
+           PARTITION BY direction, cohort_definition_id, cat
+           ORDER BY day_diff)                                              AS rn,
+         COUNT(*) OVER (
+           PARTITION BY direction, cohort_definition_id, cat)               AS n
+    FROM tagged
+  UNION ALL
+  SELECT 'age_group' AS stratum_type, age_group AS stratum_value,
+         direction, cohort_definition_id, cat, day_diff,
+         ROW_NUMBER() OVER (
+           PARTITION BY direction, cohort_definition_id, cat, age_group
+           ORDER BY day_diff)                                              AS rn,
+         COUNT(*) OVER (
+           PARTITION BY direction, cohort_definition_id, cat, age_group)    AS n
+    FROM tagged
+  UNION ALL
+  SELECT 'sex' AS stratum_type, sex AS stratum_value,
+         direction, cohort_definition_id, cat, day_diff,
+         ROW_NUMBER() OVER (
+           PARTITION BY direction, cohort_definition_id, cat, sex
+           ORDER BY day_diff)                                              AS rn,
+         COUNT(*) OVER (
+           PARTITION BY direction, cohort_definition_id, cat, sex)          AS n
+    FROM tagged
+  UNION ALL
+  SELECT 'age_sex' AS stratum_type, age_sex AS stratum_value,
+         direction, cohort_definition_id, cat, day_diff,
+         ROW_NUMBER() OVER (
+           PARTITION BY direction, cohort_definition_id, cat, age_sex
+           ORDER BY day_diff)                                              AS rn,
+         COUNT(*) OVER (
+           PARTITION BY direction, cohort_definition_id, cat, age_sex)      AS n
+    FROM tagged
 ),
 lab_stats AS (
-  SELECT direction,
+  SELECT stratum_type,
+         stratum_value,
+         direction,
          cohort_definition_id,
          cat,
          COUNT(*)                                             AS n_ever,
@@ -161,9 +219,11 @@ lab_stats AS (
                   THEN day_diff * (0.95 * (n - 1) - FLOOR(0.95 * (n - 1)))
                   ELSE 0 END)                                  AS p95_days
     FROM ranked
-   GROUP BY direction, cohort_definition_id, cat
+   GROUP BY stratum_type, stratum_value, direction, cohort_definition_id, cat
 )
-SELECT cohort_definition_id,
+SELECT stratum_type,
+       stratum_value,
+       cohort_definition_id,
        cat,
        direction,
        -- Privacy: censor each bucket independently (0 < count < @min_cell_count
@@ -185,4 +245,4 @@ SELECT cohort_definition_id,
        CASE WHEN n_ever > 0 AND n_ever < @min_cell_count THEN NULL ELSE p90_days END AS p90_days,
        CASE WHEN n_ever > 0 AND n_ever < @min_cell_count THEN NULL ELSE p95_days END AS p95_days
   FROM lab_stats
- ORDER BY cohort_definition_id, cat, direction;
+ ORDER BY cohort_definition_id, cat, direction, stratum_type, stratum_value;

@@ -48,12 +48,22 @@ mBcId       <- cohortIdByName(mainManifest, cohortNames[["T1"]])
 pcAllowedId <- cohortIdByName(mainManifest, "Target 1A PC allowed")
 metsCohortIds <- as.integer(stats::na.omit(c(mBcId, pcAllowedId)))
 
+# subject_strata.sql is the single source of truth for age_group/sex/age_sex
+# bucketing (shared with demographics.sql, R/09_outcomes.R,
+# R/12_treatment_patterns.R) -- resolve it fully first, then inject as this
+# query's stratification join.
+strataFragment <- renderSqlFile("subject_strata.sql",
+  work_database_schema = settings$workDatabaseSchema,
+  cohort_table         = settings$cohortTable,
+  cdm_database_schema  = settings$cdmDatabaseSchema)
+
 labTiming <- querySqlFile(connection, "lab_timing_to_index_portable.sql",
   target_database_schema = settings$workDatabaseSchema,
   target_cohort_table    = settings$cohortTable,
   raw_lab_results_table  = settings$rawLabResultsTable,
   cohort_definition_ids  = paste(metsCohortIds, collapse = ", "),
-  min_cell_count         = settings$minCellCount)
+  min_cell_count         = settings$minCellCount,
+  subject_strata_sql     = strataFragment)
 names(labTiming) <- tolower(names(labTiming))
 writeResultCsv(labTiming, "lab_timing_to_index")
 message("  lab_timing_to_index: ", nrow(labTiming), " rows")

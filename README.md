@@ -445,10 +445,10 @@ per-criterion (`test_id`) fan-out is collapsed to distinct measurements first.
 | `median_value`, `lq_value`, `uq_value` | Median, lower (25th) and upper (75th) quartile (blanked when censored). |
 
 ### `lab_timing_to_index.csv`
-Row per **Target 1A / Target 1A PC allowed × lab (cat) × direction** — how far
-from the cohort index (the metastasis-marker date) subjects' recorded
-measurements of each of the 14 labs fall, searching a subject's **entire**
-measurement history (not the `labWindowBeforeDays`/`labWindowAfterDays`
+Row per **Target 1A / Target 1A PC allowed × lab (cat) × direction × stratum**
+— how far from the cohort index (the metastasis-marker date) subjects'
+recorded measurements of each of the 14 labs fall, searching a subject's
+**entire** measurement history (not the `labWindowBeforeDays`/`labWindowAfterDays`
 eligibility window `lab_value_distribution.csv` restricts to). `direction` is
 one of `before` (closest on/before index), `after` (closest on/after index),
 or `any` (closest in either direction); a same-day measurement (0 days)
@@ -456,6 +456,12 @@ counts as the closest for all three. Restricted to Target 1A and its
 PC-allowed variant — the metastasis index isn't meaningful for the
 treatment-initiated cohorts (T3-6, L01-anchored), which index on treatment
 start instead.
+
+Every (cohort, cat, direction) combination is reported once overall and
+once per `subject_strata.sql` stratum (`age_group`, `sex`, `age_sex`) —
+`stratum_type`/`stratum_value` identify which. The stratum views always
+sum back to the `overall` row's `n_ever` (e.g. `age_group`'s `<=65` + `>65`
+== `overall`'s `n_ever`).
 
 Two kinds of columns: **coverage buckets** (`n_0_14` … `n_ever`), cumulative
 counts of subjects whose closest measurement in that direction falls within
@@ -466,6 +472,8 @@ direction).
 
 | Column | Meaning |
 |---|---|
+| `stratum_type` | `overall`, `age_group`, `sex`, or `age_sex`. |
+| `stratum_value` | `overall`; `<=65`/`>65`; `Male`/`Female`/`Other-Unknown`; or the `age_sex` combination (`'<=65\|Male'`, ...). |
 | `cohort_definition_id` | Cohort id (Target 1A or Target 1A PC allowed). |
 | `cat` | Lab category / analyte code (one of the 14 in `sql/lab_cohorts.sql`). |
 | `direction` | `before`, `after`, or `any`. |
