@@ -48,6 +48,10 @@ labDist <- querySqlFile(connection, "lab_value_distribution_portable.sql",
   min_cell_count         = settings$minCellCount,
   subject_strata_sql     = strataFragment)
 names(labDist) <- tolower(names(labDist))
+# settings$strataColumns (run.R CONFIG, via activeStrataTypes()) controls
+# which stratum views actually reach the CSV -- the SQL always computes all
+# four (cheap), a site that wants fewer/none just filters here.
+labDist <- labDist[labDist$stratum_type %in% activeStrataTypes(), ]
 writeResultCsv(labDist, "lab_value_distribution")
 message("  lab_value_distribution: ", nrow(labDist), " rows")
 
@@ -67,6 +71,7 @@ labTiming <- querySqlFile(connection, "lab_timing_to_index_portable.sql",
   min_cell_count         = settings$minCellCount,
   subject_strata_sql     = strataFragment)
 names(labTiming) <- tolower(names(labTiming))
+labTiming <- labTiming[labTiming$stratum_type %in% activeStrataTypes(), ]
 writeResultCsv(labTiming, "lab_timing_to_index")
 message("  lab_timing_to_index: ", nrow(labTiming), " rows")
 

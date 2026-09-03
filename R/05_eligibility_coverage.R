@@ -88,6 +88,10 @@ cov <- querySqlFile(connection, "eligibility_input_coverage.sql",
   lab_window_after_days  = settings$labWindowAfterDays,
   subject_strata_sql     = strataFragment)
 names(cov) <- tolower(names(cov))
+# settings$strataColumns (run.R CONFIG, via activeStrataTypes()) controls
+# which stratum views actually reach the CSV -- the SQL always computes all
+# four (cheap), a site that wants fewer/none just filters here.
+cov <- cov[cov$stratum_type %in% activeStrataTypes(), ]
 cov$cohort_definition_id <- as.integer(cov$cohort_definition_id)
 cov$label <- label(cov$test_id)
 cov <- dplyr::left_join(cov, denomTbl, by = c("cohort_definition_id", "stratum_type", "stratum_value"))

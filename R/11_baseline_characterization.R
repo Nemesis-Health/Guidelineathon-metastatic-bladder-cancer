@@ -112,8 +112,9 @@ if (nrow(vitals) == 0L) {
 
 } else {
 
-  strataViews <- list(overall = NULL, age_group = "age_group",
-                      sex = "sex", age_sex = "age_sex")
+  # age_group/sex/age_sex come from activeStrataSpecs() (settings$strataColumns,
+  # run.R CONFIG) so a site can narrow/disable stratification in one place.
+  strataViews <- activeStrataSpecs()
   vitalsOut <- dplyr::bind_rows(lapply(c("weight_kg", "height_cm", "bmi"), function(v) {
       dplyr::bind_rows(lapply(names(strataViews), function(st)
         summarizeVital(vitals, v, settings$minCellCount, st, strataViews[[st]])))

@@ -204,6 +204,13 @@ strataCounts <- querySqlFile(connection, "cohort_counts_stratified.sql",
   subject_strata_sql   = strataFragment)
 names(strataCounts) <- tolower(names(strataCounts))
 strataCounts$cohort_definition_id <- as.integer(strataCounts$cohort_definition_id)
+# settings$strataColumns (run.R CONFIG, via activeStrataTypes()) controls
+# which stratum views actually reach the CSV -- the SQL always computes all
+# three (age_group/sex/age_sex; cheap), a site that wants fewer/none just
+# filters here. "overall" isn't produced by this query at all (see its own
+# header), so filtering by activeStrataTypes() (which always includes
+# "overall") is harmless here -- it just never matches.
+strataCounts <- strataCounts[strataCounts$stratum_type %in% activeStrataTypes(), ]
 
 overallCounts <- tibble::tibble(
   stratum_type = "overall", stratum_value = "overall",
