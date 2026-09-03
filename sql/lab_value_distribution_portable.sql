@@ -18,8 +18,15 @@
 -- index (cohort_start_date), pick the measurement closest to index (one per
 -- subject × cat) and summarise std_value.
 --
+-- Also stratified: every (cohort, cat) row is computed four times --
+-- overall, and split by age_group / sex / age_sex (subject_strata.sql --
+-- see that file's header for the standard consumption pattern this
+-- follows, and lab_timing_to_index_portable.sql for the same UNION-ALL
+-- ranking / shared-percentile-formula shape). stratum_type/stratum_value
+-- identify which view a row belongs to.
+--
 -- Output columns:
---   cohort_definition_id, cat,
+--   stratum_type, stratum_value, cohort_definition_id, cat,
 --   n_with_lab, mean_value, sd_value, median_value, lq_value, uq_value
 --
 -- SqlRender parameters:
@@ -29,6 +36,9 @@
 --   @cohort_definition_ids   comma-separated cohort_definition_id list
 --   @lab_window_before_days integer (default 14)  @lab_window_after_days integer (default 7)
 --   @min_cell_count          privacy floor for n_with_lab (e.g. 5)
+--   subject_strata_sql (pre-rendered fragment, not a plain schema/table
+--   name -- see the `strata` CTE below): subject_strata.sql's own output,
+--   age_group/sex/age_sex per (cohort_definition_id, subject_id)
 -- =============================================================================
 
 WITH target_cohorts AS (
@@ -75,16 +85,58 @@ lab_one_per_subject AS (
     FROM lab_near_index
    WHERE rn = 1
 ),
+strata AS (
+  @subject_strata_sql
+),
+tagged AS (
+  SELECT lo.cohort_definition_id, lo.subject_id, lo.cat, lo.std_value,
+         s.age_group, s.sex, s.age_sex
+    FROM lab_one_per_subject lo
+    JOIN strata s
+      ON s.cohort_definition_id = lo.cohort_definition_id
+     AND s.subject_id           = lo.subject_id
+),
 ranked AS (
-  SELECT cohort_definition_id,
-         cat,
-         std_value,
-         ROW_NUMBER() OVER (PARTITION BY cohort_definition_id, cat ORDER BY std_value) AS rn,
-         COUNT(*)     OVER (PARTITION BY cohort_definition_id, cat)                    AS n
-    FROM lab_one_per_subject
+  SELECT 'overall' AS stratum_type, 'overall' AS stratum_value,
+         cohort_definition_id, cat, std_value,
+         ROW_NUMBER() OVER (
+           PARTITION BY cohort_definition_id, cat
+           ORDER BY std_value)                                       AS rn,
+         COUNT(*) OVER (
+           PARTITION BY cohort_definition_id, cat)                    AS n
+    FROM tagged
+  UNION ALL
+  SELECT 'age_group' AS stratum_type, age_group AS stratum_value,
+         cohort_definition_id, cat, std_value,
+         ROW_NUMBER() OVER (
+           PARTITION BY cohort_definition_id, cat, age_group
+           ORDER BY std_value)                                       AS rn,
+         COUNT(*) OVER (
+           PARTITION BY cohort_definition_id, cat, age_group)         AS n
+    FROM tagged
+  UNION ALL
+  SELECT 'sex' AS stratum_type, sex AS stratum_value,
+         cohort_definition_id, cat, std_value,
+         ROW_NUMBER() OVER (
+           PARTITION BY cohort_definition_id, cat, sex
+           ORDER BY std_value)                                       AS rn,
+         COUNT(*) OVER (
+           PARTITION BY cohort_definition_id, cat, sex)               AS n
+    FROM tagged
+  UNION ALL
+  SELECT 'age_sex' AS stratum_type, age_sex AS stratum_value,
+         cohort_definition_id, cat, std_value,
+         ROW_NUMBER() OVER (
+           PARTITION BY cohort_definition_id, cat, age_sex
+           ORDER BY std_value)                                       AS rn,
+         COUNT(*) OVER (
+           PARTITION BY cohort_definition_id, cat, age_sex)           AS n
+    FROM tagged
 ),
 lab_stats AS (
-  SELECT cohort_definition_id,
+  SELECT stratum_type,
+         stratum_value,
+         cohort_definition_id,
          cat,
          COUNT(*)                        AS n_with_lab,
          AVG(CAST(std_value AS FLOAT))   AS mean_value,
@@ -105,9 +157,11 @@ lab_stats AS (
                   THEN std_value * (0.75 * (n - 1) - FLOOR(0.75 * (n - 1)))
                   ELSE 0 END)            AS uq_value
     FROM ranked
-   GROUP BY cohort_definition_id, cat
+   GROUP BY stratum_type, stratum_value, cohort_definition_id, cat
 )
-SELECT cohort_definition_id,
+SELECT stratum_type,
+       stratum_value,
+       cohort_definition_id,
        cat,
        -- Privacy: censor cells with 0 < n_with_lab < @min_cell_count
        -- (count -> -@min_cell_count, distribution stats -> NULL), matching
@@ -125,4 +179,4 @@ SELECT cohort_definition_id,
        CASE WHEN n_with_lab > 0 AND n_with_lab < @min_cell_count
             THEN NULL ELSE uq_value     END                    AS uq_value
   FROM lab_stats
- ORDER BY cohort_definition_id, cat;
+ ORDER BY cohort_definition_id, cat, stratum_type, stratum_value;

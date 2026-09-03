@@ -1,10 +1,11 @@
 # ===========================================================================
 # 04_lab_ranges.R  —  (d) lab test ranges on the main cohorts
 # ===========================================================================
-# lab_value_distribution_portable.sql : per cohort x lab (cat) summary of
-#   std_value, censored at minCellCount, over the Target-1A cohort tree from
-#   step (c). (One row per lab: the raw table's per-criterion/test_id fan-out
-#   is collapsed, since std_value does not depend on the threshold.)
+# lab_value_distribution_portable.sql : per cohort x lab (cat) x stratum
+#   (overall/age_group/sex/age_sex) summary of std_value, censored at
+#   minCellCount, over the Target-1A cohort tree from step (c). (One row
+#   per lab: the raw table's per-criterion/test_id fan-out is collapsed,
+#   since std_value does not depend on the threshold.)
 # lab_results_summary_portable.sql    : per (cat, concept, unit) QC summary of
 #   the raw normalised table (unit-resolution sanity check).
 # lab_results_rollup_portable.sql     : per-category headline of the same table,
@@ -28,6 +29,15 @@ message("\n== (d) lab test ranges on main cohorts ==")
 targetIds <- mainManifest$cohortId
 message("Target cohorts for lab distribution: ", length(targetIds))
 
+# subject_strata.sql is the single source of truth for age_group/sex/age_sex
+# bucketing (shared with demographics.sql, R/09_outcomes.R,
+# R/12_treatment_patterns.R) -- resolve it once, reused as the
+# stratification join for every query in this step.
+strataFragment <- renderSqlFile("subject_strata.sql",
+  work_database_schema = settings$workDatabaseSchema,
+  cohort_table         = settings$cohortTable,
+  cdm_database_schema  = settings$cdmDatabaseSchema)
+
 labDist <- querySqlFile(connection, "lab_value_distribution_portable.sql",
   target_database_schema = settings$workDatabaseSchema,
   target_cohort_table    = settings$cohortTable,
@@ -35,7 +45,8 @@ labDist <- querySqlFile(connection, "lab_value_distribution_portable.sql",
   cohort_definition_ids  = paste(targetIds, collapse = ", "),
   lab_window_before_days = settings$labWindowBeforeDays,
   lab_window_after_days  = settings$labWindowAfterDays,
-  min_cell_count         = settings$minCellCount)
+  min_cell_count         = settings$minCellCount,
+  subject_strata_sql     = strataFragment)
 names(labDist) <- tolower(names(labDist))
 writeResultCsv(labDist, "lab_value_distribution")
 message("  lab_value_distribution: ", nrow(labDist), " rows")
@@ -47,15 +58,6 @@ message("  lab_value_distribution: ", nrow(labDist), " rows")
 mBcId       <- cohortIdByName(mainManifest, cohortNames[["T1"]])
 pcAllowedId <- cohortIdByName(mainManifest, "Target 1A PC allowed")
 metsCohortIds <- as.integer(stats::na.omit(c(mBcId, pcAllowedId)))
-
-# subject_strata.sql is the single source of truth for age_group/sex/age_sex
-# bucketing (shared with demographics.sql, R/09_outcomes.R,
-# R/12_treatment_patterns.R) -- resolve it fully first, then inject as this
-# query's stratification join.
-strataFragment <- renderSqlFile("subject_strata.sql",
-  work_database_schema = settings$workDatabaseSchema,
-  cohort_table         = settings$cohortTable,
-  cdm_database_schema  = settings$cdmDatabaseSchema)
 
 labTiming <- querySqlFile(connection, "lab_timing_to_index_portable.sql",
   target_database_schema = settings$workDatabaseSchema,
