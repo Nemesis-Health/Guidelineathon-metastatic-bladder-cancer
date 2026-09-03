@@ -58,6 +58,73 @@ schemas, table names, run settings; it builds the `executionSettings` object the
 ARTEMIS code reads), then sources the numbered steps in order and writes
 CSVs under `results/eligibility/`.
 
+### Running it yourself from a `.env` file
+
+Instead of typing credentials into `run.R`, copy `.env.example` to `.env` (which
+is git-ignored) and fill it in. Then the whole CONFIG block collapses to three
+lines — `configureFromEnv()` returns exactly the objects it would have built:
+
+```r
+# Must be the FIRST statement in a fresh R session (see the Java note below).
+options(java.parameters = "--add-opens=java.base/java.nio=ALL-UNNAMED")
+
+library(ARTEMIS)                    # must be ATTACHED, not just ::-loaded
+source("R/env_config.R")
+cfg <- configureFromEnv()           # reads ./.env
+connectionDetails <- cfg$connectionDetails
+settings          <- cfg$settings
+
+source("run.R")                     # or run_feasibility_only.R
+```
+
+Because `run.R`'s own CONFIG block reassigns both objects, either uncomment
+**Option A** inside that block (three lines, already there) or paste the steps
+below in place of `source("run.R")` to drive the pipeline directly:
+
+```r
+source("R/vendor_utils.R"); source("R/00_prestudy_queries.R")
+source("R/artemis.R"); source("R/artemis_uncaptured.R")
+source("R/helpers.R"); source("R/setup.R")
+
+connection <- DatabaseConnector::connect(connectionDetails)
+.checkDbiPostgresBug(connection)
+
+source("R/01_artemis.R")              # (a) ARTEMIS alignment  [WRITES to the DB]
+source("R/02_eligibility_inputs.R")   # (b)                    [WRITES]
+source("R/03_main_cohorts.R")         # (c) cohort tree        [WRITES]
+source("R/04_lab_ranges.R")           # (d)
+source("R/05_eligibility_coverage.R") # (e)
+source("R/06_artemis_assessment.R")   # (f) the artemis_* CSVs — read-only
+source("R/07_demographics.R")         # (g)
+source("R/08_covariates.R")           # (h)
+
+DatabaseConnector::disconnect(connection)
+```
+
+Steps (a)–(c) create and overwrite tables in `OSM_WORK_SCHEMA`; (d)–(h) only
+read. Step (f) needs `artemisResult` from step (a) — it reloads it from
+`results/artemis_result.rds` if step (a) did not run in the same session, so you
+can re-run just the ARTEMIS assessment after an alignment run without repeating
+the alignment.
+
+`configureFromEnv(overrides = list(...))` merges over the derived settings, e.g.
+`overrides = list(minCellCount = 1L)` for an internal run.
+
+> [!IMPORTANT]
+> **Java 17+ and the Snowflake driver.** Snowflake's JDBC driver bundles Apache
+> Arrow, which throws `Failed to initialize MemoryUtil` on Java 17 and later
+> unless `java.nio` is opened to it. All three runner scripts now set
+> `options(java.parameters = "--add-opens=java.base/java.nio=ALL-UNNAMED")` at
+> the top, but **the JVM reads it only once, at startup** — so it has no effect
+> if `DatabaseConnector` (or anything else pulling in `rJava`) has already been
+> loaded in that session. If you hit the error, restart R and set it first.
+
+> [!WARNING]
+> **Do not point `cohortTable` at another study's table.** A `.env` written for
+> OncoStudyModules carries `OSM_COHORT_TABLE` (e.g. `osm_cohorts`); this study
+> would generate its bladder cohorts straight over it. `configureFromEnv()`
+> therefore ignores that variable and pins the study's own `bc_*` table names.
+
 ### Requirements
 
 **R 4.5.1** (the version the lockfile pins) and the eleven direct R packages below. Everything else in `renv.lock` is a transitive dependency of these.
@@ -254,6 +321,7 @@ At the end of a run, results are packaged into two archives:
 | `06_artemis_assessment.R` | ARTEMIS assessment: alignment stats, cohort/patient/exposure coverage (incl. the share of the metastatic subset with ≥1 aligned regimen), per-drug and per-regimen frequencies, uncaptured exposures — each emitted for the whole scan cohort, the metastatic subset, and the metastatic subset restricted to on-or-after metastasis. All from the in-memory `artemisResult`. |
 | `helpers.R` | Cohort-generation + SQL helpers (thin wrappers over CirceR/CohortGenerator/SqlRender). |
 | `artemis.R` | The ARTEMIS pipeline wrapper: `runArtemis()`, `buildEpisodeTable()`, `writeArtemisEpisodes()`. (Coverage/uncaptured analytics are computed in `06_artemis_assessment.R`.) |
+| `env_config.R` | `configureFromEnv()` — builds `connectionDetails` + `settings` from a `.env` file, so credentials stay out of tracked files; `setJavaOptions()` for the Snowflake/Java 17 Arrow flag. Optional: the CONFIG blocks still work by hand. |
 | `vendor_utils.R` | `.getDbms()` + `%||%` (helpers used by the ARTEMIS code). |
 | `setup.R` | **Do not edit.** Validates the `run.R` CONFIG block and builds the derived paths + `executionSettings` object the steps read. |
 
