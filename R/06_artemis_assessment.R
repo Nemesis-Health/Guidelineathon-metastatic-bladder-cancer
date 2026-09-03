@@ -156,8 +156,13 @@ if (!exists("artemisResult")) {
                         stringsAsFactors = FALSE)
     if (length(cohortDefId) != 1L || is.na(cohortDefId)) return(empty)
     df <- DatabaseConnector::querySql(connection, SqlRender::translate(
+      # CAST to VARCHAR in SQL, not as.character() in R: a bigint person_id
+      # arrives as a double and as.character() would render it in scientific
+      # notation ("1.23e+12"), which never matches the ARTEMIS frames' ids
+      # (conDfSql in R/artemis.R casts to VARCHAR the same way).
       SqlRender::render(
-        "SELECT subject_id, MIN(cohort_start_date) AS index_date
+        "SELECT CAST(subject_id AS VARCHAR) AS person_id,
+                MIN(cohort_start_date) AS index_date
            FROM @work.@tbl
           WHERE cohort_definition_id = @id
           GROUP BY subject_id",
@@ -165,7 +170,7 @@ if (!exists("artemisResult")) {
         id = as.integer(cohortDefId)),
       targetDialect = .getDbms(connection)))
     names(df) <- tolower(names(df))
-    data.frame(person_id  = as.character(df$subject_id),
+    data.frame(person_id  = as.character(df$person_id),
                index_date = as.Date(df$index_date),
                stringsAsFactors = FALSE)
   }
