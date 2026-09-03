@@ -18,6 +18,16 @@
 -- Inclusion criteria (age >= 18, metastasis, prior bladder cancer, no other
 -- cancer) are NOT re-derived here — they are inherited from Cohort 1 membership.
 --
+-- Treatment-naive washout: excludes subjects with a regimen episode
+-- overlapping [Cohort 1 index - 365, Cohort 1 index - 30) -- i.e. any
+-- systemic regimen active in the year before index, up to the 30-day
+-- attribution buffer. Protocol: "patients must also either (a) be
+-- antineoplastic treatment-naive or (b) have received prior systemic
+-- treatment more than 12 months before the mBC index date" -- same window as
+-- eligibility_2a-2d.sql's washout, applied here as a defining property of
+-- the treatment-initiated cohorts (3-6) as a family rather than of any one
+-- eligibility leaf.
+--
 -- Rendered placeholders (filled in run_bladder_study.R before generation):
 --   @cohort1_id, @regimen_episode_table, @regimen_classification_table
 -- Generation placeholders (filled by CohortGenerator):
@@ -50,5 +60,14 @@ FROM (
     AND re.episode_start_date >= DATEADD(day, -30, tc.cohort_start_date)
     AND re.episode_start_date <= DATEADD(day,  90, tc.cohort_start_date)
     AND re.episode_end_date   >  tc.cohort_start_date
+
+    /* ----- Washout: no systemic regimen in [index - 365, index - 30) ----- */
+    AND NOT EXISTS (
+          SELECT 1
+            FROM @target_database_schema.@regimen_episode_table wo
+           WHERE CAST(wo.person_id AS BIGINT) = tc.subject_id
+             AND wo.episode_start_date <  DATEADD(day, -30, tc.cohort_start_date)
+             AND wo.episode_end_date   >= DATEADD(day, -365, tc.cohort_start_date)
+        )
 ) f
 WHERE f.rn = 1;
