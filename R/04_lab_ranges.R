@@ -10,6 +10,11 @@
 # lab_results_rollup_portable.sql     : per-category headline of the same table,
 #   one row per (cat, is_ambiguous) in the standard unit, with unit-resolution
 #   health folded into QC columns instead of extra rows.
+# lab_timing_to_index_portable.sql    : per lab (cat) x direction
+#   (before/after/any), the distribution of days from the Target 1A /
+#   Target 1A PC allowed index to the closest measurement in that direction
+#   -- a subject's ENTIRE history, not the +/- 14/7-day eligibility window
+#   lab_value_distribution_portable.sql restricts to.
 # The _portable versions compute quantiles via ROW_NUMBER/COUNT/FLOOR (same
 # result as PERCENTILE_CONT, which SqlRender cannot translate); the originals
 # are kept alongside for comparison.
@@ -34,6 +39,24 @@ labDist <- querySqlFile(connection, "lab_value_distribution_portable.sql",
 names(labDist) <- tolower(names(labDist))
 writeResultCsv(labDist, "lab_value_distribution")
 message("  lab_value_distribution: ", nrow(labDist), " rows")
+
+# Timing-to-index: Target 1A + Target 1A PC allowed only (not the full T1-T6
+# tree -- the metastasis index is only meaningful for these two, since it's
+# their own qualifying event; the T4-6/L01-initiated cohorts index on
+# treatment start instead).
+mBcId       <- cohortIdByName(mainManifest, cohortNames[["T1"]])
+pcAllowedId <- cohortIdByName(mainManifest, "Target 1A PC allowed")
+metsCohortIds <- as.integer(stats::na.omit(c(mBcId, pcAllowedId)))
+
+labTiming <- querySqlFile(connection, "lab_timing_to_index_portable.sql",
+  target_database_schema = settings$workDatabaseSchema,
+  target_cohort_table    = settings$cohortTable,
+  raw_lab_results_table  = settings$rawLabResultsTable,
+  cohort_definition_ids  = paste(metsCohortIds, collapse = ", "),
+  min_cell_count         = settings$minCellCount)
+names(labTiming) <- tolower(names(labTiming))
+writeResultCsv(labTiming, "lab_timing_to_index")
+message("  lab_timing_to_index: ", nrow(labTiming), " rows")
 
 labSummary <- querySqlFile(connection, "lab_results_summary_portable.sql",
   work_database_schema       = settings$workDatabaseSchema,

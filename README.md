@@ -185,7 +185,7 @@ ARTEMIS.
 | **(a)** ARTEMIS regimen alignment | `R/01_artemis.R` | `bc_artemis_episodes`, `bc_regimen_classifications` |
 | **(b)** eligibility labs **+** cohorts → one table | `R/02_eligibility_inputs.R` | `bc_lab_cohort` (labs **+** ECOG **+** conditions), `bc_raw_lab_results` |
 | **(c)** main cohort tree | `R/03_main_cohorts.R` | `bc_cohort`, `results/eligibility/cohort_counts.csv` |
-| **(d)** lab test ranges on (c) | `R/04_lab_ranges.R` | `lab_value_distribution.csv`, `lab_results_summary.csv`, `lab_results_rollup.csv` |
+| **(d)** lab test ranges on (c) | `R/04_lab_ranges.R` | `lab_value_distribution.csv`, `lab_timing_to_index.csv`, `lab_results_summary.csv`, `lab_results_rollup.csv` |
 | — eligibility-input counts + coverage | `R/05_eligibility_coverage.R` | `lab_cohort_counts.csv`, `eligibility_input_coverage.csv` |
 | — ARTEMIS alignment assessment | `R/06_artemis_assessment.R` | `artemis_summary.csv`, `artemis_coverage.csv`, `artemis_drug_exposures.csv`, `artemis_regimens_aligned.csv`, `artemis_episodes_per_patient.csv`, `artemis_uncaptured_drugs.csv` |
 | — per-cohort demographics | `R/07_demographics.R` | `demographics.csv` |
@@ -347,6 +347,7 @@ Quick index (detailed schema for each below):
 | `lab_cohort_counts.csv` | `05_eligibility_coverage.R` | **Whole population** | eligibility test-id |
 | `eligibility_input_coverage.csv` | `05_eligibility_coverage.R` | Target 1A | eligibility test-id × Target 1A |
 | `lab_value_distribution.csv` | `04_lab_ranges.R` | Per main cohort | cohort × lab (cat) |
+| `lab_timing_to_index.csv` | `04_lab_ranges.R` | Target 1A + Target 1A PC allowed | cohort × lab (cat) × direction (before/after/any) |
 | `lab_results_summary.csv` | `04_lab_ranges.R` | **Whole population** | cat × measurement concept × unit × status × ambiguity |
 | `lab_results_rollup.csv` | `04_lab_ranges.R` | **Whole population** | cat × ambiguity (standard unit; QC columns) |
 | `artemis_summary.csv` | `06_artemis_assessment.R` | Scan cohort + Target 1A | cohort × ARTEMIS pipeline stage |
@@ -442,6 +443,28 @@ per-criterion (`test_id`) fan-out is collapsed to distinct measurements first.
 | `n_with_lab` | Subjects with a value near index (censored). |
 | `mean_value`, `sd_value` | Mean and standard deviation of `std_value` (blanked when censored). |
 | `median_value`, `lq_value`, `uq_value` | Median, lower (25th) and upper (75th) quartile (blanked when censored). |
+
+### `lab_timing_to_index.csv`
+Row per **Target 1A / Target 1A PC allowed subject × lab (cat) × direction** —
+how many days from the cohort index (the metastasis-marker date) to the
+closest recorded measurement of each of the 14 labs, searching a subject's
+**entire** measurement history (not the `labWindowBeforeDays`/`labWindowAfterDays`
+eligibility window `lab_value_distribution.csv` restricts to). `direction`
+is one of `before` (closest on/before index), `after` (closest on/after
+index), or `any` (closest in either direction); a same-day measurement
+(0 days) counts as the closest for all three. Restricted to Target 1A and
+its PC-allowed variant — the metastasis index isn't meaningful for the
+treatment-initiated cohorts (T3-6, L01-anchored), which index on treatment
+start instead.
+
+| Column | Meaning |
+|---|---|
+| `cohort_definition_id` | Cohort id (Target 1A or Target 1A PC allowed). |
+| `cat` | Lab category / analyte code (one of the 14 in `sql/lab_cohorts.sql`). |
+| `direction` | `before`, `after`, or `any`. |
+| `n_with_lab` | Subjects with a qualifying measurement in that direction (censored). |
+| `mean_days`, `sd_days` | Mean and standard deviation of days-to-closest (blanked when censored). |
+| `median_days`, `lq_days`, `uq_days` | Median, lower (25th) and upper (75th) quartile of days-to-closest (blanked when censored). |
 
 ### `lab_results_summary.csv`
 QC / unit-resolution sanity check on the raw normalised table
