@@ -21,7 +21,8 @@
 #
 # Every KM outcome also gets 1/2/3-year milestones. Every outcome is run
 # "overall" plus once per protocol stratum (age_group / sex / index_year) —
-# one at a time, not crossed, matching the protocol's stratification list.
+# one at a time, matching the protocol's stratification list -- plus the
+# age x sex crossed view (subject_strata.sql's age_sex column).
 #
 # Episode ranking is ANCHORED before any line-of-therapy event is built
 # (anchorEpisodes(), R/eventBuilders.R): the protocol allows a patient into a
@@ -162,9 +163,11 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
         tfi      = tfiEvents)
     }
 
-    # one at a time (not crossed), per the protocol's stratification list
+    # one dimension at a time, per the protocol's stratification list, plus
+    # the age x sex crossed view (subject_strata.sql's age_sex column)
     outcomeStrata <- list(overall = NULL, age_group = "age_group",
-                          sex = "sex", index_year = "index_year")
+                          sex = "sex", age_sex = "age_sex",
+                          index_year = "index_year")
 
     nameMap <- dplyr::select(mainManifest, cohort_definition_id = "cohortId",
                              cohort_name = "cohortName")

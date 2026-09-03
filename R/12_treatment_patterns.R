@@ -177,10 +177,10 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     nameMapTP <- dplyr::select(mainManifest, cohort_definition_id = "cohortId",
                                cohort_name = "cohortName")
 
-    # Per-subject age group / sex (sql/subject_strata.sql — the same lookup
-    # R/09_outcomes.R uses), so this table can be sliced the same way every
-    # other stratified output in this pipeline is: one dimension at a time
-    # (overall / age_group / sex), not crossed.
+    # Per-subject age group / sex / age x sex (sql/subject_strata.sql — the
+    # same lookup R/09_outcomes.R uses), so this table can be sliced the same
+    # way every other stratified output in this pipeline is: one dimension
+    # at a time (overall / age_group / sex), plus the age x sex crossed view.
     strataTbl <- querySqlFile(connection, "subject_strata.sql",
       work_database_schema = settings$workDatabaseSchema,
       cohort_table         = settings$cohortTable,
@@ -223,7 +223,8 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     yearCatCounts <- dplyr::bind_rows(
       yearCatCountsFor(byYear, "overall"),
       yearCatCountsFor(byYear, "age_group", "age_group"),
-      yearCatCountsFor(byYear, "sex", "sex")
+      yearCatCountsFor(byYear, "sex", "sex"),
+      yearCatCountsFor(byYear, "age_sex", "age_sex")
     ) |>
       dplyr::left_join(nameMapTP, by = "cohort_definition_id") |>
       dplyr::relocate("cohort_name", .after = "cohort_definition_id")
