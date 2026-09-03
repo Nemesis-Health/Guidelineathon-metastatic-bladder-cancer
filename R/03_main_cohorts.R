@@ -76,6 +76,20 @@ labCode  <- c(ev_pembro = "a", cisplatin = "b", carboplatin = "c",
 # T1 = the Target 1A JSON cohort (captured above by its file-derived name).
 jsonSet$cohortName[jsonSet$cohortId == cohort1Id] <- cohortNames[["T1"]]
 
+# L01-anchored initiated cohorts (Target_1A_initiated_L01.json,
+# Target_1A_PC_allowed_initiated_L01.json): standalone ATLAS/Circe cohorts,
+# analogous to "mBC initiated base" below but indexed on the earliest
+# qualifying raw L01 (antineoplastic) drug exposure instead of an
+# ARTEMIS-detected regimen episode. Self-contained (their own InclusionRules
+# re-derive metastasis/prior-cancer/no-other-cancer and the L01-naive
+# washout) rather than descending from Cohort 1's generated table, so they
+# stay portable as plain ATLAS cohort definitions.
+l01InitId          <- cohortIdByName(jsonSet, "Target 1A initiated L01")
+l01InitPcAllowedId <- cohortIdByName(jsonSet, "Target 1A PC allowed initiated L01")
+stopifnot(!is.na(l01InitId), !is.na(l01InitPcAllowedId))
+jsonSet$cohortName[jsonSet$cohortId == l01InitId]          <- "mBC initiated base (L01)"
+jsonSet$cohortName[jsonSet$cohortId == l01InitPcAllowedId] <- "mBC initiated base (L01, PC allowed)"
+
 # --- initiated base ---------------------------------------------------------
 baseTemplate <- paste(readLines(file.path(sqlDir, "Target_1A_initiated_template.sql"),
                                 warn = FALSE), collapse = "\n")
