@@ -19,35 +19,33 @@
 #     whenever a subject was EVER a member of the comorbidity cohort, with
 #     no date bound at all). Flags + strata are computed entirely in SQL via
 #     conditional aggregation, not pulled per-subject and joined/pivoted in R.
-#     16 of 19 canonical components are wired (R/charlsonScore.R for
-#     the full list), sourced from Fortin/Reps/Ryan 2022 (BMC Med Inform
-#     Decis Mak 22:225; 2023 correction 23:110) — the standard OHDSI-authored
-#     SNOMED translation of the Quan 2005 Charlson coding algorithm — via new
+#     15 of 19 canonical components are wired (R/charlsonScore.R for the
+#     full list), sourced from Fortin/Reps/Ryan 2022 (BMC Med Inform Decis
+#     Mak 22:225; 2023 correction 23:110) — the standard OHDSI-authored
+#     SNOMED translation of the Quan 2005 Charlson coding algorithm — via
 #     comorbidity cohorts wired into R/08_covariates.R's `comorbMap`
 #     (Myocardial_Infarction.json, Congestive_Heart_Failure.json,
 #     Peripheral_Vascular_Disease.json, Chronic_Pulmonary_Disease.json,
 #     Rheumatic_Disease.json, Peptic_Ulcer_Disease.json,
 #     Diabetes_With_Complications.json, Hemiplegia_Paraplegia.json,
 #     AIDS_HIV.json, and a corrected Liver_Disease.json split into
-#     mild/Liver_Disease_Severe tiers). `metastatic_solid_tumor` is the one
-#     exception: it's derived from Target_1A.json's own measurement-domain
-#     metastasis marker (sql/metastasis_marker.sql), not the generic
-#     Metastatic_Solid_Tumor.json concept set (still generated for
-#     `covariate_overlap.csv`, just not consulted for CCI) — a real
-#     smoke-test run found that generic claims-oriented SNOMED list firing
-#     for 0 of 504 T1 subjects (this test CDM's condition coding is sparse
-#     outside the concept sets Target_1A.json itself uses), which would have
-#     silently understated nearly every subject's score by 6 points. Only
-#     `leukemia` and `lymphoma` remain unwired: the same source's coding
-#     algorithm merges them (and other non-hematologic tumors) into one
-#     716-concept "malignancy except skin neoplasms" bucket with no
-#     leukemia-only/lymphoma-only split available from a citable source, so
-#     computeCharlsonScore() (R/charlsonScore.R) silently omits both and the
-#     score is a (small) UNDERSTATEMENT of the true CCI for anyone with a
-#     hematologic malignancy. `any_malignancy` is also unwired, but this is
-#     immaterial here: every Cohort 1 member has `metastatic_solid_tumor`
-#     (weight 6), which the scoring hierarchy always supersedes
-#     `any_malignancy` (weight 2) with. See README "Known gaps".
+#     mild/Liver_Disease_Severe tiers). `metastatic_solid_tumor` (weight 6)
+#     and `any_malignancy` (weight 2) are both DELIBERATELY excluded, unlike
+#     a standard Charlson score: every subject in every cohort in this
+#     pipeline's main tree has metastatic bladder cancer by cohort
+#     definition — it's the entry criterion, not a comorbidity that varies
+#     between subjects — so counting it drives every subject into the ">=5"
+#     category regardless of anything else, a degenerate distribution that
+#     tells you nothing. `covariate_overlap.csv`'s own "MetSolidTumor" row
+#     (a different, generic concept-set source) is unaffected — that's a
+#     separate output. Only `leukemia` and `lymphoma` remain unwired for a
+#     different reason: the same source's coding algorithm merges them (and
+#     other non-hematologic tumors) into one 716-concept "malignancy except
+#     skin neoplasms" bucket with no leukemia-only/lymphoma-only split
+#     available from a citable source, so computeCharlsonScore()
+#     (R/charlsonScore.R) silently omits both and the score is a (small)
+#     UNDERSTATEMENT of the true CCI for anyone with a hematologic
+#     malignancy. See README "Known gaps".
 #
 # Depends on `covSet` (the generated comorbidity-cohort id/name map) from
 # R/08_covariates.R — run this step after it.
@@ -104,16 +102,16 @@ if (nrow(vitalsOut) == 0L) {
   message("  baseline_vitals: ", nrow(vitalsOut), " row(s)")
 }
 
-# --- Charlson CCI (Cohort 1 only) -------------------------------------------
+# --- Charlson CCI, every cohort in the main tree ----------------------------
 # code -> canonical Charlson component name (R/charlsonScore.R). Hypertension
 # and Venous Thrombotic Events are NOT Charlson components, so they're not
 # listed here — they stay as their own standalone rows in covariate_overlap.csv.
-# `metastatic_solid_tumor` is deliberately absent from this map — it's
-# derived separately, below, from Target_1A.json's own metastasis marker
-# (see the comment there for why). `diabetes_with_complication`/
-# `mild_liver_disease` supersede `diabetes_without_complication`/
-# `moderate_severe_liver_disease` automatically per computeCharlsonScore()'s
-# hierarchy rules when a subject has both.
+# `metastatic_solid_tumor` and `any_malignancy` are deliberately absent from
+# this map (see the comment further below, where components is scored, for
+# why). `diabetes_with_complication`/`mild_liver_disease` supersede
+# `diabetes_without_complication`/`moderate_severe_liver_disease`
+# automatically per computeCharlsonScore()'s hierarchy rules when a subject
+# has both.
 charlsonMap <- tibble::tribble(
   ~cohortName,                     ~component,
   "Type 2 Diabetes",              "diabetes_without_complication",
@@ -186,44 +184,18 @@ if (is.null(covSet) || nrow(covSet) == 0L) {
     components$cohort_definition_id <- as.integer(components$cohort_definition_id)
     components$subject_id           <- as.integer(components$subject_id)
 
-    # metastatic_solid_tumor: derive from Target_1A.json's OWN metastasis
-    # measurement marker (AJCC/UICC Stage 4, AJCC/UICC M1, Metastasis — its
-    # PrimaryCriteria's ConceptSet id 0), not the generic claims-oriented
-    # Charlson SNOMED condition list wired above (a real smoke-test run
-    # found that one firing for 0 of 504 T1 subjects — this test CDM's
-    # condition coding is sparse outside the concept sets Target_1A.json
-    # itself uses). Re-deriving from the exact marker that defines Cohort 1
-    # membership keeps a single source of truth and stays correct if that
-    # marker ever changes, unlike a hardcoded assumption. No cohort join
-    # needed: metastasis_marker.sql has no date restriction (the marker
-    # predates or equals T1 entry, hence every downstream cohort's own
-    # later-or-equal index too — see that file's header), so presence is a
-    # pure subject-level fact, independent of which target cohort a
-    # `components` row is for.
-    target1aConceptSets <- jsonlite::fromJSON(
-      readr::read_file(file.path(cohortsDir, "01_Target", "Target_1A.json")),
-      simplifyVector = FALSE)$ConceptSets
-    metastasisConceptSet <- Filter(function(cs) cs$id == 0, target1aConceptSets)[[1]]
-    if (any(vapply(metastasisConceptSet$expression$items,
-                   function(it) isTRUE(it$isExcluded), logical(1))))
-      stop("Target_1A.json's metastasis concept set (id 0) now has an ",
-           "excluded item — update sql/metastasis_marker.sql's caller to ",
-           "handle exclusions.", call. = FALSE)
-    metastasisConceptIds <- vapply(metastasisConceptSet$expression$items,
-      function(it) it$concept$CONCEPT_ID, integer(1))
-
-    metastasisFlag <- querySqlFile(connection, "metastasis_marker.sql",
-      cdm_database_schema   = settings$cdmDatabaseSchema,
-      vocab_database_schema = settings$vocabDatabaseSchema,
-      work_database_schema  = settings$workDatabaseSchema,
-      cohort_table          = settings$cohortTable,
-      target_cohort_ids     = paste(targetIds, collapse = ", "),
-      ancestor_concept_ids  = paste(metastasisConceptIds, collapse = ", "))
-    names(metastasisFlag) <- tolower(names(metastasisFlag))
-    metastasisFlag$subject_id <- as.integer(metastasisFlag$subject_id)
-
-    components$metastatic_solid_tumor <-
-      as.integer(components$subject_id %in% metastasisFlag$subject_id)
+    # metastatic_solid_tumor (weight 6) is DELIBERATELY excluded from CCI
+    # here, unlike a standard Charlson score: every subject in every cohort
+    # in this pipeline's main tree has metastatic bladder cancer by cohort
+    # definition (it's the entry criterion, not a comorbidity that varies
+    # between subjects), so including it drives every single subject into
+    # the ">=5" category regardless of anything else — degenerate, not
+    # informative. any_malignancy (weight 2) stays unwired too (no source
+    # cohort maps to it), so this score reflects the OTHER 15 wired
+    # components only. `covariate_overlap.csv`'s own "MetSolidTumor" row
+    # (from the generic Metastatic_Solid_Tumor.json concept set, a
+    # different source than the derivation this block used to do) is
+    # unaffected by this — it's a separate output.
 
     # computeCharlsonScore() ignores unknown columns and preserves row order,
     # so cohort_definition_id and the strata columns (not themselves
@@ -258,6 +230,7 @@ if (is.null(covSet) || nrow(covSet) == 0L) {
     writeResultCsv(cciOut, "charlson_cci", "characterization")
     message("  charlson_cci: ", dplyr::n_distinct(components$subject_id), " subject(s) across ",
             dplyr::n_distinct(components$cohort_definition_id), " cohorts, ",
-            nrow(flagIds) + 1L, " of 19 component(s) wired")
+            nrow(flagIds), " of 19 component(s) wired (metastatic_solid_tumor ",
+            "deliberately excluded -- see header)")
   }
 }
