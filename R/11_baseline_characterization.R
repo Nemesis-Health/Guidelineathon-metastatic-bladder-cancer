@@ -11,8 +11,15 @@
 #     R/07_demographics.R.
 #
 #   charlson_cci.csv — Charlson Comorbidity Index category distribution,
-#     Cohort 1 only (matches R/08_covariates.R's existing "overlap with 1A"
-#     scope). 16 of 19 canonical components are wired (R/charlsonScore.R for
+#     every cohort in the main tree x subject_strata.sql stratum (matches
+#     R/08_covariates.R's own scope). Each cohort's components are anchored
+#     to THAT COHORT'S OWN index date via sql/charlson_components.sql (same
+#     unbounded on/before-index look-back as covariate_overlap.csv -- fixed
+#     from an earlier version of this file, which flagged a component
+#     whenever a subject was EVER a member of the comorbidity cohort, with
+#     no date bound at all). Flags + strata are computed entirely in SQL via
+#     conditional aggregation, not pulled per-subject and joined/pivoted in R.
+#     16 of 19 canonical components are wired (R/charlsonScore.R for
 #     the full list), sourced from Fortin/Reps/Ryan 2022 (BMC Med Inform
 #     Decis Mak 22:225; 2023 correction 23:110) — the standard OHDSI-authored
 #     SNOMED translation of the Quan 2005 Charlson coding algorithm — via new
@@ -49,78 +56,50 @@
 message("\n== (k) baseline characterization: vitals + Charlson CCI ==")
 
 mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
-cohortNames  <- loadState("cohortNames", "R/03_main_cohorts.R")
 
 nameMap <- dplyr::select(mainManifest, cohort_definition_id = "cohortId",
                          cohort_name = "cohortName")
 
-# --- weight / height / BMI --------------------------------------------------
-vitals <- querySqlFile(connection, "baseline_vitals.sql",
-  cdm_database_schema  = settings$cdmDatabaseSchema,
-  work_database_schema = settings$workDatabaseSchema,
-  cohort_table         = settings$cohortTable,
-  vitals_window_days   = settings$vitalsWindowDays)
-names(vitals) <- tolower(names(vitals))
-vitals$cohort_definition_id <- as.integer(vitals$cohort_definition_id)
-
-# subject_strata.sql is the single source of truth for age_group/sex/age_sex
-# bucketing (shared with demographics.sql, R/04_lab_ranges.R,
-# R/09_outcomes.R, R/12_treatment_patterns.R). Aggregation here happens in R
-# (not SQL), so the stratification join is a plain left_join + an extra
-# grouping column, not a UNION-ALL rewrite of the SQL file.
-strataTbl <- querySqlFile(connection, "subject_strata.sql",
+# --- weight / height / BMI, per cohort x variable x stratum -----------------
+# Computed entirely in SQL (percentiles via the same ROW_NUMBER/CASE
+# interpolation as lab_value_distribution_portable.sql/
+# demographics_continuous.sql, stratified the same UNION-ALL way) rather than
+# pulling one row per cohort member with a vitals measurement into R and
+# aggregating there.
+strataFragment <- renderSqlFile("subject_strata.sql",
   work_database_schema = settings$workDatabaseSchema,
   cohort_table         = settings$cohortTable,
   cdm_database_schema  = settings$cdmDatabaseSchema)
-names(strataTbl) <- tolower(names(strataTbl))
-strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
-vitals <- dplyr::left_join(vitals, strataTbl,
-  by = c("cohort_definition_id", "subject_id"))
 
-summarizeVital <- function(df, valueCol, minCellCount, stratumType, groupCol = NULL) {
-  grp <- c("cohort_definition_id", groupCol)
-  agg <- df |>
-    dplyr::filter(!is.na(.data[[valueCol]])) |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(grp))) |>
-    dplyr::summarise(
-      n      = dplyr::n(),
-      mean   = mean(.data[[valueCol]]),
-      sd     = stats::sd(.data[[valueCol]]),
-      median = stats::median(.data[[valueCol]]),
-      lq     = stats::quantile(.data[[valueCol]], 0.25),
-      uq     = stats::quantile(.data[[valueCol]], 0.75),
-      min    = min(.data[[valueCol]]),
-      max    = max(.data[[valueCol]]),
-      .groups = "drop")
+vitalsOut <- querySqlFile(connection, "baseline_vitals.sql",
+  cdm_database_schema  = settings$cdmDatabaseSchema,
+  work_database_schema = settings$workDatabaseSchema,
+  cohort_table         = settings$cohortTable,
+  vitals_window_days   = settings$vitalsWindowDays,
+  subject_strata_sql   = strataFragment)
+names(vitalsOut) <- tolower(names(vitalsOut))
 
-  small    <- agg$n > 0L & agg$n < minCellCount
-  statCols <- c("mean", "sd", "median", "lq", "uq", "min", "max")
-  agg[statCols] <- lapply(agg[statCols], function(x) ifelse(small, NA_real_, as.double(x)))
-  agg$n <- ifelse(small, -as.integer(minCellCount), as.integer(agg$n))
-  agg$variable <- valueCol
-  agg$stratum_type <- stratumType
-  agg$stratum_value <- if (is.null(groupCol)) "overall" else agg[[groupCol]]
-  dplyr::relocate(agg, "variable", "stratum_type", "stratum_value",
-                  .after = "cohort_definition_id")[
-    c("cohort_definition_id", "variable", "stratum_type", "stratum_value",
-      "n", statCols)]
-}
-
-if (nrow(vitals) == 0L) {
+if (nrow(vitalsOut) == 0L) {
 
   message("  no weight/height/BMI measurements found near any cohort index — skipping baseline_vitals.")
 
 } else {
 
-  # age_group/sex/age_sex come from activeStrataSpecs() (settings$strataColumns,
-  # run.R CONFIG) so a site can narrow/disable stratification in one place.
-  strataViews <- activeStrataSpecs()
-  vitalsOut <- dplyr::bind_rows(lapply(c("weight_kg", "height_cm", "bmi"), function(v) {
-      dplyr::bind_rows(lapply(names(strataViews), function(st)
-        summarizeVital(vitals, v, settings$minCellCount, st, strataViews[[st]])))
-    })) |>
-    dplyr::left_join(nameMap, by = "cohort_definition_id") |>
+  vitalsOut$cohort_definition_id <- as.integer(vitalsOut$cohort_definition_id)
+  # settings$strataColumns (run.R CONFIG, via activeStrataTypes()) controls
+  # which stratum views actually reach the CSV -- the SQL always computes all
+  # four (cheap), a site that wants fewer/none just filters here.
+  vitalsOut <- vitalsOut[vitalsOut$stratum_type %in% activeStrataTypes(), ]
+
+  small <- vitalsOut$n > 0 & vitalsOut$n < settings$minCellCount
+  statCols <- c("mean", "sd", "median", "lq", "uq", "min", "max")
+  vitalsOut[statCols] <- lapply(vitalsOut[statCols], function(x) ifelse(small, NA_real_, as.double(x)))
+  vitalsOut$n <- ifelse(small, -settings$minCellCount, vitalsOut$n)
+
+  vitalsOut <- dplyr::left_join(vitalsOut, nameMap, by = "cohort_definition_id") |>
     dplyr::relocate("cohort_name", .after = "cohort_definition_id")
+  vitalsOut <- vitalsOut[c("cohort_definition_id", "cohort_name", "variable",
+                          "stratum_type", "stratum_value", "n", statCols)]
   writeResultCsv(vitalsOut, "baseline_vitals", "characterization")
   message("  baseline_vitals: ", nrow(vitalsOut), " row(s)")
 }
@@ -154,7 +133,7 @@ charlsonMap <- tibble::tribble(
   "Dementia",                     "dementia"
 )
 
-t1Id <- cohortIdByName(mainManifest, cohortNames[["T1"]])
+targetIds <- mainManifest$cohortId
 
 covSet <- tryCatch(loadState("covSet", "R/08_covariates.R"), error = function(e) NULL)
 
@@ -174,29 +153,38 @@ if (is.null(covSet) || nrow(covSet) == 0L) {
 
   } else {
 
-    flagMembership <- querySqlFile(connection, "outcome_target_data.sql",
-      work_database_schema = settings$workDatabaseSchema,
-      cohort_table         = settings$covariateCohortTable,
-      target_cohort_ids    = paste(flagIds$covariate_id, collapse = ", "))
-    names(flagMembership) <- tolower(names(flagMembership))
-    flagMembership$cohort_definition_id <- as.integer(flagMembership$cohort_definition_id)
-    flagMembership$subject_id           <- as.integer(flagMembership$subject_id)
+    # One row per (cohort, subject) a subject belongs to across the whole
+    # main tree, with every Charlson component flag AND the age_group/sex/
+    # age_sex strata already computed in SQL (sql/charlson_components.sql --
+    # each component's on/before-index look-back matches
+    # covariate_overlap.csv's; component_flags_sql is a small dynamically-
+    # built list of "MAX(CASE WHEN cov.cohort_definition_id = <id> THEN 1
+    # ELSE 0 END) AS <component>" expressions, since which comorbidity
+    # cohorts are present varies by run -- the query itself, not R, does the
+    # JOIN/aggregation work that scales with subject volume). The SAME
+    # subject is scored once per cohort, since their comorbidity flags (and
+    # hence CCI) can differ by which cohort's index anchors the look-back
+    # (e.g. a later treatment-initiation index has more time for
+    # comorbidities to accrue than the earlier mBC index).
+    componentFlagsSql <- paste(sprintf(
+      "MAX(CASE WHEN cov.cohort_definition_id = %d THEN 1 ELSE 0 END) AS %s",
+      flagIds$covariate_id, flagIds$component), collapse = ",\n       ")
 
-    t1Members <- querySqlFile(connection, "outcome_target_data.sql",
+    strataFragment <- renderSqlFile("subject_strata.sql",
       work_database_schema = settings$workDatabaseSchema,
       cohort_table         = settings$cohortTable,
-      target_cohort_ids    = as.character(t1Id))
-    names(t1Members) <- tolower(names(t1Members))
-    t1Members$subject_id <- as.integer(t1Members$subject_id)
+      cdm_database_schema  = settings$cdmDatabaseSchema)
 
-    components <- tibble::tibble(subject_id = unique(t1Members$subject_id))
-
-    for (i in seq_len(nrow(flagIds))) {
-      flaggedSubjects <- flagMembership$subject_id[
-        flagMembership$cohort_definition_id == flagIds$covariate_id[i]]
-      components[[flagIds$component[i]]] <-
-        as.integer(components$subject_id %in% flaggedSubjects)
-    }
+    components <- querySqlFile(connection, "charlson_components.sql",
+      work_database_schema   = settings$workDatabaseSchema,
+      cohort_table           = settings$cohortTable,
+      covariate_cohort_table = settings$covariateCohortTable,
+      cohort_definition_ids  = paste(targetIds, collapse = ", "),
+      component_flags_sql    = componentFlagsSql,
+      subject_strata_sql     = strataFragment)
+    names(components) <- tolower(names(components))
+    components$cohort_definition_id <- as.integer(components$cohort_definition_id)
+    components$subject_id           <- as.integer(components$subject_id)
 
     # metastatic_solid_tumor: derive from Target_1A.json's OWN metastasis
     # measurement marker (AJCC/UICC Stage 4, AJCC/UICC M1, Metastasis — its
@@ -206,7 +194,12 @@ if (is.null(covSet) || nrow(covSet) == 0L) {
     # condition coding is sparse outside the concept sets Target_1A.json
     # itself uses). Re-deriving from the exact marker that defines Cohort 1
     # membership keeps a single source of truth and stays correct if that
-    # marker ever changes, unlike a hardcoded assumption.
+    # marker ever changes, unlike a hardcoded assumption. No cohort join
+    # needed: metastasis_marker.sql has no date restriction (the marker
+    # predates or equals T1 entry, hence every downstream cohort's own
+    # later-or-equal index too — see that file's header), so presence is a
+    # pure subject-level fact, independent of which target cohort a
+    # `components` row is for.
     target1aConceptSets <- jsonlite::fromJSON(
       readr::read_file(file.path(cohortsDir, "01_Target", "Target_1A.json")),
       simplifyVector = FALSE)$ConceptSets
@@ -224,7 +217,7 @@ if (is.null(covSet) || nrow(covSet) == 0L) {
       vocab_database_schema = settings$vocabDatabaseSchema,
       work_database_schema  = settings$workDatabaseSchema,
       cohort_table          = settings$cohortTable,
-      target_cohort_ids     = as.character(t1Id),
+      target_cohort_ids     = paste(targetIds, collapse = ", "),
       ancestor_concept_ids  = paste(metastasisConceptIds, collapse = ", "))
     names(metastasisFlag) <- tolower(names(metastasisFlag))
     metastasisFlag$subject_id <- as.integer(metastasisFlag$subject_id)
@@ -232,16 +225,39 @@ if (is.null(covSet) || nrow(covSet) == 0L) {
     components$metastatic_solid_tumor <-
       as.integer(components$subject_id %in% metastasisFlag$subject_id)
 
+    # computeCharlsonScore() ignores unknown columns and preserves row order,
+    # so cohort_definition_id and the strata columns (not themselves
+    # recognised components) survive by just carrying them over positionally
+    # afterward -- already joined in charlson_components.sql above, no
+    # separate subject_strata.sql fetch/join needed here.
     cci <- computeCharlsonScore(components)
-    cciOut <- dplyr::count(cci, .data$cci_category, name = "n")
+    cci$cohort_definition_id <- components$cohort_definition_id
+    cci$age_group <- components$age_group
+    cci$sex       <- components$sex
+    cci$age_sex   <- components$age_sex
+
+    cciStrataViews <- activeStrataSpecs()
+    cciOut <- dplyr::bind_rows(lapply(names(cciStrataViews), function(st) {
+      col <- cciStrataViews[[st]]
+      grp <- c("cohort_definition_id", col)
+      agg <- dplyr::count(cci, dplyr::across(dplyr::all_of(grp)), .data$cci_category, name = "n")
+      agg$stratum_type <- st
+      agg$stratum_value <- if (is.null(col)) "overall" else agg[[col]]
+      agg
+    }))
     small <- cciOut$n > 0L & cciOut$n < settings$minCellCount
     cciOut$n <- ifelse(small, -settings$minCellCount, cciOut$n)
-    cciOut$cohort_definition_id <- t1Id
     cciOut <- dplyr::left_join(cciOut, nameMap, by = "cohort_definition_id") |>
-      dplyr::relocate(c("cohort_definition_id", "cohort_name"), .before = "cci_category")
+      dplyr::relocate(c("cohort_definition_id", "cohort_name", "stratum_type", "stratum_value"),
+                      .before = "cci_category")
+    cciOut <- cciOut[c("cohort_definition_id", "cohort_name", "stratum_type",
+                       "stratum_value", "cci_category", "n")]
+    cciOut <- cciOut[order(cciOut$cohort_definition_id, cciOut$stratum_type,
+                           cciOut$stratum_value, cciOut$cci_category), ]
 
     writeResultCsv(cciOut, "charlson_cci", "characterization")
-    message("  charlson_cci: ", nrow(components), " subject(s), ",
+    message("  charlson_cci: ", dplyr::n_distinct(components$subject_id), " subject(s) across ",
+            dplyr::n_distinct(components$cohort_definition_id), " cohorts, ",
             nrow(flagIds) + 1L, " of 19 component(s) wired")
   }
 }
