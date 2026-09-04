@@ -70,11 +70,17 @@ if (nrow(demo) == 0L) {
           dplyr::n_distinct(demo$cohort_definition_id), " cohorts")
 }
 
-# --- continuous age summary --------------------------------------------------
+# --- continuous age summary, per cohort x stratum ---------------------------
+# Computed entirely in SQL (percentiles via the same ROW_NUMBER/CASE
+# interpolation as lab_value_distribution_portable.sql, stratified the same
+# UNION-ALL way) rather than pulling one row per cohort member into R and
+# aggregating there -- `strataFragment` (subject_strata.sql, rendered above
+# for demographics.sql) is reused as-is.
 ageCont <- querySqlFile(connection, "demographics_continuous.sql",
   work_database_schema = settings$workDatabaseSchema,
   cohort_table         = settings$cohortTable,
-  cdm_database_schema  = settings$cdmDatabaseSchema)
+  cdm_database_schema  = settings$cdmDatabaseSchema,
+  subject_strata_sql   = strataFragment)
 names(ageCont) <- tolower(names(ageCont))
 
 if (nrow(ageCont) == 0L) {
@@ -82,6 +88,11 @@ if (nrow(ageCont) == 0L) {
 } else {
   ageCont$cohort_definition_id <- as.integer(ageCont$cohort_definition_id)
   ageCont$n                    <- as.integer(ageCont$n)
+  # settings$strataColumns (run.R CONFIG, via activeStrataTypes()) controls
+  # which stratum views actually reach the CSV -- the SQL always computes all
+  # four (cheap), a site that wants fewer/none just filters here.
+  ageCont <- ageCont[ageCont$stratum_type %in% activeStrataTypes(), ]
+
   ageCont <- dplyr::left_join(ageCont, nmeMap, by = "cohort_definition_id")
 
   small <- ageCont$n > 0 & ageCont$n < settings$minCellCount
@@ -89,8 +100,11 @@ if (nrow(ageCont) == 0L) {
   ageCont[statCols] <- lapply(ageCont[statCols], function(x) ifelse(small, NA_real_, as.double(x)))
   ageCont$n <- ifelse(small, -settings$minCellCount, ageCont$n)
 
-  ageCont <- ageCont[order(ageCont$cohort_definition_id),
-                     c("cohort_definition_id", "cohort_name", "n", statCols)]
+  ageCont <- ageCont[c("cohort_definition_id", "cohort_name", "stratum_type",
+                       "stratum_value", "n", statCols)]
+  ageCont <- ageCont[order(ageCont$cohort_definition_id, ageCont$stratum_type,
+                           ageCont$stratum_value), ]
   writeResultCsv(ageCont, "demographics_age_continuous", "characterization")
-  message("  demographics_age_continuous: ", nrow(ageCont), " cohort(s)")
+  message("  demographics_age_continuous: ", nrow(ageCont), " row(s) across ",
+          dplyr::n_distinct(ageCont$cohort_definition_id), " cohorts")
 }
