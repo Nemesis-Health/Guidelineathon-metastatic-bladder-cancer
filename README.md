@@ -188,8 +188,8 @@ ARTEMIS.
 | **(d)** lab test ranges on (c) | `R/04_lab_ranges.R` | `lab_value_distribution.csv`, `lab_timing_to_index.csv`, `lab_results_summary.csv`, `lab_results_rollup.csv` |
 | — eligibility-input counts + coverage | `R/05_eligibility_coverage.R` | `lab_cohort_counts.csv`, `eligibility_input_coverage.csv` |
 | — ARTEMIS alignment assessment | `R/06_artemis_assessment.R` | `artemis_summary.csv`, `artemis_coverage.csv`, `artemis_drug_exposures.csv`, `artemis_regimens_aligned.csv`, `artemis_episodes_per_patient.csv`, `artemis_uncaptured_drugs.csv` |
-| — per-cohort demographics | `R/07_demographics.R` | `demographics.csv` |
-| — covariate overlap with 1A | `R/08_covariates.R` | `covariate_overlap.csv`, `bc_covariate_cohort` |
+| — per-cohort demographics | `R/07_demographics.R` | `demographics.csv`, `demographics_age_continuous.csv` |
+| — covariate overlap with the main tree | `R/08_covariates.R` | `covariate_overlap.csv`, `bc_covariate_cohort` |
 
 **Approach A** — every eligibility input lives in one table (`bc_lab_cohort`):
 first the labs (`sql/lab_cohorts.sql`), then the ECOG + condition cohorts, whose
@@ -254,10 +254,10 @@ At the end of a run, results are packaged into two archives:
 | `05_eligibility_coverage.R` | eligibility-table counts and each input crossed with Target 1A (tested / passed). |
 | `06_artemis_assessment.R` | ARTEMIS assessment: alignment stats, patient/exposure coverage, per-drug and per-regimen frequencies, uncaptured exposures — all from the in-memory `artemisResult`. |
 | `07_demographics.R` | Per-cohort demographic strata (age group / sex / index year, with `pct`) + continuous age summary. |
-| `08_covariates.R` | Comorbidity + performance-status overlap with Target 1A; also generates the comorbidity cohorts step (k) scores as Charlson CCI components. |
+| `08_covariates.R` | Comorbidity + performance-status overlap with every cohort in the main tree; also generates the comorbidity cohorts step (k) scores as Charlson CCI components. |
 | `09_outcomes.R` | Outcomes: DTI (Target 1A), OS (every cohort), TTNT/TTD/TTD-LoT2/TFI (treatment-initiated cohorts) — KM + 1/2/3-yr milestones, stratified by age group / sex / index year. |
 | `10_adherence.R` | Guideline relevance (per-cohort % of Cohort 1) + adherence roll-up (per eligibility leaf: adherent / alt-guideline / indicated-other / non-indicated / no-treatment). |
-| `11_baseline_characterization.R` | Weight/height/BMI (per cohort) + Charlson Comorbidity Index (Cohort 1). |
+| `11_baseline_characterization.R` | Weight/height/BMI + Charlson Comorbidity Index, per cohort in the main tree. |
 | `12_treatment_patterns.R` | Regimen + classification-category distribution by line of therapy, % untreated, Sankey-ready LoT1→LoT2→LoT3 pathway counts. |
 | `helpers.R` | Cohort-generation + SQL helpers (thin wrappers over CirceR/CohortGenerator/SqlRender). |
 | `artemis.R` | The ARTEMIS pipeline wrapper: `runArtemis()`, `buildEpisodeTable()`, `writeArtemisEpisodes()`. (Coverage/uncaptured analytics are computed in `06_artemis_assessment.R`.) |
@@ -281,14 +281,16 @@ At the end of a run, results are packaged into two archives:
 | `lab_results_rollup_portable.sql` | Per-category headline of `bc_raw_lab_results`: one row per (cat, is_ambiguous) in the standard unit, with unit-resolution health as QC columns. Used by step (d); `lab_results_rollup.sql` is the PERCENTILE_CONT original, kept for comparison. |
 | `lab_cohort_counts.sql` | Whole-population counts of `bc_lab_cohort` per test-id. |
 | `eligibility_input_coverage.sql` | Each input × cohort × stratum (every cohort in the main tree): `n_tested` (measured) + `n_passed` (criterion met). |
-| `n_target1a.sql` | Target 1A denominator. Used by step (h) (`covariate_overlap.csv`); `eligibility_input_coverage.csv`'s per-cohort/stratum denominators come from `subject_strata.sql` directly instead. |
 | `cohort_counts_stratified.sql` | Per cohort × stratum (`age_group`/`sex`/`age_sex`) distinct-subject counts; the `overall` view comes from `CohortGenerator::getCohortCounts()` instead, reshaped in R. Used by step (c). |
 | `outcome_target_data.sql` | Cohort membership + index/end dates for a given cohort-id list. Used by steps 09/10/11/12 (generic — the `@target_cohort_ids` list is whatever the caller needs). |
 | `subject_strata.sql` | Per-subject age group / sex / age × sex / index year — single source of truth for this bucketing. See that file's own header for the full list of consumers. |
 | `fetch_death_events.sql` | Death dates for subjects in a set of cohorts. Used by `fetchDeathEvents()` (step 09, OS outcome). |
-| `demographics_continuous.sql` | Per-cohort continuous age summary (mean/SD/median/IQR/min/max), portable percentile technique (no `PERCENTILE_CONT`, same as `lab_value_distribution_portable.sql`). Used by step 07. |
-| `baseline_vitals.sql` | Weight (kg) / height (cm) / BMI, closest measurement to each cohort's index within `settings$vitalsWindowDays`. Used by step 11. |
+| `demographics_continuous.sql` | Per-cohort × stratum continuous age summary, portable percentile technique + stratification same as `lab_value_distribution_portable.sql`. Used by step 07. |
+| `baseline_vitals.sql` | Weight (kg) / height (cm) / BMI, closest measurement to each cohort's index within `settings$vitalsWindowDays`; distribution stats computed in SQL, portable-percentile technique + stratification same as `lab_value_distribution_portable.sql`. Used by step 11. |
 | `metastasis_marker.sql` | Subjects with a metastasis measurement among a given concept-id list (used with `Target_1A.json`'s own metastasis ConceptSet, not a hardcoded list). Used by step 11 for Charlson's `metastatic_solid_tumor`. |
+| `covariate_overlap.sql` | Comorbidity overlap counts, every cohort in the main tree × stratum, each anchored to that cohort's own index (unbounded look-back). Used by step (h). |
+| `ps_overlap.sql` | Performance-status (ECOG) overlap counts, same scope as `covariate_overlap.sql` but a near-index window instead of a look-back. Used by step (h). |
+| `charlson_components.sql` | Same look-back as `covariate_overlap.sql` but pivoted into one 0/1 flag column per Charlson component (conditional aggregation, columns built dynamically in R) plus `subject_strata.sql`'s columns, all in one row per (cohort, subject) — feeds `computeCharlsonScore()` directly, no per-subject join/pivot in R. Used by step 11. |
 
 ### `cohorts/` — cohort artefacts
 `00_ARTEMIS/` scan cohort · `01_Target/` Target 1A + the L01 comparison cohort ·
@@ -405,10 +407,10 @@ censoring" and "Age/sex stratification" above apply here too.
 | `cohort_counts.csv` | `03_main_cohorts.R` | Each cohort (the tree) | generated cohort × stratum type × stratum value |
 | `attrition_target_1a.csv` | `03_main_cohorts.R` | Target 1A tree JSON cohorts | cohort × inclusion-rule sequence |
 | `demographics.csv` | `07_demographics.R` | Per cohort | cohort × characteristic × stratum |
-| `demographics_age_continuous.csv` | `07_demographics.R` | Per cohort | cohort (n/mean/SD/median/IQR/min/max of age) |
-| `covariate_overlap.csv` | `08_covariates.R` | Target 1A | covariate (comorbidity / PS stratum) × cohort 1A |
+| `demographics_age_continuous.csv` | `07_demographics.R` | Per cohort | cohort × stratum type × stratum value |
+| `covariate_overlap.csv` | `08_covariates.R` | Per cohort | cohort × stratum type × stratum value × covariate (comorbidity / PS) |
 | `baseline_vitals.csv` | `11_baseline_characterization.R` | Per cohort | cohort × variable (weight_kg/height_cm/bmi) × stratum type × stratum value |
-| `charlson_cci.csv` | `11_baseline_characterization.R` | Target 1A | CCI category (0 / 1-2 / 3-4 / >=5) |
+| `charlson_cci.csv` | `11_baseline_characterization.R` | Per cohort | cohort × stratum type × stratum value × CCI category (0 / 1-2 / 3-4 / >=5) |
 
 ### `cohort_counts.csv`
 Row per generated cohort × stratum — the whole main tree plus covariates
@@ -470,33 +472,52 @@ cohort × characteristic × stratum (long/tidy). Age is at `cohort_start_date`
 
 ### `demographics_age_continuous.csv`
 Companion to `demographics.csv`'s categorical `age_group`: age at index as a
-continuous variable per cohort, per the protocol's "mean (SD), minimum,
-maximum, median and IQR."
+continuous variable, per the protocol's "mean (SD), minimum, maximum, median
+and IQR." Every cohort in the main tree, reported once overall and once per
+`subject_strata.sql` stratum (`age_group`, `sex`, `age_sex`) — same
+convention as `baseline_vitals.csv` (`age_group`-stratified continuous age is
+a bit tautological, since each bucket's mean is bounded by construction, but
+kept anyway for uniformity rather than special-casing this one file).
 
 | Column | Meaning |
 |---|---|
 | `cohort_definition_id`, `cohort_name` | As above. |
-| `n` | Subjects in that cohort (censored). |
+| `stratum_type` | `overall`, `age_group`, `sex`, or `age_sex`. |
+| `stratum_value` | `overall`; `<=65`/`>65`; `Male`/`Female`/`Other-Unknown`; or the `age_sex` combination. |
+| `n` | Subjects in that cohort, restricted to this stratum (censored). |
 | `mean_age`, `sd_age` | Mean and SD of age at index (blanked when `n` censored). |
 | `min_age`, `lq_age`, `median_age`, `uq_age`, `max_age` | Min, quartiles, median, max (blanked when `n` censored). |
 
 ### `covariate_overlap.csv`
 Descriptive covariates **not** used by the main cohort tree, reported as an
-overlap with cohort 1A (overall mBC). Comorbidities count 1A subjects with ≥1
-qualifying record **on/before their 1A index** (prevalent baseline comorbidity);
-performance-status strata count 1A subjects with an ECOG record (KPS folded in)
-in the stratum within the index window (`labWindowBeforeDays` before /
-`labWindowAfterDays` after). PS strata **overlap** by
-design (`PS 0-2` includes `PS1`/`PS2`). Comorbidity cohorts are generated into
+overlap with every cohort in the main tree (same scope as
+`eligibility_input_coverage.csv`/`lab_value_distribution.csv`), each anchored
+to **that cohort's own index date**. Comorbidities count members with ≥1
+qualifying record **on/before their own index** — an unbounded look-back
+(prevalent baseline comorbidity), not a windowed one; performance-status
+strata count members with an ECOG record (KPS folded in) in the stratum
+within the index window (`labWindowBeforeDays` before / `labWindowAfterDays`
+after) of their own index — deliberately a near-index window, not the
+comorbidities' unbounded look-back: PS is a point-in-time functional
+assessment, not a chronic condition flag. PS strata **overlap** by design
+(`PS 0-2` includes `PS1`/`PS2`). Comorbidity cohorts are generated into
 `bc_covariate_cohort` (never `bc_cohort`); to add one, drop its JSON into
 `cohorts/02_Covariate/` (see `R/08_covariates.R` `comorbMap`).
 
+Every (cohort, covariate) pair is reported once overall and once per
+`subject_strata.sql` stratum (`age_group`, `sex`, `age_sex`), with an
+explicit row even where there's no overlap at all (`n_overlap = 0`, not a
+silently missing combination).
+
 | Column | Meaning |
 |---|---|
+| `cohort_definition_id`, `cohort_name` | As elsewhere. |
+| `stratum_type` | `overall`, `age_group`, `sex`, or `age_sex`. |
+| `stratum_value` | `overall`; `<=65`/`>65`; `Male`/`Female`/`Other-Unknown`; or the `age_sex` combination. |
 | `code` | Short code: PS strata (`PS1`, `PS2`, `PS2+`, `PS 0-2`, `PS 0-1`) or comorbidity — see `08_covariates.R`'s `comorbMap` for the full list (`T2DM`, `HTN`, `CVD`, `Stroke`, `VTE`, `LiverDx`, `RenalDx`, `Dementia`, plus the Charlson-only additions `MI`, `CHF`, `PVD`, `COPD`, `RheumDx`, `PUD`, `DMComplic`, `Hemiplegia`, `AIDS`, `LiverDxSevere`, `MetSolidTumor`). |
 | `label` | Human-readable description. |
-| `n_1a` | Subjects in cohort 1A (the denominator). |
-| `n_overlap` | 1A subjects meeting the covariate (censored). % is not emitted — it is `n_overlap / n_1a`. |
+| `n_cohort` | This cohort's denominator, restricted to this row's stratum. |
+| `n_overlap` | Members (in this cohort × stratum) meeting the covariate (censored). % is not emitted — it is `n_overlap / n_cohort`. |
 
 ### `baseline_vitals.csv`
 Per-cohort weight/height/BMI, closest measurement to index within
@@ -514,16 +535,27 @@ stratum (`age_group`, `sex`, `age_sex`).
 | `mean`, `sd`, `median`, `lq`, `uq`, `min`, `max` | Distribution (blanked when `n` censored). |
 
 ### `charlson_cci.csv`
-Charlson Comorbidity Index category distribution, Cohort 1 only. 16 of 19
+Charlson Comorbidity Index category distribution, every cohort in the main
+tree x `subject_strata.sql` stratum (`age_group`, `sex`, `age_sex`) — same
+scope and convention as `covariate_overlap.csv`. Each cohort's components
+are anchored to **that cohort's own index date** (`sql/charlson_components.sql`,
+same unbounded on/before-index look-back as `covariate_overlap.csv`, computed
+entirely in SQL via conditional aggregation, not pulled per-subject and
+joined/pivoted in R), so the
+same subject can carry a different score in different cohorts if they have
+more comorbidities on record by a later cohort's index (e.g. a
+treatment-initiation index, which falls on/after the mBC index). 16 of 19
 canonical components are wired (see Known gaps for which three aren't, and
 why the score is still a slight understatement for a small subset of
 patients).
 
 | Column | Meaning |
 |---|---|
-| `cohort_definition_id`, `cohort_name` | Cohort 1 only. |
+| `cohort_definition_id`, `cohort_name` | As elsewhere. |
+| `stratum_type` | `overall`, `age_group`, `sex`, or `age_sex`. |
+| `stratum_value` | `overall`; `<=65`/`>65`; `Male`/`Female`/`Other-Unknown`; or the `age_sex` combination. |
 | `cci_category` | `0`, `1-2`, `3-4`, or `>=5`. |
-| `n` | Subjects in that category (censored). |
+| `n` | Subjects in that cohort × stratum × category (censored). |
 <!-- /category:characterization -->
 
 ---
