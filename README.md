@@ -287,7 +287,6 @@ At the end of a run, results are packaged into two archives:
 | `fetch_death_events.sql` | Death dates for subjects in a set of cohorts. Used by `fetchDeathEvents()` (step 09, OS outcome). |
 | `demographics_continuous.sql` | Per-cohort × stratum continuous age summary, portable percentile technique + stratification same as `lab_value_distribution_portable.sql`. Used by step 07. |
 | `baseline_vitals.sql` | Weight (kg) / height (cm) / BMI, closest measurement to each cohort's index within `settings$vitalsWindowDays`; distribution stats computed in SQL, portable-percentile technique + stratification same as `lab_value_distribution_portable.sql`. Used by step 11. |
-| `metastasis_marker.sql` | Subjects with a metastasis measurement among a given concept-id list (used with `Target_1A.json`'s own metastasis ConceptSet, not a hardcoded list). Used by step 11 for Charlson's `metastatic_solid_tumor`. |
 | `covariate_overlap.sql` | Comorbidity overlap counts, every cohort in the main tree × stratum, each anchored to that cohort's own index (unbounded look-back). Used by step (h). |
 | `ps_overlap.sql` | Performance-status (ECOG) overlap counts, same scope as `covariate_overlap.sql` but a near-index window instead of a look-back. Used by step (h). |
 | `charlson_components.sql` | Same look-back as `covariate_overlap.sql` but pivoted into one 0/1 flag column per Charlson component (conditional aggregation, columns built dynamically in R) plus `subject_strata.sql`'s columns, all in one row per (cohort, subject) — feeds `computeCharlsonScore()` directly, no per-subject join/pivot in R. Used by step 11. |
@@ -544,10 +543,16 @@ entirely in SQL via conditional aggregation, not pulled per-subject and
 joined/pivoted in R), so the
 same subject can carry a different score in different cohorts if they have
 more comorbidities on record by a later cohort's index (e.g. a
-treatment-initiation index, which falls on/after the mBC index). 16 of 19
-canonical components are wired (see Known gaps for which three aren't, and
-why the score is still a slight understatement for a small subset of
-patients).
+treatment-initiation index, which falls on/after the mBC index).
+
+15 of 19 canonical components are wired. `metastatic_solid_tumor` (weight 6)
+and `any_malignancy` (weight 2) are **deliberately excluded**, unlike a
+standard Charlson score: every subject in every cohort here has metastatic
+bladder cancer by cohort definition, so counting it would drive every
+subject into the `>=5` category regardless of anything else — degenerate,
+not informative for this study population. See Known gaps for the other two
+components that aren't wired, and why the score is a slight understatement
+for a small subset of patients as a result.
 
 | Column | Meaning |
 |---|---|
@@ -1067,10 +1072,14 @@ callable interactively, not run automatically for every combination.
   than one.
 - **Generalizability vs. trial populations (SMD) is not implemented** —
   `cohorts/extras/trial_reference.yaml` has no reference data yet.
-- **Charlson CCI covers 16 of 19 components** (Fortin/Reps/Ryan SNOMED
+- **Charlson CCI covers 15 of 19 components** (Fortin/Reps/Ryan SNOMED
   coding algorithm, *BMC Med Inform Decis Mak* 22:225 (2022), correction
   23:110 (2023)). `leukemia`/`lymphoma` aren't separable under this coding
   scheme, so CCI is slightly understated for hematologic malignancies.
+  `metastatic_solid_tumor`/`any_malignancy` are deliberately excluded (not
+  a data gap): every subject in every cohort here has metastatic bladder
+  cancer by cohort definition, so counting it would put everyone in the
+  `>=5` category regardless of anything else.
 - **NYHA, PD-L1, and comorbidity-grade criteria are not evaluated**
   (assume-pass).
 - **Condition-based criteria use "present" concept sets** as a proxy for
