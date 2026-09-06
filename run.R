@@ -98,25 +98,14 @@ suppressMessages(library(ARTEMIS))
 #       "&role=<ROLE>",
 #       "&private_key_file=", Sys.getenv("PRIV_KEY_FILE")))
 
-connectionDetails <- DatabaseConnector::createConnectionDetails(
-  dbms             = "bigquery",
-  connectionString = paste0(
-    "jdbc:bigquery://https://www.googleapis.com/bigquery/v2:443;",
-    "ProjectId=omop-test-data;OAuthType=0;",
-    "OAuthServiceAcctEmail=omop-bigquery@omop-test-data.iam.gserviceaccount.com;",
-    "OAuthPvtKeyPath=", path.expand("~/.bigquery_service_account.json"), ";",
-    "EnableSession=1;Location=EU;"),
-  user         = "",
-  password     = "",
-  pathToDriver = path.expand("~/.jdbc_drivers"))
-options(sqlRenderTempEmulationSchema = "results")
+connectionDetails <- NULL   # <-- REPLACE with your connection
 
 # --- Site + OMOP CDM schemas ------------------------------------------------
 settings <- list(
-  databaseId          = "BIGQUERY",   # short site id, e.g. "HUS"
-  cdmDatabaseSchema   = "cdm",
-  vocabDatabaseSchema = "cdm",    # defaults to cdmDatabaseSchema if blank
-  workDatabaseSchema  = "results",    # where cohort + lab + episode tables are written
+  databaseId          = "",   # short site id, e.g. "HUS"
+  cdmDatabaseSchema   = "",
+  vocabDatabaseSchema = "",    # defaults to cdmDatabaseSchema if blank
+  workDatabaseSchema  = "",    # where cohort + lab + episode tables are written
 
   # --- Work tables ----------------------------------------------------------
   cohortTable          = "bc_cohort",
@@ -179,7 +168,7 @@ settings <- list(
   # (e.g. c("sex")) or set character(0) to turn stratification off
   # everywhere and only get "overall" rows.
   strataColumns = c("age_group", "sex", "age_sex"),
-  outputFolder        = file.path("results", "BIGQUERY")
+  outputFolder        = file.path("results")
 )
 
 # ===========================================================================

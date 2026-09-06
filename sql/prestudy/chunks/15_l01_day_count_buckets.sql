@@ -18,20 +18,14 @@ SELECT
     END AS days_bucket,
     CASE WHEN COUNT(*) > 0 AND COUNT(*) <= @min_cell_count THEN -@min_cell_count ELSE COUNT(*) END AS n_patients
 FROM (
-    -- Each branch wrapped in its own subquery -- see docs/BIGQUERY.md /
-    -- the NB above 00_setup.sql's #event_code_counts INSERT.
-    SELECT * FROM (
     SELECT e.person_id, COUNT(*) AS n_days, 'ALL_L01' AS subgroup
     FROM #l01_event_days e
     GROUP BY e.person_id
-    ) b1
     UNION ALL
-    SELECT * FROM (
     SELECT e.person_id, COUNT(*) AS n_days, 'MET_L01' AS subgroup
     FROM #l01_event_days e
     JOIN #met_summary ms ON e.person_id = ms.person_id AND ms.first_met_date IS NOT NULL
     GROUP BY e.person_id
-    ) b2
 ) x
 -- x.subgroup (qualified) rather than bare `subgroup`: BigQuery-only fix, see
 -- docs/BIGQUERY.md. SqlRender's ordinal-GROUP-BY rewrite for this dialect

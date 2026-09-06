@@ -989,6 +989,19 @@ WITH grp_base AS (
          m.unit_concept_id                                AS u_id,
          CASE WHEN m.range_low  > 0 THEN m.range_low  END AS rlo,
          CASE WHEN m.range_high > 0 THEN m.range_high END AS rhi,
+         -- rlo_key/rhi_key: BigQuery-only fix, see docs/BIGQUERY.md
+         -- ("Partitioning by expressions of type FLOAT64 is not allowed",
+         -- found live, 2026-09-06) -- rlo/rhi (measurement.range_low/
+         -- range_high) are FLOAT, which every other dialect here happily
+         -- partitions by directly. Casting to VARCHAR only changes the
+         -- partition KEY's representation, not any value returned; two
+         -- floats partition together under this cast exactly when they
+         -- would have partitioned together as floats (same value -> same
+         -- string), so this is a no-op on every dialect's actual grouping.
+         -- Computed once here rather than repeated in every PARTITION BY
+         -- clause below.
+         CASE WHEN m.range_low  > 0 THEN CAST(m.range_low  AS VARCHAR(50)) END AS rlo_key,
+         CASE WHEN m.range_high > 0 THEN CAST(m.range_high AS VARCHAR(50)) END AS rhi_key,
          m.value_as_number                                AS val
     FROM @cdm_database_schema.measurement m
     JOIN @work_database_schema.@cat_concept_table cc
@@ -996,17 +1009,9 @@ WITH grp_base AS (
    WHERE m.value_as_number > 0
 ),
 grp_ranked AS (
-  -- PARTITION BY casts rlo/rhi to VARCHAR: BigQuery-only fix, see docs/BIGQUERY.md
-  -- ("Partitioning by expressions of type FLOAT64 is not allowed", found live,
-  -- 2026-09-06) -- rlo/rhi (measurement.range_low/range_high) are FLOAT, which
-  -- every other dialect here happily partitions by directly. The VARCHAR cast
-  -- only changes the partition KEY's representation, not any value returned;
-  -- two floats partition together under this cast exactly when they would
-  -- have partitioned together as floats (same value -> same string), so this
-  -- is a no-op on every dialect's actual grouping.
   SELECT cat, m_id, u_id, rlo, rhi, val,
-         ROW_NUMBER() OVER (PARTITION BY cat, m_id, u_id, CAST(rlo AS VARCHAR(50)), CAST(rhi AS VARCHAR(50)) ORDER BY val) AS rn,
-         COUNT(*)     OVER (PARTITION BY cat, m_id, u_id, CAST(rlo AS VARCHAR(50)), CAST(rhi AS VARCHAR(50)))              AS n
+         ROW_NUMBER() OVER (PARTITION BY cat, m_id, u_id, rlo_key, rhi_key ORDER BY val) AS rn,
+         COUNT(*)     OVER (PARTITION BY cat, m_id, u_id, rlo_key, rhi_key)              AS n
     FROM grp_base
 )
 SELECT cat, m_id, u_id, rlo, rhi,
@@ -1127,17 +1132,21 @@ SELECT m_id, u_id, rlo, rhi, cat,
    grp_best AS best_score, prov_score
 INTO @work_database_schema.@resolved_table
 FROM (
-   -- PARTITION BY casts rlo/rhi to VARCHAR: BigQuery-only fix, see the matching
-   -- NB above grp_ranked's PARTITION BY earlier in this file / docs/BIGQUERY.md.
    SELECT i.*,
-      MIN(score)                                   OVER (PARTITION BY m_id, u_id, CAST(rlo AS VARCHAR(50)), CAST(rhi AS VARCHAR(50))) AS grp_best,
-      SUM(CASE WHEN score < 0.7 THEN 1 ELSE 0 END) OVER (PARTITION BY m_id, u_id, CAST(rlo AS VARCHAR(50)), CAST(rhi AS VARCHAR(50))) AS grp_npass,
-      MAX(CASE WHEN is_provided = 1 THEN score  END) OVER (PARTITION BY m_id, u_id, CAST(rlo AS VARCHAR(50)), CAST(rhi AS VARCHAR(50))) AS prov_score,
-      MAX(CASE WHEN is_provided = 1 THEN factor END) OVER (PARTITION BY m_id, u_id, CAST(rlo AS VARCHAR(50)), CAST(rhi AS VARCHAR(50))) AS prov_factor,
-      MAX(CASE WHEN is_provided = 1 THEN val_offset END) OVER (PARTITION BY m_id, u_id, CAST(rlo AS VARCHAR(50)), CAST(rhi AS VARCHAR(50))) AS prov_offset,
-      ROW_NUMBER() OVER (PARTITION BY m_id, u_id, CAST(rlo AS VARCHAR(50)), CAST(rhi AS VARCHAR(50)) ORDER BY CASE WHEN score IS NULL THEN 1 ELSE 0 END, score) AS rn
+      MIN(score)                                   OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key) AS grp_best,
+      SUM(CASE WHEN score < 0.7 THEN 1 ELSE 0 END) OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key) AS grp_npass,
+      MAX(CASE WHEN is_provided = 1 THEN score  END) OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key) AS prov_score,
+      MAX(CASE WHEN is_provided = 1 THEN factor END) OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key) AS prov_factor,
+      MAX(CASE WHEN is_provided = 1 THEN val_offset END) OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key) AS prov_offset,
+      ROW_NUMBER() OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key ORDER BY CASE WHEN score IS NULL THEN 1 ELSE 0 END, score) AS rn
    FROM (
-      SELECT sc.m_id, sc.u_id, sc.rlo, sc.rhi, sc.cat, sc.factor, sc.val_offset,
+      -- rlo_key/rhi_key: BigQuery-only fix, see the matching NB above
+      -- grp_ranked's definition earlier in this file / docs/BIGQUERY.md.
+      -- Computed once here rather than repeated in every PARTITION BY
+      -- clause above.
+      SELECT sc.m_id, sc.u_id, sc.rlo, sc.rhi,
+             CAST(sc.rlo AS VARCHAR(50)) AS rlo_key, CAST(sc.rhi AS VARCHAR(50)) AS rhi_key,
+             sc.cat, sc.factor, sc.val_offset,
              COALESCE(sc.range_decade, sc.dist_decade) AS score,   -- range first, distribution only as fallback
              CASE WHEN uf.unit_concept_id IS NOT NULL THEN 1 ELSE 0 END AS is_provided
       FROM @work_database_schema.@scored_table sc
