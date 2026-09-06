@@ -63,10 +63,10 @@ dtp_flags AS (
     FROM met_subset ms
     -- Pre-filtered to DTP concepts via a real join, not `IN (subquery)` inside
     -- the ON predicate -- BigQuery rejects that ("IN subquery is not
-    -- supported inside join predicate", found live, 2026-09-06; see
-    -- docs/BIGQUERY.md). Semantically identical: only procedure_occurrence
-    -- rows matching a #dtp_concepts row are considered, and the outer LEFT
-    -- JOIN below still preserves every met_subset patient.
+    -- supported inside join predicate"). Semantically identical: only
+    -- procedure_occurrence rows matching a #dtp_concepts row are
+    -- considered, and the outer LEFT JOIN below still preserves every
+    -- met_subset patient.
     LEFT JOIN (
         SELECT po.person_id, po.procedure_date
         FROM @cdm_database_schema.procedure_occurrence po

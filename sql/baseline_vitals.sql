@@ -207,9 +207,9 @@ SELECT stratum_type,
        MAX(vital_value)                      AS max
   FROM ranked
 -- Qualified with the `ranked` CTE name rather than bare column names:
--- BigQuery-only fix, see docs/BIGQUERY.md (SqlRender's ordinal-GROUP-BY
--- rewrite for this dialect can mis-resolve bare GROUP BY columns onto an
--- aggregate expression's position, which BigQuery then rejects outright).
+-- BigQuery-only fix -- SqlRender's ordinal-GROUP-BY rewrite for this
+-- dialect can mis-resolve bare GROUP BY columns onto an aggregate
+-- expression's position, which BigQuery then rejects outright.
  GROUP BY ranked.stratum_type, ranked.stratum_value, ranked.cohort_definition_id, ranked.variable
  ORDER BY cohort_definition_id, variable, stratum_type, stratum_value
 ;

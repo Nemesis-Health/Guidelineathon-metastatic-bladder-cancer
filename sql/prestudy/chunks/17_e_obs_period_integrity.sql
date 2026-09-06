@@ -110,19 +110,17 @@ decedent_days_ranked AS (
     WHERE days_past_death IS NOT NULL
 ),
 metrics AS (
-    -- Each branch wrapped in its own `SELECT * FROM (...) bN` subquery -- see
-    -- docs/BIGQUERY.md / the NB above 00_setup.sql's #event_code_counts
-    -- INSERT (a SqlRender GROUP-BY-to-ordinal translation bug for BigQuery
-    -- that bleeds FORWARD from a branch with its own GROUP BY into any LATER
-    -- branch in the same UNION ALL -- confirmed live that this reaches even
-    -- branch (3) below, which has no GROUP BY of its own, because branch (2)
-    -- ahead of it does; only branch (1), being first, is never reached).
-    -- Every column in every wrapped branch is also explicitly aliased --
-    -- SQL Server's derived-table rule requires every column to have an
-    -- inferable name, which a bare literal/aggregate doesn't have; wrapping
-    -- without aliasing fixed BigQuery but broke SQL Server ("No column name
-    -- was specified for column 1 of 'bN'", also found live). Confirmed live
-    -- on both BigQuery and SQL Server with this fix.
+    -- Each branch wrapped in its own `SELECT * FROM (...) bN` subquery --
+    -- see the NB above 00_setup.sql's #event_code_counts INSERT (a
+    -- SqlRender GROUP-BY-to-ordinal translation bug for BigQuery that
+    -- bleeds FORWARD from a branch with its own GROUP BY into any LATER
+    -- branch in the same UNION ALL -- this reaches even branch (3) below,
+    -- which has no GROUP BY of its own, because branch (2) ahead of it
+    -- does; only branch (1), being first, is never reached). Every column
+    -- in every wrapped branch is also explicitly aliased -- SQL Server's
+    -- derived-table rule requires every column to have an inferable name,
+    -- which a bare literal/aggregate doesn't have; wrapping without
+    -- aliasing fixes BigQuery but breaks SQL Server.
     -- (1) period definition: period_type distribution (site-level) -- never
     -- reached by the bug (first branch), left unwrapped.
     SELECT

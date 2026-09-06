@@ -247,18 +247,11 @@ if (.getDbms(connection) == "bigquery") {
   # CohortGenerator::insertInclusionRuleNames() builds cohortDefinitionId via
   # as.numeric() (CohortGenerator:::getCohortInclusionRules()), i.e. an R
   # double, then hands it straight to DatabaseConnector::insertTable(). Every
-  # other dialect's JDBC driver coerces a double-valued INT64 parameter
-  # (formatted as e.g. "1.0") back to an integer on insert; BigQuery's does
-  # not -- "Unparseable query parameter `` in type `TYPE_INT64`, Bad int64
-  # value: 1.0 value: '1.0'" (found live, 2026-09-06). A real, currently open
-  # upstream bug: OHDSI/CohortGenerator#244 -- previously fixed the same way
-  # (explicit as.integer() casting, OHDSI/CohortGenerator#50, 2022) but
-  # regressed when the package dropped its bit64 dependency
-  # (OHDSI/CohortGenerator#152, 2024); ruleSequence right next to it is still
-  # correctly as.integer(), only cohortDefinitionId regressed back to a
-  # double. Replicate insertInclusionRuleNames()'s own logic here, the only
-  # difference being an explicit as.integer() on cohortDefinitionId before
-  # insertTable().
+  # other dialect's JDBC driver coerces a double-valued INT64 parameter back
+  # to an integer on insert; BigQuery's does not, and rejects it outright --
+  # a known upstream bug, OHDSI/CohortGenerator#244. Replicate
+  # insertInclusionRuleNames()'s own logic here, the only difference being
+  # an explicit as.integer() on cohortDefinitionId before insertTable().
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = "TRUNCATE TABLE @cohort_database_schema.@table;",

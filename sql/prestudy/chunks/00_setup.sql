@@ -559,20 +559,18 @@ CREATE TABLE #event_code_counts (
 -- NB: restructured as tag-then-aggregate-once (one UNION ALL of raw,
 -- untagged rows; a single outer GROUP BY does all the counting) rather than
 -- aggregating inside each UNION ALL branch. This isn't a style choice --
--- SqlRender's BigQuery translator has a confirmed bug (found live,
--- 2026-09-06; see docs/BIGQUERY.md) where its GROUP-BY-to-ordinal rewrite
--- can, in a multi-branch UNION ALL where more than one branch has its own
--- GROUP BY, bleed a numeric ordinal from one branch into an unrelated
--- branch's SELECT list -- silently replacing a real value (concept_id,
--- COUNT(*)) with a small integer literal. An earlier fix wrapped each
--- branch in its own `SELECT * FROM (...) bN` subquery instead, which does
--- stop the corruption but breaks SQL Server (its derived-table rule
+-- SqlRender's BigQuery translator has a confirmed bug where its
+-- GROUP-BY-to-ordinal rewrite can, in a multi-branch UNION ALL where more
+-- than one branch has its own GROUP BY, bleed a numeric ordinal from one
+-- branch into an unrelated branch's SELECT list -- silently replacing a
+-- real value (concept_id, COUNT(*)) with a small integer literal. Wrapping
+-- each branch in its own `SELECT * FROM (...) bN` subquery also stops the
+-- corruption, but breaks SQL Server instead (its derived-table rule
 -- requires every column to have an inferable name, and these branches
--- select unaliased literals/aggregates -- "No column name was specified
--- for column 1 of 'b1'", also found live). This version has only ONE
--- GROUP BY in the whole statement, so the cross-branch bleed has nothing
--- to bleed into -- confirmed correct on BigQuery, Postgres, Redshift, SQL
--- Server and Snowflake alike, with no per-dialect special-casing at all.
+-- select unaliased literals/aggregates). This version has only ONE GROUP
+-- BY in the whole statement, so the cross-branch bleed has nothing to
+-- bleed into -- correct on BigQuery, Postgres, Redshift, SQL Server and
+-- Snowflake alike, with no per-dialect special-casing at all.
 INSERT INTO #event_code_counts (anchor_event, event_family, concept_id, n_records, n_patients)
 SELECT anchor_event, event_family, concept_id, COUNT(*) AS n_records, COUNT(DISTINCT person_id) AS n_patients
 FROM (
@@ -640,15 +638,13 @@ CREATE TABLE #event_code_counts_before_after (
 );
 
 -- NB: restructured as tag-then-aggregate-once, same reason and pattern as
--- #event_code_counts above -- and confirmed live (2026-09-06) that the
--- cross-branch corruption reaches this statement too even though its own
--- GROUP BY columns are alias-qualified: SqlRender's BigQuery translator
--- operates on the WHOLE FILE'S text in one pass (runSqlFile()/querySqlFile()
--- call translate() once per file, not once per statement), so a repeated
--- GROUP BY pattern can bleed forward across statement boundaries within the
--- same file, not just across UNION ALL branches within one statement. An
--- isolated single-statement test of this INSERT alone did not reproduce the
--- corruption; testing it as part of the complete 00_setup.sql did.
+-- #event_code_counts above. The cross-branch corruption reaches this
+-- statement too, even though its own GROUP BY columns are alias-qualified:
+-- SqlRender's BigQuery translator operates on the WHOLE FILE'S text in one
+-- pass (runSqlFile()/querySqlFile() call translate() once per file, not
+-- once per statement), so a repeated GROUP BY pattern can bleed forward
+-- across statement boundaries within the same file, not just across UNION
+-- ALL branches within one statement.
 INSERT INTO #event_code_counts_before_after (anchor_event, event_family, time_relative, concept_id, n_records, n_patients)
 SELECT anchor_event, event_family, time_relative, concept_id, COUNT(*) AS n_records, COUNT(DISTINCT person_id) AS n_patients
 FROM (
@@ -1732,7 +1728,7 @@ SELECT
         -- rejects a bare non-aggregated column reference anywhere in the
         -- SELECT list of a GROUPING SETS query, even one only reached at
         -- runtime via a CASE/GROUPING() guard for the sets where it's
-        -- actually grouped (found live, 2026-09-06; see docs/BIGQUERY.md).
+        -- actually grouped.
         ELSE CAST(YEAR(MAX(c.index_date)) AS VARCHAR(4))
     END,
     'INDEX',
@@ -1822,8 +1818,8 @@ CREATE TABLE #followup_long (
 -- still needs to carry person_id/anchor_date through untouched -- only the
 -- final MAX/DATEDIFF collapses to one outer GROUP BY instead of four.
 -- Every outer reference is qualified with the derived table's alias (r.) --
--- confirmed live (2026-09-06) that SqlRender's BigQuery GROUP-BY-to-ordinal
--- matcher, given a bare `anchor_date` in GROUP BY that ALSO appears as a
+-- SqlRender's BigQuery GROUP-BY-to-ordinal matcher, given a bare
+-- `anchor_date` in GROUP BY that ALSO appears as a
 -- substring reference inside the DATEDIFF(...) SELECT-list expression,
 -- resolves the GROUP BY item to that expression's ordinal position instead
 -- ("Column 3 contains an aggregation function, which is not allowed in

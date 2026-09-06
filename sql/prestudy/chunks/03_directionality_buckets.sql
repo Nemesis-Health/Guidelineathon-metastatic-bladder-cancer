@@ -74,9 +74,9 @@ FROM (
     -- per-year for each pair, unioned, then ONE outer GROUP BY) rather than
     -- aggregating inside each UNION ALL branch -- see the NB above
     -- 00_setup.sql's #event_code_counts INSERT for why (a SqlRender
-    -- BigQuery-translation bug, confirmed live, that silently corrupts
-    -- SELECT-list values across UNION ALL branches that each have their own
-    -- GROUP BY; a single outer GROUP BY has nothing for it to bleed across).
+    -- BigQuery-translation bug that silently corrupts SELECT-list values
+    -- across UNION ALL branches that each have their own GROUP BY; a single
+    -- outer GROUP BY has nothing for it to bleed across).
     SELECT pair, index_year, direction, COUNT(*) AS n_patients
     FROM (
         -- DX -> MET: OVERALL

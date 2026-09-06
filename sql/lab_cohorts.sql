@@ -903,9 +903,8 @@ WITH grp_base AS (
          m.unit_concept_id                                AS u_id,
          CASE WHEN m.range_low  > 0 THEN m.range_low  END AS rlo,
          CASE WHEN m.range_high > 0 THEN m.range_high END AS rhi,
-         -- rlo_key/rhi_key: BigQuery-only fix, see docs/BIGQUERY.md
-         -- ("Partitioning by expressions of type FLOAT64 is not allowed",
-         -- found live, 2026-09-06) -- rlo/rhi (measurement.range_low/
+         -- rlo_key/rhi_key: BigQuery-only fix ("Partitioning by expressions
+         -- of type FLOAT64 is not allowed") -- rlo/rhi (measurement.range_low/
          -- range_high) are FLOAT, which every other dialect here happily
          -- partitions by directly. Casting to VARCHAR only changes the
          -- partition KEY's representation, not any value returned; two
@@ -1055,9 +1054,8 @@ FROM (
       ROW_NUMBER() OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key ORDER BY CASE WHEN score IS NULL THEN 1 ELSE 0 END, score) AS rn
    FROM (
       -- rlo_key/rhi_key: BigQuery-only fix, see the matching NB above
-      -- grp_ranked's definition earlier in this file / docs/BIGQUERY.md.
-      -- Computed once here rather than repeated in every PARTITION BY
-      -- clause above.
+      -- grp_ranked's definition earlier in this file. Computed once here
+      -- rather than repeated in every PARTITION BY clause above.
       SELECT sc.m_id, sc.u_id, sc.rlo, sc.rhi,
              CAST(sc.rlo AS VARCHAR(50)) AS rlo_key, CAST(sc.rhi AS VARCHAR(50)) AS rhi_key,
              sc.cat, sc.factor, sc.val_offset,

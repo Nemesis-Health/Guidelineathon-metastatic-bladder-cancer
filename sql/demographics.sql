@@ -50,15 +50,14 @@ SELECT cohort_definition_id,
 UNION ALL
 -- index year
 -- coh.index_year (qualified) rather than bare `index_year`: BigQuery-only
--- fix, see docs/BIGQUERY.md. SqlRender's ordinal-GROUP-BY rewrite for this
--- dialect resolves a bare GROUP BY column by a plain substring search over
--- the SELECT list -- since the bare column's own name is also a substring
--- of the CAST(...) expression earlier in the same SELECT list, it matched
--- the CAST expression's position instead of its own, producing `GROUP BY
--- 1, 3, 3` (duplicated, dropping the real 4th grouping column) instead of
--- `1, 3, 4` (found live, 2026-09-06). Qualifying makes it a dotted
--- `alias.column` reference, which the rewrite copies straight through
--- untouched instead of searching for it.
+-- fix -- SqlRender's ordinal-GROUP-BY rewrite for this dialect resolves a
+-- bare GROUP BY column by a plain substring search over the SELECT list --
+-- since the bare column's own name is also a substring of the CAST(...)
+-- expression earlier in the same SELECT list, it matched that expression's
+-- position instead of its own, producing `GROUP BY 1, 3, 3` (duplicated,
+-- dropping the real 4th grouping column) instead of `1, 3, 4`. Qualifying
+-- makes it a dotted `alias.column` reference, which the rewrite copies
+-- straight through untouched instead of searching for it.
 SELECT cohort_definition_id,
        'index_year' AS characteristic,
        CAST(coh.index_year AS VARCHAR(4)) AS stratum,

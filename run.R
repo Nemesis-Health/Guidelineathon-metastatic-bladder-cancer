@@ -78,7 +78,7 @@ suppressMessages(library(ARTEMIS))
 #   # gets sent to it verbatim as `jdbc:sqlserver://host/db`, which it treats
 #   # as ONE hostname to resolve (fails with a "TCP/IP connection... has
 #   # failed" error that looks like a network/instance problem but isn't). Use
-#   # `extraSettings = "databaseName=..."` instead; see docs/SQL_SERVER.md.
+#   # `extraSettings = "databaseName=..."` instead.
 #
 # Example (DBI / Azure token):
 #   connectionDetails <- DatabaseConnector::createDbiConnectionDetails(
