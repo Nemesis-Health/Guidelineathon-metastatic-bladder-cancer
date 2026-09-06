@@ -542,7 +542,7 @@ silently missing combination).
 | `cohort_definition_id`, `cohort_name` | As elsewhere. |
 | `stratum_type` | `overall`, `age_group`, `sex`, or `age_sex`. |
 | `stratum_value` | `overall`; `<=65`/`>65`; `Male`/`Female`/`Other-Unknown`; or the `age_sex` combination. |
-| `code` | Short code: PS strata (`PS1`, `PS2`, `PS2+`, `PS 0-2`, `PS 0-1`) or comorbidity — see `08_covariates.R`'s `comorbMap` for the full list (`T2DM`, `HTN`, `CVD`, `Stroke`, `VTE`, `LiverDx`, `RenalDx`, `Dementia`, plus the Charlson-only additions `MI`, `CHF`, `PVD`, `COPD`, `RheumDx`, `PUD`, `DMComplic`, `Hemiplegia`, `AIDS`, `LiverDxSevere`, `MetSolidTumor`). |
+| `code` | Short code: PS strata (`PS1`, `PS2`, `PS2+`, `PS 0-2`, `PS 0-1`) or comorbidity — see `08_covariates.R`'s `comorbMap` for the full list (`T2DM`, `HTN`, `CVD`, `Stroke`, `VTE`, `LiverDx`, `RenalDx`, `Dementia`, `HemeDx`, plus the Charlson-only additions `MI`, `CHF`, `PVD`, `COPD`, `RheumDx`, `PUD`, `DMComplic`, `Hemiplegia`, `AIDS`, `LiverDxSevere`, `MetSolidTumor`). |
 | `label` | Human-readable description. |
 | `n_cohort` | This cohort's denominator, restricted to this row's stratum. |
 | `n_overlap` | Members (in this cohort × stratum) meeting the covariate (censored). % is not emitted — it is `n_overlap / n_cohort`. |

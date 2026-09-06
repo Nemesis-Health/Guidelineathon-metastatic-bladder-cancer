@@ -54,6 +54,7 @@ comorbMap <- tibble::tribble(
   "LiverDx",      "Liver Disease",                "Liver disease (mild)",
   "RenalDx",      "Renal Disease",                "Renal disease",
   "Dementia",     "Dementia",                     "Dementia",
+  "HemeDx",       "Heme Disorders",               "Hematologic disorder",
   "MI",           "Myocardial Infarction",        "Myocardial infarction",
   "CHF",          "Congestive Heart Failure",     "Congestive heart failure",
   "PVD",          "Peripheral Vascular Disease",  "Peripheral vascular disease",
