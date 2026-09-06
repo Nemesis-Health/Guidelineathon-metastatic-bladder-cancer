@@ -416,83 +416,87 @@
       "Type": "First"
     }
   },
-  "AdditionalCriteria": {
-    "Type": "ANY",
-    "CriteriaList": [
-      {
-        "Criteria": {
-          "ConditionOccurrence": {
-            "CodesetId": 0
-          }
-        },
-        "StartWindow": {
-          "Start": {
-            "Days": 1,
-            "Coeff": 1
-          },
-          "End": {
-            "Coeff": 1
-          },
-          "UseEventEnd": false
-        },
-        "Occurrence": {
-          "Type": 2,
-          "Count": 1
-        }
-      },
-      {
-        "Criteria": {
-          "ProcedureOccurrence": {
-            "CodesetId": 1
-          }
-        },
-        "StartWindow": {
-          "Start": {
-            "Days": 0,
-            "Coeff": -1
-          },
-          "End": {
-            "Coeff": 1
-          },
-          "UseEventEnd": false
-        },
-        "Occurrence": {
-          "Type": 2,
-          "Count": 1
-        }
-      },
-      {
-        "Criteria": {
-          "Observation": {
-            "CodesetId": 1
-          }
-        },
-        "StartWindow": {
-          "Start": {
-            "Days": 0,
-            "Coeff": -1
-          },
-          "End": {
-            "Coeff": 1
-          },
-          "UseEventEnd": false
-        },
-        "Occurrence": {
-          "Type": 2,
-          "Count": 1
-        }
-      }
-    ],
-    "DemographicCriteriaList": [],
-    "Groups": []
-  },
   "QualifiedLimit": {
     "Type": "First"
   },
   "ExpressionLimit": {
     "Type": "First"
   },
-  "InclusionRules": [],
+  "InclusionRules": [
+    {
+      "name": "Confirmed CKD (repeat diagnosis or dialysis)",
+      "expression": {
+        "Type": "ANY",
+        "CriteriaList": [
+          {
+            "Criteria": {
+              "ConditionOccurrence": {
+                "CodesetId": 0
+              }
+            },
+            "StartWindow": {
+              "Start": {
+                "Days": 1,
+                "Coeff": 1
+              },
+              "End": {
+                "Coeff": 1
+              },
+              "UseEventEnd": false
+            },
+            "Occurrence": {
+              "Type": 2,
+              "Count": 1
+            }
+          },
+          {
+            "Criteria": {
+              "ProcedureOccurrence": {
+                "CodesetId": 1
+              }
+            },
+            "StartWindow": {
+              "Start": {
+                "Days": 0,
+                "Coeff": -1
+              },
+              "End": {
+                "Coeff": 1
+              },
+              "UseEventEnd": false
+            },
+            "Occurrence": {
+              "Type": 2,
+              "Count": 1
+            }
+          },
+          {
+            "Criteria": {
+              "Observation": {
+                "CodesetId": 1
+              }
+            },
+            "StartWindow": {
+              "Start": {
+                "Days": 0,
+                "Coeff": -1
+              },
+              "End": {
+                "Coeff": 1
+              },
+              "UseEventEnd": false
+            },
+            "Occurrence": {
+              "Type": 2,
+              "Count": 1
+            }
+          }
+        ],
+        "DemographicCriteriaList": [],
+        "Groups": []
+      }
+    }
+  ],
   "CensoringCriteria": [],
   "CollapseSettings": {
     "CollapseType": "ERA",
