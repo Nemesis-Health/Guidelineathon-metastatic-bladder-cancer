@@ -147,6 +147,15 @@ if (nrow(episodes) > 0L) {
 regimenClass <- as.data.frame(regRef[, c("regName", "regCode",
   "class_eau", "class_hemonc_mbc", "class_any")])
 saveState("regimenClass", regimenClass)
+# On some backends, DatabaseConnector's default path for a fresh table like
+# this one is considerably slower than its optional bulk-load path (a real
+# difference, not a nice-to-have, for a reference table this size). No
+# bulkLoad argument is passed here deliberately -- insertTable()'s own
+# default (`Sys.getenv("DATABASE_CONNECTOR_BULK_UPLOAD")`) is the
+# backend-agnostic switch already: DatabaseConnector's internal dispatch only
+# acts on it for the backends it applies to, so this call site doesn't need
+# to know or check which backend it's talking to. See run.R's CONFIG note for
+# how to turn it on.
 DatabaseConnector::insertTable(
   connection = connection, databaseSchema = settings$workDatabaseSchema,
   tableName = settings$regimenClassTable, dropTableIfExists = TRUE,

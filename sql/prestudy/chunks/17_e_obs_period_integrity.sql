@@ -110,7 +110,21 @@ decedent_days_ranked AS (
     WHERE days_past_death IS NOT NULL
 ),
 metrics AS (
-    -- (1) period definition: period_type distribution (site-level)
+    -- Each branch wrapped in its own `SELECT * FROM (...) bN` subquery -- see
+    -- docs/BIGQUERY.md / the NB above 00_setup.sql's #event_code_counts
+    -- INSERT (a SqlRender GROUP-BY-to-ordinal translation bug for BigQuery
+    -- that bleeds FORWARD from a branch with its own GROUP BY into any LATER
+    -- branch in the same UNION ALL -- confirmed live that this reaches even
+    -- branch (3) below, which has no GROUP BY of its own, because branch (2)
+    -- ahead of it does; only branch (1), being first, is never reached).
+    -- Every column in every wrapped branch is also explicitly aliased --
+    -- SQL Server's derived-table rule requires every column to have an
+    -- inferable name, which a bare literal/aggregate doesn't have; wrapping
+    -- without aliasing fixed BigQuery but broke SQL Server ("No column name
+    -- was specified for column 1 of 'bN'", also found live). Confirmed live
+    -- on both BigQuery and SQL Server with this fix.
+    -- (1) period definition: period_type distribution (site-level) -- never
+    -- reached by the bug (first branch), left unwrapped.
     SELECT
         'ALL' AS anchor_event,
         'PERIOD_TYPE_CONCEPT' AS metric,
@@ -123,52 +137,60 @@ metrics AS (
 
     UNION ALL
     -- (2) patients with more than one observation period (a gap)
+    SELECT * FROM (
     SELECT
         anchor_event,
-        'PATIENTS_WITH_MULTIPLE_OBS_PERIODS',
-        '',
-        SUM(CASE WHEN n_periods > 1 THEN 1 ELSE 0 END),
-        COUNT(*),
-        CAST(NULL AS FLOAT)
+        'PATIENTS_WITH_MULTIPLE_OBS_PERIODS' AS metric,
+        '' AS stratum,
+        SUM(CASE WHEN n_periods > 1 THEN 1 ELSE 0 END) AS n_numerator,
+        COUNT(*) AS n_denominator,
+        CAST(NULL AS FLOAT) AS median_days
     FROM anchor_cohort
     GROUP BY anchor_event
+    ) b2
 
     UNION ALL
     -- (3) deaths recorded outside any observation period
+    SELECT * FROM (
     SELECT
         anchor_event,
-        'DEATHS_OUTSIDE_OBS_PERIOD',
-        '',
-        n_deaths_out_obs,
-        n_deaths,
-        CAST(NULL AS FLOAT)
+        'DEATHS_OUTSIDE_OBS_PERIOD' AS metric,
+        '' AS stratum,
+        n_deaths_out_obs AS n_numerator,
+        n_deaths AS n_denominator,
+        CAST(NULL AS FLOAT) AS median_days
     FROM #death_stratum_counts
     WHERE prevalence_year = 'OVERALL'
+    ) b3
 
     UNION ALL
     -- (4) decedents whose observation period ends after the death date
+    SELECT * FROM (
     SELECT
         anchor_event,
-        'DECEDENTS_PERIOD_ENDS_AFTER_DEATH',
-        '',
-        SUM(period_ends_after_death),
-        COUNT(*),
-        CAST(NULL AS FLOAT)
+        'DECEDENTS_PERIOD_ENDS_AFTER_DEATH' AS metric,
+        '' AS stratum,
+        SUM(period_ends_after_death) AS n_numerator,
+        COUNT(*) AS n_denominator,
+        CAST(NULL AS FLOAT) AS median_days
     FROM decedent_anchor
     GROUP BY anchor_event
+    ) b4
 
     UNION ALL
     -- (5) median days the period runs past death, among those decedents
+    SELECT * FROM (
     SELECT
         anchor_event,
-        'MEDIAN_DAYS_PERIOD_ENDS_PAST_DEATH',
-        '',
-        CAST(NULL AS INT),
-        MAX(non_null_cnt),
+        'MEDIAN_DAYS_PERIOD_ENDS_PAST_DEATH' AS metric,
+        '' AS stratum,
+        CAST(NULL AS INT) AS n_numerator,
+        MAX(non_null_cnt) AS n_denominator,
         MIN(CASE WHEN 2.0 * rn >= non_null_cnt
-                 THEN CAST(days_past_death AS FLOAT) END)
+                 THEN CAST(days_past_death AS FLOAT) END) AS median_days
     FROM decedent_days_ranked
     GROUP BY anchor_event
+    ) b5
 )
 SELECT
     anchor_event,

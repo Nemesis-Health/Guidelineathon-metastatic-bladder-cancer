@@ -50,3 +50,11 @@ renv/sandbox/
 
 # === OS ===
 .DS_Store
+
+# === Multi-dialect testing reference docs (this repo's own testing process,
+# not part of the study package -- kept on disk, deliberately never tracked) ===
+docs/BIGQUERY.md
+docs/BULK_LOAD.md
+docs/HANDOFF.md
+docs/REDSHIFT.md
+docs/SQL_SERVER.md

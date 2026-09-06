@@ -126,6 +126,38 @@ is up to you — `connectionDetails` is defined by you in `run.R` (see step 2 in
 > a future ARTEMIS release is confirmed pandas-3-compatible, this note (and the
 > pin) can be dropped.
 
+> [!TIP]
+> **Optional, one-time setup: turn on `DatabaseConnector`'s built-in bulk-load switch for faster writes on some backends.**
+> This pipeline writes a couple of reference tables while it runs. On some
+> database backends, `DatabaseConnector` can write them considerably faster
+> using its own built-in bulk-load mechanism instead of its default path.
+> Neither `insertTable()` call in this codebase passes a `bulkLoad` argument,
+> so its own default (`Sys.getenv("DATABASE_CONNECTOR_BULK_UPLOAD")`) applies
+> automatically — set it once, before `source("run.R")`:
+> ```r
+> Sys.setenv(DATABASE_CONNECTOR_BULK_UPLOAD = TRUE)
+> ```
+> This is always safe to set: `DatabaseConnector` applies it only to the
+> backends its bulk-load path actually supports, and it's a no-op everywhere
+> else — nothing here needs to know or check which backend you're using.
+> Depending on your backend, its bulk-load path may need one of two kinds of
+> prerequisite:
+> - **a local database client tool** installed on this machine, or
+> - **object-storage credentials**, set the same way:
+>   ```r
+>   Sys.setenv(
+>     AWS_ACCESS_KEY_ID     = "...",
+>     AWS_SECRET_ACCESS_KEY = "...",
+>     AWS_DEFAULT_REGION    = "...",   # region of the staging bucket
+>     AWS_BUCKET_NAME       = "...",   # bucket to stage data in before loading
+>     AWS_OBJECT_KEY        = "...",   # key prefix within that bucket
+>     AWS_SSE_TYPE          = "AES256"
+>   )
+>   ```
+> Neither available to you? Simply don't set `DATABASE_CONNECTOR_BULK_UPLOAD`
+> — the pipeline runs correctly either way, just slower on those couple of
+> writes.
+
 ### Installing the dependencies
 
 Two ways — renv first (reproducible), or a plain install if you prefer.

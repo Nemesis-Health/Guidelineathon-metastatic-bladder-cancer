@@ -35,5 +35,9 @@ SELECT stratum_type,
        COUNT(*)                   AS n_entries,
        COUNT(DISTINCT subject_id) AS n_subjects
   FROM tagged
- GROUP BY stratum_type, stratum_value, cohort_definition_id
+-- Qualified with the `tagged` CTE name rather than bare column names:
+-- BigQuery-only fix, see docs/BIGQUERY.md (SqlRender's ordinal-GROUP-BY
+-- rewrite for this dialect can mis-resolve bare GROUP BY columns onto an
+-- aggregate expression's position, which BigQuery then rejects outright).
+ GROUP BY tagged.stratum_type, tagged.stratum_value, tagged.cohort_definition_id
  ORDER BY cohort_definition_id, stratum_type, stratum_value;

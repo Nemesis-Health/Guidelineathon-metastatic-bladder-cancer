@@ -89,6 +89,15 @@ SELECT stratum_type,
                 ELSE 0 END)                     AS uq_age,
        MAX(age_at_index)                        AS max_age
   FROM ranked
- GROUP BY stratum_type, stratum_value, cohort_definition_id
+-- Qualified with the `ranked` CTE name rather than bare column names:
+-- BigQuery-only fix, see docs/BIGQUERY.md. SqlRender's ordinal-GROUP-BY
+-- rewrite for this dialect resolved both `stratum_type` and `stratum_value`
+-- (bare) to the SAME wrong position -- one that holds an aggregate
+-- expression -- producing `GROUP BY 8, 8, 3`, which BigQuery then rejects
+-- outright ("Column 8 contains an aggregation function, which is not
+-- allowed in GROUP BY"; found live, 2026-09-06). Qualifying makes each a
+-- dotted `alias.column` reference, which the rewrite copies straight
+-- through untouched instead of searching for it.
+ GROUP BY ranked.stratum_type, ranked.stratum_value, ranked.cohort_definition_id
  ORDER BY cohort_definition_id, stratum_type, stratum_value
 ;

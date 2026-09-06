@@ -466,6 +466,8 @@ writeArtemisEpisodes <- function(connection,
   stageTable <- paste0(executionSettings$artemisSettings$episodeTable, "_staging")
 
   # stage as character, then rebuild with person_id CAST to BIGINT
+  # No bulkLoad argument passed deliberately -- see the matching insertTable()
+  # call in R/01_artemis.R for why.
   DatabaseConnector::insertTable(
     connection     = connection,
     databaseSchema = executionSettings$workDatabaseSchema,

@@ -27,8 +27,14 @@ FROM (
     JOIN #met_summary ms ON e.person_id = ms.person_id AND ms.first_met_date IS NOT NULL
     GROUP BY e.person_id
 ) x
+-- x.subgroup (qualified) rather than bare `subgroup`: BigQuery-only fix, see
+-- docs/BIGQUERY.md. SqlRender's ordinal-GROUP-BY rewrite for this dialect
+-- only special-cases an already-qualified `alias.column` reference (copied
+-- through untouched); a bare column name mixed into the same GROUP BY list
+-- as a CASE expression that also needs converting gets mis-numbered instead
+-- of being copied through or numbered correctly (found live, 2026-09-06).
 GROUP BY
-    subgroup,
+    x.subgroup,
     CASE
         WHEN n_days =  1 THEN '1'
         WHEN n_days <= 6 THEN '2_6'

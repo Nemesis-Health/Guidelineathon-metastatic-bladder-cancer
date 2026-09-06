@@ -44,6 +44,25 @@ suppressMessages(library(ARTEMIS))
 # ===========================================================================
 
 # --- Database connection ----------------------------------------------------
+# OPTIONAL, ONE-TIME SETUP: this pipeline writes a couple of reference tables
+# while it runs. On some database backends, DatabaseConnector can write them
+# a lot faster if you turn on its own built-in bulk-load mechanism first:
+#
+#   Sys.setenv(DATABASE_CONNECTOR_BULK_UPLOAD = TRUE)
+#
+# This is always safe to set -- DatabaseConnector applies it only to the
+# backends it supports, and does nothing on any other backend. Depending on
+# which backend you're connecting to, its bulk-load path may need one of two
+# kinds of one-time setup of its own:
+#   - a local database client tool installed on this machine, or
+#   - object-storage credentials, set the same way:
+#       Sys.setenv(AWS_ACCESS_KEY_ID = "...", AWS_SECRET_ACCESS_KEY = "...",
+#                  AWS_DEFAULT_REGION = "...", AWS_BUCKET_NAME = "...",
+#                  AWS_OBJECT_KEY = "...", AWS_SSE_TYPE = "AES256")
+# If neither is available to you, simply don't set
+# DATABASE_CONNECTOR_BULK_UPLOAD -- the pipeline runs correctly either way,
+# just slower on those couple of writes.
+#
 # Define `connectionDetails` however your site connects — this is left open on
 # purpose. Most JDBC setups use DatabaseConnector::createConnectionDetails(),
 # but some sites need a different constructor (e.g. createDbiConnectionDetails()
@@ -53,8 +72,13 @@ suppressMessages(library(ARTEMIS))
 #
 # Example (JDBC):
 #   connectionDetails <- DatabaseConnector::createConnectionDetails(
-#     dbms = "sql server", server = "host/db", user = "...", password = "...",
-#     pathToDriver = path.expand("~/.jdbc_drivers"))
+#     dbms = "sql server", server = "host", user = "...", password = "...",
+#     extraSettings = "databaseName=db", pathToDriver = path.expand("~/.jdbc_drivers"))
+#   # NB: this driver has no "host/db" path-style syntax -- `server = "host/db"`
+#   # gets sent to it verbatim as `jdbc:sqlserver://host/db`, which it treats
+#   # as ONE hostname to resolve (fails with a "TCP/IP connection... has
+#   # failed" error that looks like a network/instance problem but isn't). Use
+#   # `extraSettings = "databaseName=..."` instead; see docs/SQL_SERVER.md.
 #
 # Example (DBI / Azure token):
 #   connectionDetails <- DatabaseConnector::createDbiConnectionDetails(
