@@ -1,14 +1,18 @@
-# BigQuery: three real bugs found and fixed, one live blocker still open
+# BigQuery: every real bug found and fixed, full pipeline verified end to end
 
 BigQuery is the fifth comparison target (`bladder_mbc.yaml`, `--seed 42`, 560 patients, same
 seeded dataset as Postgres/Redshift/SQL Server/Snowflake). Unlike those four, this pipeline had
-never actually been run against it before 2026-09-06. It surfaced three distinct, real bugs —
-two in how `SqlRender` translates this pipeline's own SQL for the `bigquery` dialect, one in a
-genuine BigQuery/GoogleSQL restriction this pipeline's SQL was tripping over — all found live,
-root-caused, and fixed in this pass. It also surfaced one infrastructure blocker (a missing GCP
-IAM permission) that stopped the full `run.R` pass partway through eligibility step (a) — **not
-fixed here**, per this project's rule of stopping and reporting rather than guessing at
-infra-side changes; see §4.
+never actually been run against it before 2026-09-06. Getting a full `run.R` pass (diagnostics
+plus eligibility steps (a)-(l)) green took six distinct, real bug root causes — most in how
+`SqlRender` translates this pipeline's own SQL for the `bigquery` dialect (one of which recurred
+across several files, §2 and §9), two in genuine BigQuery/GoogleSQL restrictions this pipeline's
+SQL was tripping over (§3, §8), one in `CohortGenerator`'s BigQuery parameter binding (§7) — all
+found live, root-caused, and fixed. It also surfaced one infrastructure blocker (a missing GCP IAM
+permission), reported rather than guessed at per this project's standing rule, and since resolved
+by the user granting the permission (§6). The diagnostics-stage bugs are §1-4; the
+eligibility-stage bugs found finishing steps (a)-(l) are §7-9. **As of this pass, the full
+pipeline (diagnostics + all 12 eligibility steps) runs to completion on BigQuery and matches the
+other four dialects row-for-row and value-for-value** (§5, §10).
 
 The connection-string gotchas (`EnableSession=1`, `Location=EU`, `tempEmulationSchema`) are
 already covered in `docs/HANDOFF.md` §6 and `config/aws_targets_connectionDetails.R` — this doc
@@ -17,10 +21,17 @@ is about what broke *after* the connection was live.
 ## 0. What passed cleanly
 
 Every one of the 42 pre-study diagnostics chunks (`sql/prestudy/chunks/*.sql`, run via
-`run_diagnostics_only.R`) now runs correctly against BigQuery and produces **row-for-row and
-value-for-value identical output** to Postgres/Redshift/SQL Server/Snowflake — see §5. The main
-cohort tree (ARTEMIS bladder cohort, 540 subjects) and ARTEMIS regimen loading (1508 of 1617
-regimens kept, endocrine excluded) also ran correctly before the pipeline hit the §4 blocker.
+`run_diagnostics_only.R`) runs correctly against BigQuery and produces **row-for-row and
+value-for-value identical output** to Postgres/Redshift/SQL Server/Snowflake — see §5. With §6's
+IAM permission granted and §7-9's eligibility-stage bugs fixed, the full `run.R` pass — the main
+cohort tree (33 cohorts), ARTEMIS regimen alignment and episode building, all 19 covariate
+cohorts (Charlson comorbidities, including Renal Disease — see the parenthetical note just below), outcomes,
+guideline adherence, baseline characterization + Charlson CCI, and treatment patterns — now also
+runs correctly end to end, live-verified twice (§10). (The Renal Disease covariate cohort — the
+subject of a separate, pre-existing, dialect-independent slow-query investigation — generated
+normally in both full runs, alongside the other 18 covariate cohorts, with no special hang or
+slowness; that issue was fixed independently, in `cohorts/02_Covariate/Renal_Disease.json` itself,
+outside this pass.)
 
 ## 1. SqlRender's BigQuery translator corrupts UNION ALL branches that each have their own GROUP BY
 
@@ -351,11 +362,12 @@ which dominates for a script built as many small sequential statements rather th
 ones. Not investigated further here (out of scope for this pass; `REDSHIFT.md` §"Net result"
 already covers the tradeoffs of rewriting `00_setup.sql` to fewer round-trips).
 
-## 6. Open blocker (not fixed here): BigQuery Storage Read API permission denied
+## 6. RESOLVED: BigQuery Storage Read API permission denied
 
-The full `run.R` pass (diagnostics + eligibility step (a), ARTEMIS regimen alignment) got through
-diagnostics, the main cohort tree (540 subjects), and ARTEMIS regimen loading (1508/1617 regimens
-kept) before failing on a query building the ARTEMIS "valid drugs" reference set:
+**Status: fixed by a GCP IAM grant, confirmed live.** The full `run.R` pass (diagnostics +
+eligibility step (a), ARTEMIS regimen alignment) initially got through diagnostics, the main
+cohort tree (540 subjects), and ARTEMIS regimen loading (1508/1617 regimens kept) before failing
+on a query building the ARTEMIS "valid drugs" reference set:
 
 ```sql
 SELECT DISTINCT ca.descendant_concept_id AS concept_id
@@ -395,13 +407,145 @@ size-based activation flags made no difference, this looks like either a driver-
 discrepancy from its own documentation or an unconditional path tied to session-mode
 (`EnableSession=1`) rather than result size — not something resolvable from the R/SQL side.
 
-**This was not fixed here** — per this project's standing rule (see `docs/HANDOFF.md`'s framing
-and this pass's own instructions), an IAM grant is a GCP-side infrastructure change, not a code
-fix, and is flagged for the user to action rather than guessed at. **What's needed**: grant
+**Not fixed from the code side** — per this project's standing rule (see `docs/HANDOFF.md`'s
+framing), an IAM grant is a GCP-side infrastructure change, not a code fix, so this was reported
+rather than guessed at. **Resolution**: the user granted
 `omop-bigquery@omop-test-data.iam.gserviceaccount.com` the `roles/bigquery.readSessionUser` role
-(or a custom role containing `bigquery.readsessions.create`) on project `omop-test-data`, then
-re-run `run.R` from this point.
+on project `omop-test-data` (the specific role documented above as containing
+`bigquery.readsessions.create`). Re-running `run.R` from a fresh session afterward got past this
+query with no further changes needed — confirmed by two full, independent live runs all the way
+through eligibility step (l) (§10).
 
-**Blast radius**: this blocks eligibility step (a) (`R/01_artemis.R`) onward — i.e. the entire
-eligibility/feasibility half of the pipeline (steps a-l, `results/BIGQUERY/eligibility/`).
-Pre-study diagnostics (§0, §5) are unaffected and already fully validated.
+**Blast radius while open**: this had blocked eligibility step (a) (`R/01_artemis.R`) onward —
+i.e. the entire eligibility/feasibility half of the pipeline (steps a-l,
+`results/BIGQUERY/eligibility/`). Pre-study diagnostics (§0, §5) were unaffected throughout.
+
+## 7. `CohortGenerator::insertInclusionRuleNames()` passes a double where BigQuery needs a strict INT64
+
+**Symptom:** `java.sql.SQLException: [Simba][BigQueryJDBCDriver](100032) ... Unparseable query
+parameter \`\` in type \`TYPE_INT64\`, Bad int64 value: 1.0 value: '1.0'` — thrown from
+`insertTable()`'s parameterized-batch-insert path, not from any SQL this pipeline wrote directly.
+
+**Root cause:** `CohortGenerator:::getCohortInclusionRules()` (an upstream OHDSI package function,
+called by the exported `insertInclusionRuleNames()`) builds its result with
+`cohortDefinitionId = as.numeric(cohortDefinitionSet$cohortId[i])` — an R **double**, even though
+the column is a whole-number cohort id. `DatabaseConnector::insertTable()` binds this as a
+parameterized query value; every other dialect's JDBC driver coerces a double-valued INT64
+parameter (serialized as e.g. `"1.0"`) back to an integer on insert. BigQuery's driver does not —
+a query parameter with a decimal point is rejected outright for an `INT64` column, regardless of
+its numeric value.
+
+**Fix:** at the one call site in this pipeline (`R/03_main_cohorts.R`), branch on
+`.getDbms(connection) == "bigquery"` and replicate `insertInclusionRuleNames()`'s own logic
+(truncate the table, call the still-exported `CohortGenerator::getCohortInclusionRules()`,
+`insertTable()` the result) with one difference: `inclusionRules$cohortDefinitionId <-
+as.integer(inclusionRules$cohortDefinitionId)` before the insert. Every other dialect keeps using
+`CohortGenerator::insertInclusionRuleNames()` unmodified, so this is a zero-behavior-change
+branch everywhere except BigQuery.
+
+**Where fixed:** `R/03_main_cohorts.R`, immediately after `CohortGenerator::getCohortTableNames()`
+is called for the main cohort tree's inclusion-rule attrition table.
+
+## 8. A window function can't `PARTITION BY` a `FLOAT64` column on BigQuery
+
+**Symptom:** `Partitioning by expressions of type FLOAT64 is not allowed` — a genuine BigQuery
+restriction (not a SqlRender issue); the other four dialects all partition by a float column
+without complaint.
+
+**Where found:** `sql/lab_cohorts.sql`'s lab-unit-resolution pipeline, which partitions by
+`measurement.range_low`/`range_high` (both OMOP `FLOAT` columns, aliased `rlo`/`rhi`) to group
+same-reference-range measurements together — 8 `OVER (PARTITION BY ...)` clauses across two
+`SELECT`s (`grp_ranked`'s percentile ranking, and the per-unit scale-resolution ranking further
+down the same file).
+
+**Fix:** `CAST(rlo AS VARCHAR(50))` / `CAST(rhi AS VARCHAR(50))` in every affected `PARTITION BY`
+list (not in the `SELECT` list or anywhere else the real float values are used) — a no-op on the
+actual partitioning outcome, since two floats land in the same partition under this cast exactly
+when they would have anyway (same value -> same string), and it's valid, portable SQL on every
+dialect (confirmed via `SqlRender::translate()` for all five).
+
+**Where fixed:** `sql/lab_cohorts.sql`, both `PARTITION BY` sites (8 window functions total).
+
+## 9. The bare-column/complex-expression `GROUP BY` bug (§2) recurs across the eligibility-stage SQL, sometimes landing on an aggregate's position
+
+**Symptom (two variants, same root cause as §2):** either silently wrong grouping (no error), or
+— when the mis-resolved ordinal happens to land on a column that's itself an aggregate expression
+— a hard failure: `Column N contains an aggregation function, which is not allowed in GROUP BY`.
+
+Two concrete manifestations found running eligibility steps (a)-(l) live:
+
+- **`sql/demographics.sql`**'s "index year" branch: `GROUP BY cohort_definition_id,
+  CAST(index_year AS VARCHAR(4)), index_year` translated to `GROUP BY 1, 3, 3` (duplicated,
+  dropping the real 3rd grouping column) instead of `1, 3, 4` — the bare `index_year` at the true
+  4th position textually collided with the *earlier* `CAST(index_year AS VARCHAR(4))` expression
+  (which contains the substring `index_year`), so the ordinal-resolution search matched that
+  expression's position instead of continuing on to its own.
+- **`sql/demographics_continuous.sql`**, and the same shared pattern in
+  `sql/baseline_vitals.sql`, `sql/cohort_counts_stratified.sql`,
+  `sql/lab_timing_to_index_portable.sql`, `sql/lab_value_distribution_portable.sql` (all built on
+  `subject_strata.sql`'s stratified-aggregate idiom — see that file's header for the full
+  consumer list): `GROUP BY stratum_type, stratum_value, cohort_definition_id` translated to
+  `GROUP BY 8, 8, 3` — both bare `stratum_type` and `stratum_value` resolved to the *same* wrong
+  position (an aggregate `SUM(...)` expression further down the SELECT list), which BigQuery then
+  rejected outright since an aggregate can't be a `GROUP BY` target.
+
+**Fix**, the same as §2: qualify every bare column in the affected `GROUP BY` with its source
+CTE/table name (`coh.index_year`, `ranked.stratum_type`, `tagged.stratum_type`, ...) so it reads
+as an already-qualified `alias.column` reference and is copied straight through untouched instead
+of going through the substring-search path at all. Confirmed via `SqlRender::translate()` that
+each fix produces the intended, correct ordinals with no behavior change on the other four
+dialects.
+
+**Where fixed:** `sql/demographics.sql`, `sql/demographics_continuous.sql`,
+`sql/baseline_vitals.sql`, `sql/cohort_counts_stratified.sql`,
+`sql/lab_timing_to_index_portable.sql`, `sql/lab_value_distribution_portable.sql`.
+
+**Audited and confirmed NOT affected** (same "stratified aggregate" shape, already qualified from
+the start, or single/non-colliding bare items — checked by rendering + translating each complete
+file and inspecting the resulting `GROUP BY`/`PARTITION BY` clauses, not just by inspection):
+`sql/covariate_overlap.sql`, `sql/eligibility_input_coverage.sql`, `sql/ps_overlap.sql`,
+`sql/charlson_components.sql`, `sql/lab_cohort_counts.sql`, `sql/lab_results_rollup_portable.sql`,
+`sql/lab_results_summary_portable.sql`. (`sql/lab_value_distribution.sql`,
+`sql/lab_results_summary.sql`, `sql/lab_results_rollup.sql` — the non-`_portable` siblings of some
+of these — aren't referenced by any `R/*.R` file and weren't touched.)
+
+## 10. Full pipeline comparison: diagnostics + eligibility, both row-for-row and value-for-value
+
+With §1-4 and §7-9 fixed and §6's IAM permission granted, the complete `run.R` pipeline
+(diagnostics + all 12 eligibility steps) was run live against BigQuery **twice**, independently,
+end to end. The second run was specifically a re-verification against the repo's fully current,
+committed state, since the diagnostics-stage fix (§1) was independently refined (restructured to
+also fix a SQL Server regression the original subquery-wrap approach had introduced — see §1b)
+partway through this pass, and everything downstream of `00_setup.sql` depends on the temp tables
+it builds, so a fresh end-to-end run was the only way to be sure the refined version didn't change
+anything for the eligibility stage. Both runs completed with no errors and produced identical
+results. Total elapsed wall-clock time for the full pipeline (diagnostics + steps a-l), each run:
+**~59 minutes**.
+
+**Diagnostics** (`results/BIGQUERY/diagnostics/*.csv`, 44 files) vs.
+`results/AWS_PG`/`results/AWS_REDSHIFT`/`results/AWS_SQLSERVER`/`results/SNOWFLAKE`:
+- Row counts: 44/44 match exactly. Zero mismatches.
+- Content (sorted, order-independent full-value diff): 41/44 byte-identical; the remaining 3
+  (`09_demographics.csv`, `36_a_record_count_percentiles.csv`,
+  `37_c_met_intercode_percentiles.csv`) differ only in floating-point display precision — see §5's
+  detail, unchanged by this section's re-run.
+
+**Eligibility** (`results/BIGQUERY/eligibility/{labs,characterization,artemis,
+treatment_patterns,guideline,outcomes}/*.csv`, 52 files across all six subfolders) vs. the same
+four targets:
+- Row counts: 52/52 match exactly. Zero mismatches.
+- Content: 47/52 byte-identical. The remaining 5 (`labs/lab_results_rollup.csv`,
+  `labs/lab_results_summary.csv`, `labs/lab_timing_to_index.csv`,
+  `labs/lab_value_distribution.csv`, `characterization/demographics_age_continuous.csv`) differ
+  only in floating-point display precision — the same class of non-issue as the diagnostics-stage
+  3, e.g. `25.3` vs `25.30000000000001`, `20.041717647259713` vs `20.041717647259716` (BigQuery
+  serializing full `FLOAT64` precision where the other four dialects' drivers truncate on
+  display). Every such diff was individually confirmed to be the same value well beyond any digit
+  that matters for this study's percentile/mean/SD outputs — not touched here, for the same
+  reason given in §5 (cosmetic, and would need an even-handed pass across all five dialects to be
+  meaningful).
+
+Every cohort count, demographics breakdown, outcome summary (OS/TTNT/TTD/TFI/DTI), guideline
+adherence rollup, Charlson CCI, and treatment-pattern table BigQuery produced is therefore
+confirmed identical to what Postgres/Redshift/SQL Server/Snowflake already produce from the same
+seeded data.
