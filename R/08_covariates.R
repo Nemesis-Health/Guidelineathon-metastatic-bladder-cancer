@@ -9,8 +9,9 @@
 #                      index (prevalent baseline comorbidity) -- an unbounded
 #                      look-back, not a windowed one.
 #   * performance status strata — members with an ECOG record in the stratum
-#                      within labWindowBeforeDays before / labWindowAfterDays
-#                      after their own index (KPS folded in) -- deliberately
+#                      within covariateWindowBeforeDays before /
+#                      covariateWindowAfterDays after their own index (KPS
+#                      folded in) -- deliberately
 #                      a near-index window, not the comorbidities' unbounded
 #                      look-back: PS is a point-in-time functional
 #                      assessment, not a chronic condition flag.
@@ -157,13 +158,13 @@ if (nrow(present)) {
 
 # --- performance status strata (from ECOG slots 24-27 in the lab table) ------
 ps <- querySqlFile(connection, "ps_overlap.sql",
-  work_database_schema   = settings$workDatabaseSchema,
-  cohort_table           = settings$cohortTable,
-  lab_cohort_table       = settings$labCohortTable,
-  cohort_definition_ids  = paste(targetIds, collapse = ", "),
-  lab_window_before_days = settings$labWindowBeforeDays,
-  lab_window_after_days  = settings$labWindowAfterDays,
-  subject_strata_sql     = strataFragment)
+  work_database_schema        = settings$workDatabaseSchema,
+  cohort_table                = settings$cohortTable,
+  lab_cohort_table             = settings$labCohortTable,
+  cohort_definition_ids        = paste(targetIds, collapse = ", "),
+  covariate_window_before_days = settings$covariateWindowBeforeDays,
+  covariate_window_after_days  = settings$covariateWindowAfterDays,
+  subject_strata_sql           = strataFragment)
 names(ps) <- tolower(names(ps))
 ps <- ps[ps$stratum_type %in% activeStrataTypes(), ]
 ps$cohort_definition_id <- as.integer(ps$cohort_definition_id)

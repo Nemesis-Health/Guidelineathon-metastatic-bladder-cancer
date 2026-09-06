@@ -11,8 +11,9 @@
 --   @cohort1_id
 --
 -- Eligibility rows: cohort_definition_id = test_id in @lab_cohort_table.
--- Each qualifying measurement must fall within [index - 14, index + 14] days
--- unless noted otherwise.
+-- Each qualifying measurement must fall within [index - labWindowBeforeDays,
+-- index + labWindowAfterDays] days (settings$labWindowBeforeDays/AfterDays,
+-- default 30/30) unless noted otherwise.
 --
 -- test_id reference (lab_cohorts.sql #criteria, ids 1-23):
 --   1  aPTT <= 1.5 ULN          14 GFR >= 30 mL/min

@@ -14,7 +14,7 @@
 # lab_timing_to_index_portable.sql    : per lab (cat) x direction
 #   (before/after/any), the distribution of days from the Target 1A /
 #   Target 1A PC allowed index to the closest measurement in that direction
-#   -- a subject's ENTIRE history, not the +/- 14/7-day eligibility window
+#   -- a subject's ENTIRE history, not the +/- 30-day eligibility window
 #   lab_value_distribution_portable.sql restricts to.
 # The _portable versions compute quantiles via ROW_NUMBER/COUNT/FLOOR (same
 # result as PERCENTILE_CONT, which SqlRender cannot translate); the originals

@@ -524,8 +524,10 @@ to **that cohort's own index date**. Comorbidities count members with ≥1
 qualifying record **on/before their own index** — an unbounded look-back
 (prevalent baseline comorbidity), not a windowed one; performance-status
 strata count members with an ECOG record (KPS folded in) in the stratum
-within the index window (`labWindowBeforeDays` before / `labWindowAfterDays`
-after) of their own index — deliberately a near-index window, not the
+within the index window (`covariateWindowBeforeDays` before /
+`covariateWindowAfterDays` after) of their own index — a separate, narrower
+window from `labWindowBeforeDays`/`labWindowAfterDays` (used by eligibility
+and lab-input reporting) — deliberately a near-index window, not the
 comorbidities' unbounded look-back: PS is a point-in-time functional
 assessment, not a chronic condition flag. PS strata **overlap** by design
 (`PS 0-2` includes `PS1`/`PS2`). Comorbidity cohorts are generated into
@@ -628,7 +630,7 @@ Row per eligibility test-id **crossed with every cohort in the main tree**
 overall and once per `subject_strata.sql` stratum (`age_group`, `sex`,
 `age_sex`) — how many members of that cohort had each input measured vs.
 passed it, within the index window (`labWindowBeforeDays` before /
-`labWindowAfterDays` after, default 14 / 7) of *that cohort's own* index
+`labWindowAfterDays` after, default 30 / 30) of *that cohort's own* index
 date. ECOG/condition slots have no `n_tested` (blank — they are not lab
 measurements). `n_cohort` is the denominator **for that cohort × stratum**
 (e.g. a `cohort_definition_id=T2a, age_group=">65"` row's `n_cohort` is >65
@@ -1119,7 +1121,7 @@ callable interactively, not run automatically for every combination.
   atomic components, not combined rows.
 - **Gilbert's syndrome (test 29) is not encoded**, so the TBil ≤3× ULN
   branch is left ungated (over-permissive; excludes no one).
-- **Eligibility window is ±14/7 days around the Cohort 1 index** for lab
+- **Eligibility window is ±30 days around the Cohort 1 index** for lab
   criteria — an intentional PI decision, not the protocol's literal 90-day
   window. Non-lab condition criteria inherit the same window by
   construction.

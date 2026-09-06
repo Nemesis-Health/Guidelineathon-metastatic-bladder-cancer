@@ -118,10 +118,17 @@ settings <- list(
 
   # --- Run settings ---------------------------------------------------------
   minCellCount        = 5L,
-  # Index window for near-index inputs (labs, ECOG, condition/diagnosis limbs):
-  # how many days BEFORE and AFTER the index date a record may fall. Asymmetric.
-  labWindowBeforeDays = 14L,
-  labWindowAfterDays  = 7L,
+  # Index window for near-index eligibility inputs (labs, ECOG, condition/
+  # diagnosis limbs in Target 2a-2d): how many days BEFORE and AFTER the
+  # index date a record may fall.
+  labWindowBeforeDays = 30L,
+  labWindowAfterDays  = 30L,
+  # Index window for the performance-status covariate overlap (step (h),
+  # R/08_covariates.R) — separate from labWindowBeforeDays/AfterDays above:
+  # eligibility and covariate reporting are different purposes and may need
+  # different windows.
+  covariateWindowBeforeDays = 14L,
+  covariateWindowAfterDays  = 7L,
   # Index window for baseline weight/height/BMI (step (k)) — wider than the
   # lab window above; matches onco-study-modules' own +/-90-day convention
   # for vitals.

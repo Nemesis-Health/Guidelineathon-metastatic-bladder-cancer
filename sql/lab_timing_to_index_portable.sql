@@ -1,7 +1,7 @@
 -- Dialect-portable: for each target cohort (Target 1A / Target 1A PC allowed)
 -- and lab (cat), how far from the cohort index (cohort_start_date, the
 -- metastasis-marker date) is the closest recorded measurement -- looking at
--- a subject's ENTIRE measurement history, not the +/- 14/7-day eligibility
+-- a subject's ENTIRE measurement history, not the +/- 30-day eligibility
 -- window lab_value_distribution_portable.sql restricts to. Reports, in three
 -- directions:
 --   before -- closest measurement on/before index (days = index - date, >= 0)
