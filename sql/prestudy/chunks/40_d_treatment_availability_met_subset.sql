@@ -61,9 +61,18 @@ dtp_flags AS (
         MAX(CASE WHEN po.person_id IS NOT NULL THEN 1 ELSE 0 END)                                AS has_dtp_ever,
         MAX(CASE WHEN po.procedure_date >= ms.first_met_date THEN 1 ELSE 0 END)                  AS has_dtp_oaf
     FROM met_subset ms
-    LEFT JOIN @cdm_database_schema.procedure_occurrence po
+    -- Pre-filtered to DTP concepts via a real join, not `IN (subquery)` inside
+    -- the ON predicate -- BigQuery rejects that ("IN subquery is not
+    -- supported inside join predicate", found live, 2026-09-06; see
+    -- docs/BIGQUERY.md). Semantically identical: only procedure_occurrence
+    -- rows matching a #dtp_concepts row are considered, and the outer LEFT
+    -- JOIN below still preserves every met_subset patient.
+    LEFT JOIN (
+        SELECT po.person_id, po.procedure_date
+        FROM @cdm_database_schema.procedure_occurrence po
+        JOIN #dtp_concepts dc ON dc.concept_id = po.procedure_concept_id
+    ) po
       ON po.person_id = ms.person_id
-     AND po.procedure_concept_id IN (SELECT concept_id FROM #dtp_concepts)
     GROUP BY ms.person_id
 ),
 patient_flags AS (

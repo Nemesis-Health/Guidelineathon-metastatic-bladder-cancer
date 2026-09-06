@@ -157,7 +157,11 @@ lab_stats AS (
                   THEN std_value * (0.75 * (n - 1) - FLOOR(0.75 * (n - 1)))
                   ELSE 0 END)            AS uq_value
     FROM ranked
-   GROUP BY stratum_type, stratum_value, cohort_definition_id, cat
+-- Qualified with the `ranked` CTE name rather than bare column names:
+-- BigQuery-only fix, see docs/BIGQUERY.md (SqlRender's ordinal-GROUP-BY
+-- rewrite for this dialect can mis-resolve bare GROUP BY columns onto an
+-- aggregate expression's position, which BigQuery then rejects outright).
+   GROUP BY ranked.stratum_type, ranked.stratum_value, ranked.cohort_definition_id, ranked.cat
 )
 SELECT stratum_type,
        stratum_value,

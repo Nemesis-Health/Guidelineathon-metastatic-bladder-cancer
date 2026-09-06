@@ -70,45 +70,40 @@ SELECT
     x.direction,
     CASE WHEN x.n_patients <= @min_cell_count THEN -@min_cell_count ELSE x.n_patients END AS n_patients
 FROM (
-    -- DX -> MET: OVERALL
-    SELECT 'DX_MET' AS pair, 'OVERALL' AS index_year, direction, COUNT(*) AS n_patients
-    FROM dx_met_base
-    GROUP BY direction
-
-    UNION ALL
-
-    -- DX -> MET: by DX year
-    SELECT 'DX_MET' AS pair, CAST(index_year_int AS VARCHAR(4)) AS index_year, direction, COUNT(*) AS n_patients
-    FROM dx_met_base
-    GROUP BY index_year_int, direction
-
-    UNION ALL
-
-    -- DX -> L01: OVERALL
-    SELECT 'DX_L01' AS pair, 'OVERALL' AS index_year, direction, COUNT(*) AS n_patients
-    FROM dx_l01_base
-    GROUP BY direction
-
-    UNION ALL
-
-    -- DX -> L01: by DX year
-    SELECT 'DX_L01' AS pair, CAST(index_year_int AS VARCHAR(4)) AS index_year, direction, COUNT(*) AS n_patients
-    FROM dx_l01_base
-    GROUP BY index_year_int, direction
-
-    UNION ALL
-
-    -- MET -> L01: OVERALL
-    SELECT 'MET_L01' AS pair, 'OVERALL' AS index_year, direction, COUNT(*) AS n_patients
-    FROM met_l01_base
-    GROUP BY direction
-
-    UNION ALL
-
-    -- MET -> L01: by MET year
-    SELECT 'MET_L01' AS pair, CAST(index_year_int AS VARCHAR(4)) AS index_year, direction, COUNT(*) AS n_patients
-    FROM met_l01_base
-    GROUP BY index_year_int, direction
+    -- Restructured as tag-then-aggregate-once (raw rows tagged OVERALL/
+    -- per-year for each pair, unioned, then ONE outer GROUP BY) rather than
+    -- aggregating inside each UNION ALL branch -- see the NB above
+    -- 00_setup.sql's #event_code_counts INSERT for why (a SqlRender
+    -- BigQuery-translation bug, confirmed live, that silently corrupts
+    -- SELECT-list values across UNION ALL branches that each have their own
+    -- GROUP BY; a single outer GROUP BY has nothing for it to bleed across).
+    SELECT pair, index_year, direction, COUNT(*) AS n_patients
+    FROM (
+        -- DX -> MET: OVERALL
+        SELECT 'DX_MET' AS pair, 'OVERALL' AS index_year, direction
+        FROM dx_met_base
+        UNION ALL
+        -- DX -> MET: by DX year
+        SELECT 'DX_MET', CAST(index_year_int AS VARCHAR(4)), direction
+        FROM dx_met_base
+        UNION ALL
+        -- DX -> L01: OVERALL
+        SELECT 'DX_L01', 'OVERALL', direction
+        FROM dx_l01_base
+        UNION ALL
+        -- DX -> L01: by DX year
+        SELECT 'DX_L01', CAST(index_year_int AS VARCHAR(4)), direction
+        FROM dx_l01_base
+        UNION ALL
+        -- MET -> L01: OVERALL
+        SELECT 'MET_L01', 'OVERALL', direction
+        FROM met_l01_base
+        UNION ALL
+        -- MET -> L01: by MET year
+        SELECT 'MET_L01', CAST(index_year_int AS VARCHAR(4)), direction
+        FROM met_l01_base
+    ) raw_rows
+    GROUP BY pair, index_year, direction
 ) x
 ORDER BY
     x.pair,

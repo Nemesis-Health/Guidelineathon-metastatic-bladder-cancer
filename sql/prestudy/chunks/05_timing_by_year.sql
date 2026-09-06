@@ -15,9 +15,21 @@ SELECT
     CASE WHEN x.n_patients_with_pair <= @min_cell_count THEN NULL ELSE x.p50_days  END AS p50_days,
     CASE WHEN x.n_patients_with_pair <= @min_cell_count THEN NULL ELSE x.p75_days  END AS p75_days
 FROM (
-    -- first_to_first by anchor year
+    -- Restructured as tag-then-aggregate-once -- see the NB above
+    -- 00_setup.sql's #event_code_counts INSERT for why (a SqlRender
+    -- BigQuery-translation bug, confirmed live, that silently corrupts
+    -- SELECT-list values across UNION ALL branches that each have their own
+    -- GROUP BY; a single outer GROUP BY has nothing for it to bleed across).
+    -- The window functions (rn/cnt) still have to be computed separately
+    -- per source table BEFORE the union -- each PARTITION BY only spans
+    -- from_event/to_event/index_year_int, not timing_type, so unioning the
+    -- raw pre-window-function rows first would let first_to_first and
+    -- first_to_closest_after rows share the same partition and corrupt both
+    -- rn and cnt. Only the final COUNT(*)/percentile aggregation collapses
+    -- to one GROUP BY; the per-source window-function computation is
+    -- unchanged from the original.
     SELECT
-        'first_to_first' AS timing_type,
+        timing_type,
         CAST(index_year_int AS VARCHAR(4)) AS index_year,
         from_event,
         to_event,
@@ -26,38 +38,25 @@ FROM (
         MIN(CASE WHEN 2.0 * rn >= cnt THEN CAST(days_diff AS FLOAT) END) AS p50_days,
         MIN(CASE WHEN 4.0 * rn >= 3 * cnt THEN CAST(days_diff AS FLOAT) END) AS p75_days
     FROM (
-        SELECT p.from_event, p.to_event, p.days_diff,
+        -- first_to_first by anchor year
+        SELECT 'first_to_first' AS timing_type, p.from_event, p.to_event, p.days_diff,
             CASE WHEN p.from_event = 'MET' THEN YEAR(ms.first_met_date) ELSE YEAR(pc.index_date) END AS index_year_int,
             ROW_NUMBER() OVER (PARTITION BY CASE WHEN p.from_event = 'MET' THEN YEAR(ms.first_met_date) ELSE YEAR(pc.index_date) END, p.from_event, p.to_event ORDER BY p.days_diff) AS rn,
             COUNT(*)     OVER (PARTITION BY CASE WHEN p.from_event = 'MET' THEN YEAR(ms.first_met_date) ELSE YEAR(pc.index_date) END, p.from_event, p.to_event)                    AS cnt
         FROM #patient_timing_pairs p
         JOIN #patient_char pc    ON p.person_id = pc.person_id
         LEFT JOIN #met_summary ms ON p.person_id = ms.person_id
-    ) y
-    GROUP BY index_year_int, from_event, to_event
-
-    UNION ALL
-
-    -- first_to_closest_after by anchor year (MET-anchored pairs use MET year)
-    SELECT
-        'first_to_closest_after' AS timing_type,
-        CAST(index_year_int AS VARCHAR(4)) AS index_year,
-        from_event,
-        to_event,
-        COUNT(*) AS n_patients_with_pair,
-        MIN(CASE WHEN 4.0 * rn >= cnt THEN CAST(days_diff AS FLOAT) END) AS p25_days,
-        MIN(CASE WHEN 2.0 * rn >= cnt THEN CAST(days_diff AS FLOAT) END) AS p50_days,
-        MIN(CASE WHEN 4.0 * rn >= 3 * cnt THEN CAST(days_diff AS FLOAT) END) AS p75_days
-    FROM (
-        SELECT p.from_event, p.to_event, p.days_diff,
-            CASE WHEN p.from_event = 'MET' THEN YEAR(ms.first_met_date) ELSE YEAR(pc.index_date) END AS index_year_int,
-            ROW_NUMBER() OVER (PARTITION BY CASE WHEN p.from_event = 'MET' THEN YEAR(ms.first_met_date) ELSE YEAR(pc.index_date) END, p.from_event, p.to_event ORDER BY p.days_diff) AS rn,
-            COUNT(*)     OVER (PARTITION BY CASE WHEN p.from_event = 'MET' THEN YEAR(ms.first_met_date) ELSE YEAR(pc.index_date) END, p.from_event, p.to_event)                    AS cnt
+        UNION ALL
+        -- first_to_closest_after by anchor year (MET-anchored pairs use MET year)
+        SELECT 'first_to_closest_after', p.from_event, p.to_event, p.days_diff,
+            CASE WHEN p.from_event = 'MET' THEN YEAR(ms.first_met_date) ELSE YEAR(pc.index_date) END,
+            ROW_NUMBER() OVER (PARTITION BY CASE WHEN p.from_event = 'MET' THEN YEAR(ms.first_met_date) ELSE YEAR(pc.index_date) END, p.from_event, p.to_event ORDER BY p.days_diff),
+            COUNT(*)     OVER (PARTITION BY CASE WHEN p.from_event = 'MET' THEN YEAR(ms.first_met_date) ELSE YEAR(pc.index_date) END, p.from_event, p.to_event)
         FROM #patient_timing_pairs_first_to_closest_after p
         JOIN #patient_char pc    ON p.person_id = pc.person_id
         LEFT JOIN #met_summary ms ON p.person_id = ms.person_id
     ) y
-    GROUP BY index_year_int, from_event, to_event
+    GROUP BY timing_type, index_year_int, from_event, to_event
 ) x
 ORDER BY
     x.timing_type,

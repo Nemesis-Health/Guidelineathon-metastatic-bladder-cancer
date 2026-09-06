@@ -556,66 +556,77 @@ CREATE TABLE #event_code_counts (
     n_patients INT
 );
 
+-- NB: restructured as tag-then-aggregate-once (one UNION ALL of raw,
+-- untagged rows; a single outer GROUP BY does all the counting) rather than
+-- aggregating inside each UNION ALL branch. This isn't a style choice --
+-- SqlRender's BigQuery translator has a confirmed bug (found live,
+-- 2026-09-06; see docs/BIGQUERY.md) where its GROUP-BY-to-ordinal rewrite
+-- can, in a multi-branch UNION ALL where more than one branch has its own
+-- GROUP BY, bleed a numeric ordinal from one branch into an unrelated
+-- branch's SELECT list -- silently replacing a real value (concept_id,
+-- COUNT(*)) with a small integer literal. An earlier fix wrapped each
+-- branch in its own `SELECT * FROM (...) bN` subquery instead, which does
+-- stop the corruption but breaks SQL Server (its derived-table rule
+-- requires every column to have an inferable name, and these branches
+-- select unaliased literals/aggregates -- "No column name was specified
+-- for column 1 of 'b1'", also found live). This version has only ONE
+-- GROUP BY in the whole statement, so the cross-branch bleed has nothing
+-- to bleed into -- confirmed correct on BigQuery, Postgres, Redshift, SQL
+-- Server and Snowflake alike, with no per-dialect special-casing at all.
 INSERT INTO #event_code_counts (anchor_event, event_family, concept_id, n_records, n_patients)
-SELECT 'INDEX', 'DX', concept_id, COUNT(*), COUNT(DISTINCT person_id)
-FROM #dx_events
-WHERE person_id IN (SELECT person_id FROM #cohort)
-GROUP BY concept_id
-UNION ALL
-SELECT 'INDEX', 'ODX', concept_id, COUNT(*), COUNT(DISTINCT person_id)
-FROM #other_dx_events
-WHERE person_id IN (SELECT person_id FROM #cohort)
-GROUP BY concept_id
-UNION ALL
-SELECT 'INDEX', 'GDX', concept_id, COUNT(*), COUNT(DISTINCT person_id)
-FROM #gen_cancer_events
-WHERE person_id IN (SELECT person_id FROM #cohort)
-GROUP BY concept_id
-UNION ALL
-SELECT 'INDEX', 'MET', concept_id, COUNT(*), COUNT(DISTINCT person_id)
-FROM #met_events
-WHERE person_id IN (SELECT person_id FROM #cohort)
-GROUP BY concept_id
-UNION ALL
-SELECT 'INDEX', 'L01', concept_id, COUNT(*), COUNT(DISTINCT person_id)
-FROM #l01_ingredient_events
-WHERE person_id IN (SELECT person_id FROM #cohort)
-GROUP BY concept_id
-UNION ALL
-SELECT 'FIRST_MET', 'DX', concept_id, COUNT(*), COUNT(DISTINCT e.person_id)
-FROM #dx_events e
-JOIN #met_summary ms
-  ON e.person_id = ms.person_id
-WHERE ms.first_met_date IS NOT NULL
-GROUP BY concept_id
-UNION ALL
-SELECT 'FIRST_MET', 'ODX', concept_id, COUNT(*), COUNT(DISTINCT e.person_id)
-FROM #other_dx_events e
-JOIN #met_summary ms
-  ON e.person_id = ms.person_id
-WHERE ms.first_met_date IS NOT NULL
-GROUP BY concept_id
-UNION ALL
-SELECT 'FIRST_MET', 'GDX', concept_id, COUNT(*), COUNT(DISTINCT e.person_id)
-FROM #gen_cancer_events e
-JOIN #met_summary ms
-  ON e.person_id = ms.person_id
-WHERE ms.first_met_date IS NOT NULL
-GROUP BY concept_id
-UNION ALL
-SELECT 'FIRST_MET', 'MET', concept_id, COUNT(*), COUNT(DISTINCT e.person_id)
-FROM #met_events e
-JOIN #met_summary ms
-  ON e.person_id = ms.person_id
-WHERE ms.first_met_date IS NOT NULL
-GROUP BY concept_id
-UNION ALL
-SELECT 'FIRST_MET', 'L01', concept_id, COUNT(*), COUNT(DISTINCT e.person_id)
-FROM #l01_ingredient_events e
-JOIN #met_summary ms
-  ON e.person_id = ms.person_id
-WHERE ms.first_met_date IS NOT NULL
-GROUP BY concept_id
+SELECT anchor_event, event_family, concept_id, COUNT(*) AS n_records, COUNT(DISTINCT person_id) AS n_patients
+FROM (
+    SELECT 'INDEX' AS anchor_event, 'DX' AS event_family, concept_id, person_id
+    FROM #dx_events
+    WHERE person_id IN (SELECT person_id FROM #cohort)
+    UNION ALL
+    SELECT 'INDEX', 'ODX', concept_id, person_id
+    FROM #other_dx_events
+    WHERE person_id IN (SELECT person_id FROM #cohort)
+    UNION ALL
+    SELECT 'INDEX', 'GDX', concept_id, person_id
+    FROM #gen_cancer_events
+    WHERE person_id IN (SELECT person_id FROM #cohort)
+    UNION ALL
+    SELECT 'INDEX', 'MET', concept_id, person_id
+    FROM #met_events
+    WHERE person_id IN (SELECT person_id FROM #cohort)
+    UNION ALL
+    SELECT 'INDEX', 'L01', concept_id, person_id
+    FROM #l01_ingredient_events
+    WHERE person_id IN (SELECT person_id FROM #cohort)
+    UNION ALL
+    SELECT 'FIRST_MET', 'DX', e.concept_id, e.person_id
+    FROM #dx_events e
+    JOIN #met_summary ms
+      ON e.person_id = ms.person_id
+    WHERE ms.first_met_date IS NOT NULL
+    UNION ALL
+    SELECT 'FIRST_MET', 'ODX', e.concept_id, e.person_id
+    FROM #other_dx_events e
+    JOIN #met_summary ms
+      ON e.person_id = ms.person_id
+    WHERE ms.first_met_date IS NOT NULL
+    UNION ALL
+    SELECT 'FIRST_MET', 'GDX', e.concept_id, e.person_id
+    FROM #gen_cancer_events e
+    JOIN #met_summary ms
+      ON e.person_id = ms.person_id
+    WHERE ms.first_met_date IS NOT NULL
+    UNION ALL
+    SELECT 'FIRST_MET', 'MET', e.concept_id, e.person_id
+    FROM #met_events e
+    JOIN #met_summary ms
+      ON e.person_id = ms.person_id
+    WHERE ms.first_met_date IS NOT NULL
+    UNION ALL
+    SELECT 'FIRST_MET', 'L01', e.concept_id, e.person_id
+    FROM #l01_ingredient_events e
+    JOIN #met_summary ms
+      ON e.person_id = ms.person_id
+    WHERE ms.first_met_date IS NOT NULL
+) all_events
+GROUP BY anchor_event, event_family, concept_id
 ;
 
 DROP TABLE IF EXISTS #event_code_counts_before_after;
@@ -628,71 +639,55 @@ CREATE TABLE #event_code_counts_before_after (
     n_patients INT
 );
 
+-- NB: restructured as tag-then-aggregate-once, same reason and pattern as
+-- #event_code_counts above -- and confirmed live (2026-09-06) that the
+-- cross-branch corruption reaches this statement too even though its own
+-- GROUP BY columns are alias-qualified: SqlRender's BigQuery translator
+-- operates on the WHOLE FILE'S text in one pass (runSqlFile()/querySqlFile()
+-- call translate() once per file, not once per statement), so a repeated
+-- GROUP BY pattern can bleed forward across statement boundaries within the
+-- same file, not just across UNION ALL branches within one statement. An
+-- isolated single-statement test of this INSERT alone did not reproduce the
+-- corruption; testing it as part of the complete 00_setup.sql did.
 INSERT INTO #event_code_counts_before_after (anchor_event, event_family, time_relative, concept_id, n_records, n_patients)
-SELECT 'INDEX',
-       'DX',
-       CASE WHEN DATEDIFF(DAY, c.index_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END AS time_relative,
-       e.concept_id,
-       COUNT(*) AS n_records,
-       COUNT(DISTINCT e.person_id) AS n_patients
-FROM #dx_events e
-JOIN #cohort c
-  ON e.person_id = c.person_id
-GROUP BY
-    CASE WHEN DATEDIFF(DAY, c.index_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-    e.concept_id
-UNION ALL
-SELECT 'INDEX',
-       'ODX',
-       CASE WHEN DATEDIFF(DAY, c.index_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-       e.concept_id,
-       COUNT(*),
-       COUNT(DISTINCT e.person_id)
-FROM #other_dx_events e
-JOIN #cohort c
-  ON e.person_id = c.person_id
-GROUP BY
-    CASE WHEN DATEDIFF(DAY, c.index_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-    e.concept_id
-UNION ALL
-SELECT 'INDEX',
-       'GDX',
-       CASE WHEN DATEDIFF(DAY, c.index_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-       e.concept_id,
-       COUNT(*),
-       COUNT(DISTINCT e.person_id)
-FROM #gen_cancer_events e
-JOIN #cohort c
-  ON e.person_id = c.person_id
-GROUP BY
-    CASE WHEN DATEDIFF(DAY, c.index_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-    e.concept_id
-UNION ALL
-SELECT 'INDEX',
-       'MET',
-       CASE WHEN DATEDIFF(DAY, c.index_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-       e.concept_id,
-       COUNT(*),
-       COUNT(DISTINCT e.person_id)
-FROM #met_events e
-JOIN #cohort c
-  ON e.person_id = c.person_id
-GROUP BY
-    CASE WHEN DATEDIFF(DAY, c.index_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-    e.concept_id
-UNION ALL
-SELECT 'INDEX',
-       'L01',
-       CASE WHEN DATEDIFF(DAY, c.index_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-       e.concept_id,
-       COUNT(*),
-       COUNT(DISTINCT e.person_id)
-FROM #l01_ingredient_events e
-JOIN #cohort c
-  ON e.person_id = c.person_id
-GROUP BY
-    CASE WHEN DATEDIFF(DAY, c.index_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-    e.concept_id
+SELECT anchor_event, event_family, time_relative, concept_id, COUNT(*) AS n_records, COUNT(DISTINCT person_id) AS n_patients
+FROM (
+    SELECT 'INDEX' AS anchor_event, 'DX' AS event_family,
+        CASE WHEN DATEDIFF(DAY, c.index_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END AS time_relative,
+        e.concept_id AS concept_id, e.person_id AS person_id
+    FROM #dx_events e
+    JOIN #cohort c
+      ON e.person_id = c.person_id
+    UNION ALL
+    SELECT 'INDEX', 'ODX',
+        CASE WHEN DATEDIFF(DAY, c.index_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
+        e.concept_id, e.person_id
+    FROM #other_dx_events e
+    JOIN #cohort c
+      ON e.person_id = c.person_id
+    UNION ALL
+    SELECT 'INDEX', 'GDX',
+        CASE WHEN DATEDIFF(DAY, c.index_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
+        e.concept_id, e.person_id
+    FROM #gen_cancer_events e
+    JOIN #cohort c
+      ON e.person_id = c.person_id
+    UNION ALL
+    SELECT 'INDEX', 'MET',
+        CASE WHEN DATEDIFF(DAY, c.index_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
+        e.concept_id, e.person_id
+    FROM #met_events e
+    JOIN #cohort c
+      ON e.person_id = c.person_id
+    UNION ALL
+    SELECT 'INDEX', 'L01',
+        CASE WHEN DATEDIFF(DAY, c.index_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
+        e.concept_id, e.person_id
+    FROM #l01_ingredient_events e
+    JOIN #cohort c
+      ON e.person_id = c.person_id
+) all_events
+GROUP BY anchor_event, event_family, time_relative, concept_id
 ;
 
 DROP TABLE IF EXISTS #event_code_counts_before_after_first_met;
@@ -705,76 +700,52 @@ CREATE TABLE #event_code_counts_before_after_first_met (
     n_patients INT
 );
 
+-- NB: restructured as tag-then-aggregate-once -- see the matching NB above
+-- #event_code_counts_before_after's INSERT for why.
 INSERT INTO #event_code_counts_before_after_first_met (anchor_event, event_family, time_relative, concept_id, n_records, n_patients)
-SELECT 'FIRST_MET',
-       'DX',
-       CASE WHEN DATEDIFF(DAY, ms.first_met_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END AS time_relative,
-       e.concept_id,
-       COUNT(*) AS n_records,
-       COUNT(DISTINCT e.person_id) AS n_patients
-FROM #dx_events e
-JOIN #met_summary ms
-  ON e.person_id = ms.person_id
-WHERE ms.first_met_date IS NOT NULL
-GROUP BY
-    CASE WHEN DATEDIFF(DAY, ms.first_met_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-    e.concept_id
-UNION ALL
-SELECT 'FIRST_MET',
-       'ODX',
-       CASE WHEN DATEDIFF(DAY, ms.first_met_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-       e.concept_id,
-       COUNT(*),
-       COUNT(DISTINCT e.person_id)
-FROM #other_dx_events e
-JOIN #met_summary ms
-  ON e.person_id = ms.person_id
-WHERE ms.first_met_date IS NOT NULL
-GROUP BY
-    CASE WHEN DATEDIFF(DAY, ms.first_met_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-    e.concept_id
-UNION ALL
-SELECT 'FIRST_MET',
-       'GDX',
-       CASE WHEN DATEDIFF(DAY, ms.first_met_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-       e.concept_id,
-       COUNT(*),
-       COUNT(DISTINCT e.person_id)
-FROM #gen_cancer_events e
-JOIN #met_summary ms
-  ON e.person_id = ms.person_id
-WHERE ms.first_met_date IS NOT NULL
-GROUP BY
-    CASE WHEN DATEDIFF(DAY, ms.first_met_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-    e.concept_id
-UNION ALL
-SELECT 'FIRST_MET',
-       'MET',
-       CASE WHEN DATEDIFF(DAY, ms.first_met_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-       e.concept_id,
-       COUNT(*),
-       COUNT(DISTINCT e.person_id)
-FROM #met_events e
-JOIN #met_summary ms
-  ON e.person_id = ms.person_id
-WHERE ms.first_met_date IS NOT NULL
-GROUP BY
-    CASE WHEN DATEDIFF(DAY, ms.first_met_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-    e.concept_id
-UNION ALL
-SELECT 'FIRST_MET',
-       'L01',
-       CASE WHEN DATEDIFF(DAY, ms.first_met_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-       e.concept_id,
-       COUNT(*),
-       COUNT(DISTINCT e.person_id)
-FROM #l01_ingredient_events e
-JOIN #met_summary ms
-  ON e.person_id = ms.person_id
-WHERE ms.first_met_date IS NOT NULL
-GROUP BY
-    CASE WHEN DATEDIFF(DAY, ms.first_met_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
-    e.concept_id
+SELECT anchor_event, event_family, time_relative, concept_id, COUNT(*) AS n_records, COUNT(DISTINCT person_id) AS n_patients
+FROM (
+    SELECT 'FIRST_MET' AS anchor_event, 'DX' AS event_family,
+        CASE WHEN DATEDIFF(DAY, ms.first_met_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END AS time_relative,
+        e.concept_id AS concept_id, e.person_id AS person_id
+    FROM #dx_events e
+    JOIN #met_summary ms
+      ON e.person_id = ms.person_id
+    WHERE ms.first_met_date IS NOT NULL
+    UNION ALL
+    SELECT 'FIRST_MET', 'ODX',
+        CASE WHEN DATEDIFF(DAY, ms.first_met_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
+        e.concept_id, e.person_id
+    FROM #other_dx_events e
+    JOIN #met_summary ms
+      ON e.person_id = ms.person_id
+    WHERE ms.first_met_date IS NOT NULL
+    UNION ALL
+    SELECT 'FIRST_MET', 'GDX',
+        CASE WHEN DATEDIFF(DAY, ms.first_met_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
+        e.concept_id, e.person_id
+    FROM #gen_cancer_events e
+    JOIN #met_summary ms
+      ON e.person_id = ms.person_id
+    WHERE ms.first_met_date IS NOT NULL
+    UNION ALL
+    SELECT 'FIRST_MET', 'MET',
+        CASE WHEN DATEDIFF(DAY, ms.first_met_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
+        e.concept_id, e.person_id
+    FROM #met_events e
+    JOIN #met_summary ms
+      ON e.person_id = ms.person_id
+    WHERE ms.first_met_date IS NOT NULL
+    UNION ALL
+    SELECT 'FIRST_MET', 'L01',
+        CASE WHEN DATEDIFF(DAY, ms.first_met_date, e.event_date) < 0 THEN 'BEFORE' ELSE 'AFTER' END,
+        e.concept_id, e.person_id
+    FROM #l01_ingredient_events e
+    JOIN #met_summary ms
+      ON e.person_id = ms.person_id
+    WHERE ms.first_met_date IS NOT NULL
+) all_events
+GROUP BY anchor_event, event_family, time_relative, concept_id
 ;
 
 DROP TABLE IF EXISTS #event_code_all_events;
@@ -1754,7 +1725,15 @@ INSERT INTO #death_stratum_counts (prevalence_year, anchor_event, n_patients, n_
 SELECT
     CASE
         WHEN GROUPING(YEAR(c.index_date)) = 1 THEN 'OVERALL'
-        ELSE CAST(YEAR(c.index_date) AS VARCHAR(4))
+        -- MAX(...) wrap is a no-op here (c.index_date is already unique per
+        -- group in the (YEAR(c.index_date)) grouping set, and this branch
+        -- never runs for the () set) -- needed only because BigQuery,
+        -- unlike the other four dialects this file also targets, statically
+        -- rejects a bare non-aggregated column reference anywhere in the
+        -- SELECT list of a GROUPING SETS query, even one only reached at
+        -- runtime via a CASE/GROUPING() guard for the sets where it's
+        -- actually grouped (found live, 2026-09-06; see docs/BIGQUERY.md).
+        ELSE CAST(YEAR(MAX(c.index_date)) AS VARCHAR(4))
     END,
     'INDEX',
     COUNT(*),
@@ -1770,7 +1749,8 @@ INSERT INTO #death_stratum_counts (prevalence_year, anchor_event, n_patients, n_
 SELECT
     CASE
         WHEN GROUPING(YEAR(ms.first_met_date)) = 1 THEN 'OVERALL'
-        ELSE CAST(YEAR(ms.first_met_date) AS VARCHAR(4))
+        -- see matching NB above the first #death_stratum_counts INSERT.
+        ELSE CAST(YEAR(MAX(ms.first_met_date)) AS VARCHAR(4))
     END,
     'FIRST_MET',
     COUNT(*),
@@ -1836,40 +1816,50 @@ CREATE TABLE #followup_long (
     followup_days INT
 );
 
+-- NB: restructured as tag-then-aggregate-once -- see the NB above
+-- #event_code_counts's INSERT for why. The per-person MAX(...) here is a
+-- genuine aggregation (unlike the pure counts above), so the raw layer
+-- still needs to carry person_id/anchor_date through untouched -- only the
+-- final MAX/DATEDIFF collapses to one outer GROUP BY instead of four.
+-- Every outer reference is qualified with the derived table's alias (r.) --
+-- confirmed live (2026-09-06) that SqlRender's BigQuery GROUP-BY-to-ordinal
+-- matcher, given a bare `anchor_date` in GROUP BY that ALSO appears as a
+-- substring reference inside the DATEDIFF(...) SELECT-list expression,
+-- resolves the GROUP BY item to that expression's ordinal position instead
+-- ("Column 3 contains an aggregation function, which is not allowed in
+-- GROUP BY"). Qualifying makes it an `alias.column` reference, which the
+-- matcher copies straight through untouched (same fix class as
+-- sql/demographics.sql's `coh.index_year`).
 INSERT INTO #followup_long (prevalence_year, anchor_event, followup_days)
-SELECT 'OVERALL', 'INDEX',
-       DATEDIFF(DAY, c.index_date, MAX(op.observation_period_end_date))
-FROM #cohort c
-INNER JOIN @cdm_database_schema.observation_period op
-  ON op.person_id = c.person_id
- AND op.observation_period_end_date >= c.index_date
-GROUP BY c.person_id, c.index_date
-UNION ALL
-SELECT CAST(YEAR(c.index_date) AS VARCHAR(4)), 'INDEX',
-       DATEDIFF(DAY, c.index_date, MAX(op.observation_period_end_date))
-FROM #cohort c
-INNER JOIN @cdm_database_schema.observation_period op
-  ON op.person_id = c.person_id
- AND op.observation_period_end_date >= c.index_date
-GROUP BY c.person_id, c.index_date, YEAR(c.index_date)
-UNION ALL
-SELECT 'OVERALL', 'FIRST_MET',
-       DATEDIFF(DAY, ms.first_met_date, MAX(op.observation_period_end_date))
-FROM #cohort c
-INNER JOIN #met_summary ms ON c.person_id = ms.person_id AND ms.first_met_date IS NOT NULL
-INNER JOIN @cdm_database_schema.observation_period op
-  ON op.person_id = c.person_id
- AND op.observation_period_end_date >= ms.first_met_date
-GROUP BY c.person_id, ms.first_met_date
-UNION ALL
-SELECT CAST(YEAR(ms.first_met_date) AS VARCHAR(4)), 'FIRST_MET',
-       DATEDIFF(DAY, ms.first_met_date, MAX(op.observation_period_end_date))
-FROM #cohort c
-INNER JOIN #met_summary ms ON c.person_id = ms.person_id AND ms.first_met_date IS NOT NULL
-INNER JOIN @cdm_database_schema.observation_period op
-  ON op.person_id = c.person_id
- AND op.observation_period_end_date >= ms.first_met_date
-GROUP BY c.person_id, ms.first_met_date, YEAR(ms.first_met_date)
+SELECT r.prevalence_year, r.anchor_event, DATEDIFF(DAY, r.anchor_date, MAX(r.obs_end))
+FROM (
+    SELECT 'OVERALL' AS prevalence_year, 'INDEX' AS anchor_event, c.person_id AS person_id, c.index_date AS anchor_date, op.observation_period_end_date AS obs_end
+    FROM #cohort c
+    INNER JOIN @cdm_database_schema.observation_period op
+      ON op.person_id = c.person_id
+     AND op.observation_period_end_date >= c.index_date
+    UNION ALL
+    SELECT CAST(YEAR(c.index_date) AS VARCHAR(4)), 'INDEX', c.person_id, c.index_date, op.observation_period_end_date
+    FROM #cohort c
+    INNER JOIN @cdm_database_schema.observation_period op
+      ON op.person_id = c.person_id
+     AND op.observation_period_end_date >= c.index_date
+    UNION ALL
+    SELECT 'OVERALL', 'FIRST_MET', c.person_id, ms.first_met_date, op.observation_period_end_date
+    FROM #cohort c
+    INNER JOIN #met_summary ms ON c.person_id = ms.person_id AND ms.first_met_date IS NOT NULL
+    INNER JOIN @cdm_database_schema.observation_period op
+      ON op.person_id = c.person_id
+     AND op.observation_period_end_date >= ms.first_met_date
+    UNION ALL
+    SELECT CAST(YEAR(ms.first_met_date) AS VARCHAR(4)), 'FIRST_MET', c.person_id, ms.first_met_date, op.observation_period_end_date
+    FROM #cohort c
+    INNER JOIN #met_summary ms ON c.person_id = ms.person_id AND ms.first_met_date IS NOT NULL
+    INNER JOIN @cdm_database_schema.observation_period op
+      ON op.person_id = c.person_id
+     AND op.observation_period_end_date >= ms.first_met_date
+) r
+GROUP BY r.prevalence_year, r.anchor_event, r.person_id, r.anchor_date
 ;
 
 DROP TABLE IF EXISTS #followup_quantiles;

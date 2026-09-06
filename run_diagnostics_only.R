@@ -24,13 +24,24 @@ for (p in c("DatabaseConnector", "SqlRender", "dplyr", "readr")) {
 
 # --- Database connection ----------------------------------------------------
 # Same as run.R — see that file's CONFIG block for JDBC / DBI examples.
-connectionDetails <- NULL   # <-- REPLACE with your connection
+connectionDetails <- DatabaseConnector::createConnectionDetails(
+  dbms             = "bigquery",
+  connectionString = paste0(
+    "jdbc:bigquery://https://www.googleapis.com/bigquery/v2:443;",
+    "ProjectId=omop-test-data;OAuthType=0;",
+    "OAuthServiceAcctEmail=omop-bigquery@omop-test-data.iam.gserviceaccount.com;",
+    "OAuthPvtKeyPath=", path.expand("~/.bigquery_service_account.json"), ";",
+    "EnableSession=1;Location=EU;"),
+  user         = "",
+  password     = "",
+  pathToDriver = path.expand("~/.jdbc_drivers"))
+options(sqlRenderTempEmulationSchema = "results")
 
 # --- Site + OMOP CDM schema --------------------------------------------------
 settings <- list(
-  cdmDatabaseSchema = "",   # OMOP CDM schema the diagnostics queries read
+  cdmDatabaseSchema = "cdm",   # OMOP CDM schema the diagnostics queries read
   minCellCount      = 5L,
-  outputFolder      = file.path("results")
+  outputFolder      = file.path("results", "BIGQUERY_diag_smoketest")
 )
 
 # ===========================================================================

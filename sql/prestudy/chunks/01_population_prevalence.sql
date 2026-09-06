@@ -3,7 +3,13 @@ WITH base AS (
     SELECT
         CASE
             WHEN GROUPING(YEAR(index_date)) = 1 THEN 'OVERALL'
-            ELSE CAST(YEAR(index_date) AS VARCHAR(4))
+            -- MAX(...) wrap: BigQuery-only fix, see the matching NB in
+            -- 00_setup.sql's #death_stratum_counts INSERT (found live,
+            -- 2026-09-06; docs/BIGQUERY.md) -- a no-op on every other
+            -- dialect and on this one, since index_date is already unique
+            -- per group in the (YEAR(index_date)) set and this branch never
+            -- runs for the () set.
+            ELSE CAST(YEAR(MAX(index_date)) AS VARCHAR(4))
         END AS prevalence_year,
         COUNT(*) AS n_patients,
         SUM(CASE WHEN first_other_dx_date IS NOT NULL THEN 1 ELSE 0 END) AS n_with_other_dx,
