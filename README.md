@@ -107,8 +107,10 @@ is up to you — `connectionDetails` is defined by you in `run.R` (see step 2 in
 
 > [!WARNING]
 > **Pin `pandas` to the 2.x line (e.g. `2.2.3`) in ARTEMIS's Python environment —
-> `pandas 3.x` silently breaks regimen alignment.** With `pandas 3.x` installed
-> in the reticulate venv ARTEMIS builds (usually `<Rlib>/ARTEMIS/.r-reticulate`),
+> `pandas 3.x` silently breaks regimen alignment. This includes `pandas 3.1`,
+> not just `3.0` — pinning to `2.x` specifically, not just "not 3.0", matters.**
+> With `pandas 3.x` installed in the reticulate venv ARTEMIS builds (usually
+> `<Rlib>/ARTEMIS/.r-reticulate`),
 > `ARTEMIS::generateRawAlignments()`/`runArtemis()` fails with `Error in if
 > (nrow(output) == 0) { : argument is of length zero` — **after** "Generating raw
 > alignments" reports 100% complete, so it looks like an alignment/data problem,
