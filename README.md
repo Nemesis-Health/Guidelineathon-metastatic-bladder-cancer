@@ -1122,12 +1122,28 @@ callable interactively, not run automatically for every combination.
 - **Eligibility window is ±30 days around the Cohort 1 index** for lab/ECOG
   criteria — an intentional PI decision, not the protocol's literal 90-day
   window. Pre-existing CONDITION criteria (liver-mets, Gilbert's syndrome,
-  neuropathy, skin, hearing) use a separate, narrower window instead: "any
-  record on or before index + 7 days" (`settings$conditionFlagWindowAfterDays`,
-  no lower bound).
+  neuropathy, skin, hearing) use a separate, wider window instead: [index -
+  365, index + 30] days (`settings$conditionFlagWindowBeforeDays`/
+  `conditionFlagWindowAfterDays`).
 - **The treatment-initiated cohort's regimen-start window is
   `[index − 30, index + 90]`**, an author-chosen window rather than a
   literal transcription of the protocol text.
+- **Lab/ECOG "pass" flags reflect any qualifying record within the window,
+  not the single closest one.** `bc_lab_cohort` (`lab_cohorts.sql`) stores
+  one row per qualifying measurement across a subject's whole history, and
+  every window-scoped consumer — `eligibility_2{a,b,c,d,e}.sql`'s flags,
+  `eligibility_input_coverage.sql`'s `n_passed`, `ps_overlap.sql`'s PS-strata
+  counts — treats "any row in window" as a pass. A subject with two draws in
+  the same window can satisfy mutually exclusive bands at once (e.g. GFR >60
+  from one draw and GFR <30 from another; ECOG 0 from one visit and ECOG 2
+  from another). For eligibility this may be an intentional permissive
+  convention (one passing draw during screening is enough); for
+  characterization/overlap reporting it can inflate apparent membership in
+  more than one bucket at once. Neither is changed yet: picking the single
+  closest-to-index record per (cohort, subject, lab/ECOG) before classifying
+  would resolve the reporting side, but changing the eligibility side is a
+  protocol-semantics decision, not a reporting fix, and needs sign-off
+  before it's made.
 - **Cohorts 4/5/6(a–f) are three independent, non-exclusive regimen
   classifications** (`class_eau` / `class_hemonc_mbc` / `class_any`), not
   the protocol's exclusive tiers.

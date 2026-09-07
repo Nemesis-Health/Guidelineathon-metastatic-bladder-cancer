@@ -13,11 +13,12 @@
 -- Eligibility rows: cohort_definition_id = test_id in @lab_cohort_table.
 -- Each qualifying measurement must fall within [index - labWindowBeforeDays,
 -- index + labWindowAfterDays] days (settings$labWindowBeforeDays/AfterDays,
--- default 30/30), EXCEPT the pre-existing condition flags (liver metastasis
--- [28], Gilbert's syndrome [29], neuropathy [33], skin disorders [34]), which
--- use "any record on or before index + conditionFlagWindowAfterDays days"
--- (settings$conditionFlagWindowAfterDays, default 7 -- no lower bound, since
--- these are pre-existing-condition checks, not near-index measurements).
+-- default 30/30), EXCEPT the condition flags (liver metastasis [28],
+-- Gilbert's syndrome [29], neuropathy [33], skin disorders [34]), which use
+-- their own [index - conditionFlagWindowBeforeDays, index +
+-- conditionFlagWindowAfterDays] window (settings$conditionFlagWindowBeforeDays/
+-- AfterDays, default 365/30 -- wider than the lab window since these are
+-- pre-existing-condition checks, not near-index measurements).
 --
 -- test_id reference (lab_cohorts.sql #criteria, ids 1-23):
 --   1  aPTT <= 1.5 ULN          14 GFR >= 30 mL/min
@@ -69,7 +70,8 @@ WITH base AS (
   SELECT tc.subject_id, tc.cohort_start_date, tc.cohort_end_date,
          DATEADD(day, -@lab_window_before_days, tc.cohort_start_date) AS win_lo,
          DATEADD(day,  @lab_window_after_days,  tc.cohort_start_date) AS win_hi,
-         DATEADD(day,  @condition_flag_window_after_days, tc.cohort_start_date) AS win_hi_cond
+         DATEADD(day, -@condition_flag_window_before_days, tc.cohort_start_date) AS win_lo_cond,
+         DATEADD(day,  @condition_flag_window_after_days,  tc.cohort_start_date) AS win_hi_cond
     FROM @target_database_schema.@target_cohort_table tc
    WHERE tc.cohort_definition_id = @cohort1_id
 
@@ -83,7 +85,7 @@ WITH base AS (
          )
 ),
 labs AS (
-  SELECT b.subject_id, b.cohort_start_date, b.cohort_end_date, b.win_lo, b.win_hi, b.win_hi_cond,
+  SELECT b.subject_id, b.cohort_start_date, b.cohort_end_date, b.win_lo, b.win_hi, b.win_lo_cond, b.win_hi_cond,
          lab.cohort_definition_id AS test_id, lab.cohort_start_date AS lab_date
     FROM base b
     LEFT JOIN @target_database_schema.@lab_cohort_table lab
@@ -104,10 +106,10 @@ flags AS (
     MAX(CASE WHEN test_id = 23                      AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_tbil_gt15,
     MAX(CASE WHEN test_id = 9                       AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_dbil,
     MAX(CASE WHEN test_id = 21                      AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_tbil_le3,
-    MAX(CASE WHEN test_id = 29                      AND lab_date <= win_hi_cond            THEN 1 ELSE 0 END) AS f_gilbert,
+    MAX(CASE WHEN test_id = 29                      AND lab_date BETWEEN win_lo_cond AND win_hi_cond THEN 1 ELSE 0 END) AS f_gilbert,
     MAX(CASE WHEN test_id = 5                       AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_ast_le25,
     MAX(CASE WHEN test_id = 6                       AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_ast_le5,
-    MAX(CASE WHEN test_id = 28                      AND lab_date <= win_hi_cond            THEN 1 ELSE 0 END) AS f_livermet,
+    MAX(CASE WHEN test_id = 28                      AND lab_date BETWEEN win_lo_cond AND win_hi_cond THEN 1 ELSE 0 END) AS f_livermet,
     MAX(CASE WHEN test_id = 2                       AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_alt_le25,
     MAX(CASE WHEN test_id = 3                       AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_alt_le5,
     MAX(CASE WHEN test_id = 18                      AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_inr,
@@ -118,8 +120,8 @@ flags AS (
     MAX(CASE WHEN test_id = 16                      AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_hba1c_7_8,
     MAX(CASE WHEN test_id = 35                      AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_polyuria,
     MAX(CASE WHEN test_id = 36                      AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_polydipsia,
-    MAX(CASE WHEN test_id = 33                      AND lab_date <= win_hi_cond            THEN 1 ELSE 0 END) AS f_neuropathy,
-    MAX(CASE WHEN test_id = 34                      AND lab_date <= win_hi_cond            THEN 1 ELSE 0 END) AS f_skin
+    MAX(CASE WHEN test_id = 33                      AND lab_date BETWEEN win_lo_cond AND win_hi_cond THEN 1 ELSE 0 END) AS f_neuropathy,
+    MAX(CASE WHEN test_id = 34                      AND lab_date BETWEEN win_lo_cond AND win_hi_cond THEN 1 ELSE 0 END) AS f_skin
   FROM labs
   GROUP BY subject_id, cohort_start_date, cohort_end_date
 )
@@ -179,7 +181,8 @@ SELECT subject_id, cohort_start_date, cohort_end_date
        )
 
    -- Enfortumab: no significant peripheral neuropathy (test 33); pre-existing
-   -- = any record on/before index + conditionFlagWindowAfterDays.
+   -- = a record within [index - conditionFlagWindowBeforeDays, index +
+   -- conditionFlagWindowAfterDays].
    AND f_neuropathy = 0
 
    -- Enfortumab: no pre-existing significant skin disorders (test 34).

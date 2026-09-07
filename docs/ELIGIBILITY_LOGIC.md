@@ -11,8 +11,9 @@ Approach A) see [DEVELOPMENT.md](../DEVELOPMENT.md).
 - Unless noted, a criterion means **"the patient has a qualifying row within ±30
   days of their Target 1A (metastasis) index date"** (`settings$labWindowBeforeDays`/
   `labWindowAfterDays`). A few pre-existing CONDITION flags (liver-mets, Gilbert's
-  syndrome, neuropathy, skin, hearing) instead use **"any record on or before
-  index + 7 days"** (`settings$conditionFlagWindowAfterDays`, no lower bound).
+  syndrome, neuropathy, skin, hearing) instead use a wider window: **"a qualifying
+  row within [index - 365, index + 30] days"** (`settings$conditionFlagWindowBeforeDays`/
+  `conditionFlagWindowAfterDays`).
 - The leaves are **mutually exclusive by construction**: 2b excludes enfortumab-
   eligible patients, 2c excludes enfortumab- and cisplatin-eligible, 2d is the
   "not combination-eligible" branch, and **2e is everyone in Cohort 1 not placed

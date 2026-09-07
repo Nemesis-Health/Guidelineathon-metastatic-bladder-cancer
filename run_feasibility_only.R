@@ -73,12 +73,11 @@ settings <- list(
   labWindowAfterDays  = 30L,
   # Window for the pre-existing CONDITION flags in Target 2a-2d (liver
   # metastasis, Gilbert's syndrome, neuropathy, skin disorders, hearing
-  # loss) -- separate from labWindowBeforeDays/AfterDays above, since these
-  # are "any record on or before index + N days" checks (no lower bound),
-  # not near-index measurements. conditionFlagWindowBeforeDays is currently
-  # unused (kept for symmetry/future use); only AfterDays feeds the cutoff.
-  conditionFlagWindowBeforeDays = 14L,
-  conditionFlagWindowAfterDays  = 7L,
+  # loss) -- separate from, and wider than, labWindowBeforeDays/AfterDays
+  # above, since these are pre-existing-condition checks, not near-index
+  # measurements.
+  conditionFlagWindowBeforeDays = 365L,
+  conditionFlagWindowAfterDays  = 30L,
   # Index window for baseline weight/height/BMI (step (k)) — wider than the
   # lab window above; matches onco-study-modules' own +/-90-day convention
   # for vitals.

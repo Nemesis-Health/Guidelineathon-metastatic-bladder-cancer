@@ -143,7 +143,8 @@ labReg <- list(lab_cohort_table = settings$labCohortTable,
                regimen_episode_table = settings$episodeTable, cohort1_id = cohort1Id,
                lab_window_before_days = settings$labWindowBeforeDays,
                lab_window_after_days  = settings$labWindowAfterDays,
-               condition_flag_window_after_days = settings$conditionFlagWindowAfterDays)
+               condition_flag_window_before_days = settings$conditionFlagWindowBeforeDays,
+               condition_flag_window_after_days  = settings$conditionFlagWindowAfterDays)
 elig2 <- list()
 elig2$a <- addCustom(cohortNames[["T2a"]], do.call(renderElig, c(list("a"), labReg)))
 elig2$b <- addCustom(cohortNames[["T2b"]], do.call(renderElig,
