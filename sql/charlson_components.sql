@@ -35,8 +35,13 @@
 WITH strata AS (
   @subject_strata_sql
 )
+-- subject_id cast to VARCHAR here, not as.character() in R after the fact --
+-- see sql/outcome_target_data.sql's comment. (s.subject_id, from the shared
+-- subject_strata.sql fragment, stays native numeric -- only used here in a
+-- join condition, never in the output, and other consumers of that shared
+-- fragment rely on it staying numeric.)
 SELECT tc.cohort_definition_id,
-       tc.subject_id,
+       CAST(tc.subject_id AS VARCHAR) AS subject_id,
        s.age_group, s.sex, s.age_sex,
        @component_flags_sql
   FROM @work_database_schema.@cohort_table tc
