@@ -1,5 +1,5 @@
 # ===========================================================================
-# run_study_only.R  —  eligibility/study pipeline only
+# run_study_only.R  —  study pipeline only
 # ===========================================================================
 # Complement of run_diagnostics_only.R: runs everything in run.R EXCEPT the
 # pre-study diagnostics stage (0). Together, run_diagnostics_only.R +
@@ -20,7 +20,7 @@
 #
 # Use this once ARTEMIS is sorted (see README.md) if you already have
 # diagnostics results from run_diagnostics_only.R and just need the
-# eligibility cohorts now — no need to re-run diagnostics.
+# study results now — no need to re-run diagnostics.
 #
 # Usage: edit the CONFIG block below, then  source("run_study_only.R")
 # Requires: DatabaseConnector, SqlRender, CohortGenerator, CirceR, ARTEMIS,
@@ -108,8 +108,8 @@ source("R/13_covariate_lab_coverage.R") # lab coverage by comorbidity subgroup (
 
 message("\n=== Done. Results under ", settings$outputFolder, "/eligibility/ ===")
 
-utils::zip(zipfile = file.path(settings$outputFolder, "eligibility_results.zip"), files = list.files(file.path(settings$outputFolder, "eligibility"), recursive = TRUE, full.names = TRUE, include.dirs = TRUE, all.files = TRUE), flags = "-q")
+utils::zip(zipfile = file.path(settings$outputFolder, "study_results.zip"), files = list.files(file.path(settings$outputFolder, "eligibility"), recursive = TRUE, full.names = TRUE, include.dirs = TRUE, all.files = TRUE), flags = "-q")
 
-message("Wrote eligibility_results.zip to ", settings$outputFolder)
+message("Wrote study_results.zip to ", settings$outputFolder)
 
 DatabaseConnector::disconnect(connection)
