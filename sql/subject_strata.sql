@@ -19,7 +19,7 @@
 -- eligibility_input_coverage.sql, cohort_counts_stratified.sql. Consumers,
 -- R-side (queried directly, joined/filtered in R then looped over stratum
 -- columns): R/09_outcomes.R, R/12_treatment_patterns.R,
--- R/11_baseline_characterization.R (baseline_vitals), R/10_adherence.R
+-- R/11_baseline_characterization.R (baseline_body_measurements), R/10_adherence.R
 -- (guideline_relevance/guideline_adherence). The standard pattern either
 -- way: join/filter the analysis's own per-subject data by
 -- (cohort_definition_id, subject_id), then compute the SAME metric once

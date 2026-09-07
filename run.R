@@ -18,7 +18,7 @@
 #   (h) covariate overlap with 1A             -> R/08_covariates.R
 #   (i) outcomes: DTI / OS / TTNT / TTD / TFI -> R/09_outcomes.R
 #   (j) guideline relevance + adherence       -> R/10_adherence.R
-#   (k) baseline vitals + Charlson CCI        -> R/11_baseline_characterization.R
+#   (k) baseline body measurements + Charlson CCI -> R/11_baseline_characterization.R
 #   (l) treatment patterns by LoT             -> R/12_treatment_patterns.R
 #   (m) lab coverage by comorbidity subgroup  -> R/13_covariate_lab_coverage.R
 #
@@ -134,8 +134,8 @@ settings <- list(
   conditionFlagWindowAfterDays  = 30L,
   # Index window for baseline weight/height/BMI (step (k)) — wider than the
   # lab window above; matches onco-study-modules' own +/-90-day convention
-  # for vitals.
-  vitalsWindowDays    = 90L,
+  # for body measurements.
+  bodyMeasurementsWindowDays = 90L,
   # Exclude endocrine-therapy regimens (tamoxifen, abiraterone, GnRH agonists,
   # ...) from the ARTEMIS reference. Applied via the is_endocrine column of
   # cohorts/extras/regimen_reference.csv. TRUE = drop hormone therapy (default);
@@ -170,7 +170,7 @@ settings <- list(
   # Which subject_strata.sql (age/sex) breakdowns get reported, on top of
   # "overall", across every stratified output (lab_value_distribution,
   # lab_timing_to_index, eligibility_input_coverage, cohort_counts,
-  # demographics, outcomes, guideline_relevance/adherence, baseline_vitals,
+  # demographics, outcomes, guideline_relevance/adherence, baseline_body_measurements,
   # treatment_pattern_*). One setting, read by activeStrataTypes()/
   # activeStrataSpecs() (R/helpers.R) -- no per-step code needed to change
   # it. DEFAULT c("age_group", "sex", "age_sex") (all three); a smaller

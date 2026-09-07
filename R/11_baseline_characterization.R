@@ -5,10 +5,10 @@
 # R/07_demographics.R (age/sex/index year) or R/08_covariates.R (individual
 # comorbidity flags + PS strata):
 #
-#   baseline_vitals.csv — per-cohort weight (kg) / height (cm) / BMI, closest
-#     measurement to index within +/- settings$vitalsWindowDays
-#     (sql/baseline_vitals.sql). Every cohort in bc_cohort, same scope as
-#     R/07_demographics.R.
+#   baseline_body_measurements.csv — per-cohort weight (kg) / height (cm) /
+#     BMI, closest measurement to index within
+#     +/- settings$bodyMeasurementsWindowDays (sql/baseline_body_measurements.sql).
+#     Every cohort in bc_cohort, same scope as R/07_demographics.R.
 #
 #   charlson_cci.csv — Charlson Comorbidity Index category distribution,
 #     every cohort in the main tree x subject_strata.sql stratum (matches
@@ -51,7 +51,7 @@
 # R/08_covariates.R — run this step after it.
 # ===========================================================================
 
-message("\n== (k) baseline characterization: vitals + Charlson CCI ==")
+message("\n== (k) baseline characterization: body measurements + Charlson CCI ==")
 
 mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
 
@@ -62,44 +62,44 @@ nameMap <- dplyr::select(mainManifest, cohort_definition_id = "cohortId",
 # Computed entirely in SQL (percentiles via the same ROW_NUMBER/CASE
 # interpolation as lab_value_distribution_portable.sql/
 # demographics_continuous.sql, stratified the same UNION-ALL way) rather than
-# pulling one row per cohort member with a vitals measurement into R and
+# pulling one row per cohort member with a body measurement into R and
 # aggregating there.
 strataFragment <- renderSqlFile("subject_strata.sql",
   work_database_schema = settings$workDatabaseSchema,
   cohort_table         = settings$cohortTable,
   cdm_database_schema  = settings$cdmDatabaseSchema)
 
-vitalsOut <- querySqlFile(connection, "baseline_vitals.sql",
-  cdm_database_schema  = settings$cdmDatabaseSchema,
-  work_database_schema = settings$workDatabaseSchema,
-  cohort_table         = settings$cohortTable,
-  vitals_window_days   = settings$vitalsWindowDays,
-  subject_strata_sql   = strataFragment)
-names(vitalsOut) <- tolower(names(vitalsOut))
+bodyMeasurementsOut <- querySqlFile(connection, "baseline_body_measurements.sql",
+  cdm_database_schema           = settings$cdmDatabaseSchema,
+  work_database_schema          = settings$workDatabaseSchema,
+  cohort_table                  = settings$cohortTable,
+  body_measurements_window_days = settings$bodyMeasurementsWindowDays,
+  subject_strata_sql            = strataFragment)
+names(bodyMeasurementsOut) <- tolower(names(bodyMeasurementsOut))
 
-if (nrow(vitalsOut) == 0L) {
+if (nrow(bodyMeasurementsOut) == 0L) {
 
-  message("  no weight/height/BMI measurements found near any cohort index — skipping baseline_vitals.")
+  message("  no weight/height/BMI measurements found near any cohort index — skipping baseline_body_measurements.")
 
 } else {
 
-  vitalsOut$cohort_definition_id <- as.integer(vitalsOut$cohort_definition_id)
+  bodyMeasurementsOut$cohort_definition_id <- as.integer(bodyMeasurementsOut$cohort_definition_id)
   # settings$strataColumns (run.R CONFIG, via activeStrataTypes()) controls
   # which stratum views actually reach the CSV -- the SQL always computes all
   # four (cheap), a site that wants fewer/none just filters here.
-  vitalsOut <- vitalsOut[vitalsOut$stratum_type %in% activeStrataTypes(), ]
+  bodyMeasurementsOut <- bodyMeasurementsOut[bodyMeasurementsOut$stratum_type %in% activeStrataTypes(), ]
 
-  small <- vitalsOut$n > 0 & vitalsOut$n < settings$minCellCount
+  small <- bodyMeasurementsOut$n > 0 & bodyMeasurementsOut$n < settings$minCellCount
   statCols <- c("mean", "sd", "median", "lq", "uq", "min", "max")
-  vitalsOut[statCols] <- lapply(vitalsOut[statCols], function(x) ifelse(small, NA_real_, as.double(x)))
-  vitalsOut$n <- ifelse(small, -settings$minCellCount, vitalsOut$n)
+  bodyMeasurementsOut[statCols] <- lapply(bodyMeasurementsOut[statCols], function(x) ifelse(small, NA_real_, as.double(x)))
+  bodyMeasurementsOut$n <- ifelse(small, -settings$minCellCount, bodyMeasurementsOut$n)
 
-  vitalsOut <- dplyr::left_join(vitalsOut, nameMap, by = "cohort_definition_id") |>
+  bodyMeasurementsOut <- dplyr::left_join(bodyMeasurementsOut, nameMap, by = "cohort_definition_id") |>
     dplyr::relocate("cohort_name", .after = "cohort_definition_id")
-  vitalsOut <- vitalsOut[c("cohort_definition_id", "cohort_name", "variable",
+  bodyMeasurementsOut <- bodyMeasurementsOut[c("cohort_definition_id", "cohort_name", "variable",
                           "stratum_type", "stratum_value", "n", statCols)]
-  writeResultCsv(vitalsOut, "baseline_vitals", "characterization")
-  message("  baseline_vitals: ", nrow(vitalsOut), " row(s)")
+  writeResultCsv(bodyMeasurementsOut, "baseline_body_measurements", "characterization")
+  message("  baseline_body_measurements: ", nrow(bodyMeasurementsOut), " row(s)")
 }
 
 # --- Charlson CCI, every cohort in the main tree ----------------------------
