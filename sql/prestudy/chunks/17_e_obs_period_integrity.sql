@@ -32,9 +32,9 @@
 --     Anchors: INDEX (cohort index date) and FIRST_MET (first metastasis date).
 --     Sources: #cohort, #met_summary, #death_obs_status, #death_stratum_counts
 --     (00_setup.sql) and @cdm_database_schema.observation_period.
---     Small-cell suppression: n_numerator in (0, @min_cell_count] set to
---     -@min_cell_count; median set to NULL when its decedent denominator is
---     suppressed. Aggregate cohort/death denominators are not suppressed.
+--     Small-cell suppression: n_numerator and n_denominator each in
+--     (0, @min_cell_count] set to -@min_cell_count, independently; median
+--     set to NULL when its decedent denominator is suppressed.
 
 WITH patient_obs AS (
     SELECT
@@ -196,7 +196,12 @@ SELECT
     stratum,
     CASE WHEN n_numerator IS NOT NULL AND n_numerator > 0 AND n_numerator <= @min_cell_count
          THEN -@min_cell_count ELSE n_numerator END AS n_numerator,
-    n_denominator,
+    -- n_denominator is independently censored too: for the death-related
+    -- metrics it's the same underlying count as a numerator censored
+    -- elsewhere in this file (or in 08_death_timing.sql's n_deaths) -- left
+    -- raw here would show in plain sight exactly what was hidden there.
+    CASE WHEN n_denominator IS NOT NULL AND n_denominator > 0 AND n_denominator <= @min_cell_count
+         THEN -@min_cell_count ELSE n_denominator END AS n_denominator,
     CASE WHEN median_days IS NOT NULL AND n_denominator IS NOT NULL AND n_denominator <= @min_cell_count
          THEN NULL ELSE median_days END AS median_days
 FROM metrics

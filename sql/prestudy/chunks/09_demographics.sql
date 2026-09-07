@@ -41,16 +41,28 @@ ages AS (
         END AS age_years
     FROM base
 )
+-- Small-cell suppression: n_patients/n_male/n_female in (0, @min_cell_count]
+-- set to -@min_cell_count, independently; pct_male/pct_female and the age
+-- quartiles blanked whenever their underlying count is censored (a raw
+-- pct alongside a censored n would let the true small count be recomputed).
 SELECT
     agg.anchor_event,
-    agg.n_patients,
-    agg.n_male,
-    agg.n_female,
-    agg.pct_male,
-    agg.pct_female,
-    p.age_lq_years,
-    p.age_median_years,
-    p.age_uq_years
+    CASE WHEN agg.n_patients > 0 AND agg.n_patients <= @min_cell_count
+         THEN -@min_cell_count ELSE agg.n_patients END AS n_patients,
+    CASE WHEN agg.n_male > 0 AND agg.n_male <= @min_cell_count
+         THEN -@min_cell_count ELSE agg.n_male END AS n_male,
+    CASE WHEN agg.n_female > 0 AND agg.n_female <= @min_cell_count
+         THEN -@min_cell_count ELSE agg.n_female END AS n_female,
+    CASE WHEN agg.n_male > 0 AND agg.n_male <= @min_cell_count
+         THEN NULL ELSE agg.pct_male END AS pct_male,
+    CASE WHEN agg.n_female > 0 AND agg.n_female <= @min_cell_count
+         THEN NULL ELSE agg.pct_female END AS pct_female,
+    CASE WHEN agg.n_patients > 0 AND agg.n_patients <= @min_cell_count
+         THEN NULL ELSE p.age_lq_years END AS age_lq_years,
+    CASE WHEN agg.n_patients > 0 AND agg.n_patients <= @min_cell_count
+         THEN NULL ELSE p.age_median_years END AS age_median_years,
+    CASE WHEN agg.n_patients > 0 AND agg.n_patients <= @min_cell_count
+         THEN NULL ELSE p.age_uq_years END AS age_uq_years
 FROM (
     SELECT
         anchor_event,

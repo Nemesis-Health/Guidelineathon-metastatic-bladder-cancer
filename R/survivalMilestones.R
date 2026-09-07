@@ -84,8 +84,13 @@ extractSurvivalMilestones <- function(kmData,
   result <- dplyr::bind_rows(rows)
 
   if (hasRisk) {
-    censor <- !is.na(result$n_at_risk) & result$n_at_risk > 0L &
-              result$n_at_risk < minCellCount
+    # n_at_risk may arrive already censored to -minCellCount (this repo's
+    # computeTimeToEvent() censors kmData$n.risk before returning it) rather
+    # than as the raw small value -- catch both shapes, or surv_prob/lower/
+    # upper never get blanked for an already-censored row.
+    censor <- !is.na(result$n_at_risk) &
+              ((result$n_at_risk > 0L & result$n_at_risk < minCellCount) |
+               result$n_at_risk == -as.integer(minCellCount))
     if (any(censor)) {
       result$surv_prob[censor] <- NA_real_
       if (hasCi) {

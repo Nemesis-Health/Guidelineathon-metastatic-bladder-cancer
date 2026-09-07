@@ -345,6 +345,20 @@ attrition$gainCount[.smallAttr]   <- NA_integer_
 attrition$personCount[.smallAttr] <- -settings$minCellCount
 .smallRem <- attrition$remaining > 0 & attrition$remaining < settings$minCellCount
 attrition$remaining[.smallRem] <- -settings$minCellCount
+# gainCount is its own distinct-patient count, not merely a value paired with
+# personCount -- it can be small even when personCount is large, so it needs
+# its own independent censoring check (the block above only blanks it when
+# personCount itself is small).
+.smallGain <- !is.na(attrition$gainCount) & attrition$gainCount > 0 &
+              attrition$gainCount < settings$minCellCount
+attrition$gainCount[.smallGain] <- -settings$minCellCount
+# personTotal (the pre-inclusion-rule qualifying-event population) is not
+# published anywhere else -- and on the ruleSequence = -1 row it is BY
+# CONSTRUCTION equal to personCount, so leaving it uncensored there would
+# show the exact value personCount was just suppressed to hide. Censor it
+# independently, same rule as every other count in this table.
+.smallTotal <- attrition$personTotal > 0 & attrition$personTotal < settings$minCellCount
+attrition$personTotal[.smallTotal] <- -settings$minCellCount
 
 writeResultCsv(attrition, "attrition_target_1a", "characterization")
 print(tibble::as_tibble(attrition), n = Inf)

@@ -138,11 +138,11 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
         nTreated <- dplyr::n_distinct(tp$person_id)
         untreatedRow <- tibble::tibble(
           stratum_type  = stratumType, stratum_value = val,
-          n_t1          = nT1,
+          n_t1          = censorN(nT1),
           n_treated     = censorN(nTreated),
           n_untreated   = censorN(nT1 - nTreated),
           pct_untreated = round((nT1 - nTreated) / nT1 * 100, 2))
-        if (untreatedRow$n_treated < 0 || untreatedRow$n_untreated < 0)
+        if (untreatedRow$n_t1 < 0 || untreatedRow$n_treated < 0 || untreatedRow$n_untreated < 0)
           untreatedRow$pct_untreated <- NA_real_
         untreatedList[[length(untreatedList) + 1L]] <- untreatedRow
 
@@ -182,15 +182,19 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     writeResultCsv(untreated, "treatment_pattern_untreated", "treatment_patterns")
 
     regimenCounts <- dplyr::bind_rows(regimenList)
-    small <- regimenCounts$n_patients > 0 & regimenCounts$n_patients < settings$minCellCount
-    regimenCounts$pct_of_lot <- ifelse(small, NA_real_, regimenCounts$pct_of_lot)
+    small    <- regimenCounts$n_patients > 0 & regimenCounts$n_patients < settings$minCellCount
+    smallLot <- regimenCounts$lot_n > 0 & regimenCounts$lot_n < settings$minCellCount
+    regimenCounts$pct_of_lot <- ifelse(small | smallLot, NA_real_, regimenCounts$pct_of_lot)
     regimenCounts$n_patients <- ifelse(small, -settings$minCellCount, regimenCounts$n_patients)
+    regimenCounts$lot_n      <- ifelse(smallLot, -settings$minCellCount, regimenCounts$lot_n)
     writeResultCsv(regimenCounts, "treatment_pattern_regimen", "treatment_patterns")
 
     catCounts <- dplyr::bind_rows(catList)
-    small <- catCounts$n_patients > 0 & catCounts$n_patients < settings$minCellCount
-    catCounts$pct_of_lot <- ifelse(small, NA_real_, catCounts$pct_of_lot)
+    small    <- catCounts$n_patients > 0 & catCounts$n_patients < settings$minCellCount
+    smallLot <- catCounts$lot_n > 0 & catCounts$lot_n < settings$minCellCount
+    catCounts$pct_of_lot <- ifelse(small | smallLot, NA_real_, catCounts$pct_of_lot)
     catCounts$n_patients <- ifelse(small, -settings$minCellCount, catCounts$n_patients)
+    catCounts$lot_n      <- ifelse(smallLot, -settings$minCellCount, catCounts$lot_n)
     writeResultCsv(catCounts, "treatment_pattern_category", "treatment_patterns")
 
     pathways <- dplyr::bind_rows(pathwaysList) |>
@@ -271,9 +275,11 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
       dplyr::left_join(nameMapTP, by = "cohort_definition_id") |>
       dplyr::relocate("cohort_name", .after = "cohort_definition_id")
 
-    small <- yearCatCounts$n_patients > 0 & yearCatCounts$n_patients < settings$minCellCount
-    yearCatCounts$pct_of_year_lot <- ifelse(small, NA_real_, yearCatCounts$pct_of_year_lot)
+    small     <- yearCatCounts$n_patients > 0 & yearCatCounts$n_patients < settings$minCellCount
+    smallYear <- yearCatCounts$year_lot_n > 0 & yearCatCounts$year_lot_n < settings$minCellCount
+    yearCatCounts$pct_of_year_lot <- ifelse(small | smallYear, NA_real_, yearCatCounts$pct_of_year_lot)
     yearCatCounts$n_patients      <- ifelse(small, -settings$minCellCount, yearCatCounts$n_patients)
+    yearCatCounts$year_lot_n      <- ifelse(smallYear, -settings$minCellCount, yearCatCounts$year_lot_n)
     writeResultCsv(yearCatCounts, "treatment_pattern_by_year", "treatment_patterns")
 
     # nT1/nTreated inside the loop above are per-stratum-value locals (R's
