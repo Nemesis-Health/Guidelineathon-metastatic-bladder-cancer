@@ -58,3 +58,7 @@ docs/BULK_LOAD.md
 docs/HANDOFF.md
 docs/REDSHIFT.md
 docs/SQL_SERVER.md
+
+# === DatabaseConnector debug output (written on a SQL error; may contain
+# schema/SQL details) ===
+errorReportSql.txt
