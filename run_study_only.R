@@ -34,10 +34,6 @@ for (p in c("DatabaseConnector", "SqlRender", "CohortGenerator", "CirceR",
     stop("Required package not installed: ", p, call. = FALSE)
 }
 
-# ARTEMIS must be ATTACHED (not just loaded via `::`): loadRegimens() does
-# data("regimens", package = "ARTEMIS", envir = regimens_env) internally, but
-# then checks exists("regimens") without envir = regimens_env, so the check
-# only succeeds when package:ARTEMIS is already on the search path.
 suppressMessages(library(ARTEMIS))
 
 # ===========================================================================
@@ -64,56 +60,18 @@ settings <- list(
   episodeTable         = "bc_artemis_episodes",
   regimenClassTable    = "bc_regimen_classifications",
 
-  # --- Run settings ---------------------------------------------------------
+  # --- Run settings -- full detail on all of these in README.md's CONFIG settings reference ---
   minCellCount        = 5L,
-  # Index window for near-index eligibility inputs (labs, ECOG/PS) in Target
-  # 2a-2d, the covariate PS overlap (step (h)), eligibility-input coverage
-  # (step (e)), and lab value distributions (step (d)): how many days BEFORE
-  # and AFTER the index date a record may fall.
-  labWindowBeforeDays = 30L,
-  labWindowAfterDays  = 30L,
-  # Window for the pre-existing CONDITION flags in Target 2a-2d (liver
-  # metastasis, Gilbert's syndrome, neuropathy, skin disorders, hearing
-  # loss) -- separate from, and wider than, labWindowBeforeDays/AfterDays
-  # above, since these are pre-existing-condition checks, not near-index
-  # measurements.
-  conditionFlagWindowBeforeDays = 365L,
-  conditionFlagWindowAfterDays  = 30L,
-  # Index window for baseline weight/height/BMI (step (k)) — wider than the
-  # lab window above; matches onco-study-modules' own +/-90-day convention
-  # for body measurements.
-  bodyMeasurementsWindowDays = 90L,
-  # Exclude endocrine-therapy regimens (tamoxifen, abiraterone, GnRH agonists,
-  # ...) from the ARTEMIS reference. Applied via the is_endocrine column of
-  # cohorts/extras/regimen_reference.csv. TRUE = drop hormone therapy (default);
-  # FALSE = count endocrine therapy as anticancer treatment.
-  stripEndocrineTherapy = TRUE,
-  # --- Which drugs ARTEMIS encodes into each patient's alignment string ------
-  # Non-regimen / supportive drugs in the string are gap noise that lowers
-  # alignment scores and shrinks eras (DEVELOPMENT.md §10.4). Two composable
-  # filters (both applied when both active). Regimens whose components are
-  # filtered out can no longer align and are dropped from the reference (logged).
-  #   validDrugsRegimenComponents  TRUE (default) = keep only drugs that appear
-  #                                in a kept regimen; FALSE = keep all. This keeps
-  #                                validDrugs and the regimen file consistent —
-  #                                every kept regimen's components stay encodable,
-  #                                so every regimen stays alignable.
-  #   validDrugsAtcClasses         ATC 2nd-level classes to keep. DEFAULT
-  #                                character(0) (off): setting c("L01".."L04")
-  #                                further drops steroids/rescue agents for a
-  #                                cleaner string, but ALSO false-drops anticancer
-  #                                drugs whose special-formulation / fixed-dose-
-  #                                combo RxNorm concept isn't ATC-mapped in the
-  #                                vocab (nab-paclitaxel, liposomal doxorubicin,
-  #                                ADCs, ...) and their regimens — so it is opt-in.
-  validDrugsRegimenComponents = TRUE,
-  validDrugsAtcClasses = c("L01", "L02", "L03", "L04"),
-  # ATC 2nd-level classes whose descendant ingredients are kept in the ARTEMIS
-  # exposure assessment (drug_exposures / uncaptured / coverage in step (f)).
-  # NULL (default) mirrors the regimen anticancer filter: L01/L03/L04, plus L02
-  # when stripEndocrineTherapy is FALSE. Set an explicit vector (e.g. c("L01"))
-  # to override, or character(0) to keep every recognised ingredient.
-  assessmentAtcClasses = NULL,
+  labWindowBeforeDays = 30L,   # near-index eligibility inputs (labs, ECOG/PS): days before index
+  labWindowAfterDays  = 30L,   # same, days after index
+  conditionFlagWindowBeforeDays = 365L,   # pre-existing condition flags (liver mets, neuropathy, ...): days before index
+  conditionFlagWindowAfterDays  = 30L,    # same, days after index
+  bodyMeasurementsWindowDays = 90L,   # baseline weight/height/BMI: days before/after index
+  stripEndocrineTherapy = TRUE,   # drop endocrine-therapy regimens from the ARTEMIS reference
+  validDrugsRegimenComponents = TRUE,   # keep only drugs that appear in a kept regimen
+  validDrugsAtcClasses = c("L01", "L02", "L03", "L04"),   # ATC classes kept in the alignment string
+  assessmentAtcClasses = NULL,   # ATC classes kept in exposure assessment (step f); NULL mirrors the regimen filter above
+  strataColumns = c("age_group", "sex", "age_sex"),   # age/sex breakdowns reported on every stratified output
   outputFolder        = file.path("results")
 )
 

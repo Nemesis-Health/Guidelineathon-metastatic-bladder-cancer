@@ -61,6 +61,22 @@ schemas, table names, run settings; it builds the `executionSettings` object the
 ARTEMIS code reads), then sources the numbered steps in order and writes
 CSVs under `results/eligibility/`.
 
+### CONFIG settings reference
+
+The comments in `run.R`/`run_study_only.R` are deliberately terse — full detail on the
+less-obvious run settings lives here instead.
+
+| Setting | Default | What it does |
+|---|---|---|
+| `labWindowBeforeDays`, `labWindowAfterDays` | `30`, `30` | Days before/after index a record may fall for near-index eligibility inputs: labs, ECOG/PS in Target 2a-2d, the covariate PS overlap (step (h)), eligibility-input coverage (step (e)), lab value distributions (step (d)). |
+| `conditionFlagWindowBeforeDays`, `conditionFlagWindowAfterDays` | `365`, `30` | Separate, wider window for the pre-existing CONDITION flags in Target 2a-2d (liver metastasis, Gilbert's syndrome, neuropathy, skin disorders, hearing loss) — these are pre-existing-condition checks, not near-index measurements, so they don't share the lab window above. |
+| `bodyMeasurementsWindowDays` | `90` | Index window for baseline weight/height/BMI (step (k)) — wider than the lab window, matching onco-study-modules' own convention for body measurements. |
+| `stripEndocrineTherapy` | `TRUE` | Excludes endocrine-therapy regimens (tamoxifen, abiraterone, GnRH agonists, ...) from the ARTEMIS reference, via `is_endocrine` in `cohorts/extras/regimen_reference.csv`. `FALSE` counts endocrine therapy as anticancer treatment. |
+| `validDrugsRegimenComponents` | `TRUE` | Controls which drugs ARTEMIS encodes into each patient's alignment string — non-regimen/supportive drugs are gap noise that lowers alignment scores and shrinks eras (DEVELOPMENT.md §10.4). `TRUE` keeps only drugs that appear in a kept regimen (keeps `validDrugs` and the regimen file consistent — every kept regimen's components stay encodable); `FALSE` keeps all. Composes with `validDrugsAtcClasses` below (both apply when both active); regimens whose components get filtered out can no longer align and are dropped from the reference (logged). |
+| `validDrugsAtcClasses` | `c("L01","L02","L03","L04")` | ATC 2nd-level classes to keep in the alignment string. `character(0)` (off) also keeps steroids/rescue agents — the classes further drop those for a cleaner string, but ALSO false-drop anticancer drugs whose special-formulation/fixed-dose-combo RxNorm concept isn't ATC-mapped in the vocab (nab-paclitaxel, liposomal doxorubicin, ADCs, ...) and their regimens — opt-in for that reason. |
+| `assessmentAtcClasses` | `NULL` | ATC 2nd-level classes kept in the ARTEMIS exposure assessment (`drug_exposures`/`uncaptured`/`coverage` in step (f)) — a diagnostic escape hatch, separate from the alignment-string filter above. `NULL` mirrors the regimen anticancer filter (`L01`/`L03`/`L04`, plus `L02` when `stripEndocrineTherapy` is `FALSE`). Set an explicit vector to override, or `character(0)` to keep every recognized ingredient (useful for one-off debugging of confusing coverage numbers — shows the *unfiltered* exposure counts, supportive drugs included). |
+| `strataColumns` | `c("age_group","sex","age_sex")` | Which `subject_strata.sql` (age/sex) breakdowns get reported, on top of `"overall"`, across every stratified output (`lab_value_distribution`, `lab_timing_to_index`, `eligibility_input_coverage`, `cohort_counts`, `demographics`, `outcomes`, `guideline_relevance`/`adherence`, `baseline_body_measurements`, `treatment_pattern_*`). Read by `activeStrataTypes()`/`activeStrataSpecs()` (`R/helpers.R`) — no per-step code needed to change it. A partner whose subgroups censor too heavily to be useful can narrow this (e.g. `c("sex")`), or set `character(0)` to turn stratification off everywhere and only get `"overall"` rows. |
+
 ### Requirements
 
 **R 4.5.1** (the version the lockfile pins) and the fourteen direct R packages below (the set `run.R` itself checks for on startup). Everything else in `renv.lock` is a transitive dependency of these.
@@ -95,7 +111,38 @@ You also need a driver for your database: a **JDBC driver** if you connect with
 `DatabaseConnector::downloadJdbcDrivers("<dbms>", "~/.jdbc_drivers")`), or the
 relevant **ODBC/DBI driver** if you use `createDbiConnectionDetails()`. Which one
 is up to you — `connectionDetails` is defined by you in `run.R` (see step 2 in
-[Quick start](#quick-start)).
+[Quick start](#quick-start)). Any `DatabaseConnector` `connectionDetails` works;
+the SQL dialect is read from the live connection, so nothing else depends on
+how it's built. A few examples:
+
+```r
+# JDBC (SQL Server) -- NB: this driver has no "host/db" path-style syntax;
+# server = "host/db" gets sent verbatim as jdbc:sqlserver://host/db, which it
+# treats as ONE hostname to resolve (fails with a "TCP/IP connection... has
+# failed" error that looks like a network/instance problem but isn't). Use
+# extraSettings = "databaseName=..." instead.
+connectionDetails <- DatabaseConnector::createConnectionDetails(
+  dbms = "sql server", server = "host", user = "...", password = "...",
+  extraSettings = "databaseName=db", pathToDriver = path.expand("~/.jdbc_drivers"))
+
+# DBI / Azure AD token
+connectionDetails <- DatabaseConnector::createDbiConnectionDetails(
+  dbms = "sql server", drv = odbc::odbc(),
+  Driver = "ODBC Driver 18 for SQL Server",
+  Server = "...", Database = "...", Encrypt = "yes",
+  TrustServerCertificate = "No",
+  attributes = list("azure_token" = token$credentials$access_token))
+
+# Snowflake, RSA key-pair auth (e.g. IQVIA Posit Workbench)
+connectionDetails <- DatabaseConnector::createConnectionDetails(
+  dbms = "snowflake",
+  user = Sys.getenv("SNOWFLAKE_USER"),          # e.g. "u12345678"
+  connectionString = paste0(
+    "jdbc:snowflake://<account>.snowflakecomputing.com/",
+    "?warehouse=<WAREHOUSE>&db=<DATABASE>&schema=<CDM_SCHEMA>",
+    "&role=<ROLE>",
+    "&private_key_file=", Sys.getenv("PRIV_KEY_FILE")))
+```
 
 > [!WARNING]
 > **PostgreSQL: use a JDBC connection, not DBI/RPostgres.** DatabaseConnector's

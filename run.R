@@ -45,60 +45,7 @@ suppressMessages(library(ARTEMIS))
 # ===========================================================================
 
 # --- Database connection ----------------------------------------------------
-# OPTIONAL, ONE-TIME SETUP: this pipeline writes a couple of reference tables
-# while it runs. On some database backends, DatabaseConnector can write them
-# a lot faster if you turn on its own built-in bulk-load mechanism first:
-#
-#   Sys.setenv(DATABASE_CONNECTOR_BULK_UPLOAD = TRUE)
-#
-# This is always safe to set -- DatabaseConnector applies it only to the
-# backends it supports, and does nothing on any other backend. Depending on
-# which backend you're connecting to, its bulk-load path may need one of two
-# kinds of one-time setup of its own:
-#   - a local database client tool installed on this machine, or
-#   - object-storage credentials, set the same way:
-#       Sys.setenv(AWS_ACCESS_KEY_ID = "...", AWS_SECRET_ACCESS_KEY = "...",
-#                  AWS_DEFAULT_REGION = "...", AWS_BUCKET_NAME = "...",
-#                  AWS_OBJECT_KEY = "...", AWS_SSE_TYPE = "AES256")
-# If neither is available to you, simply don't set
-# DATABASE_CONNECTOR_BULK_UPLOAD -- the pipeline runs correctly either way,
-# just slower on those couple of writes.
-#
-# Define `connectionDetails` however your site connects — this is left open on
-# purpose. Most JDBC setups use DatabaseConnector::createConnectionDetails(),
-# but some sites need a different constructor (e.g. createDbiConnectionDetails()
-# for Azure AD token auth). Any DatabaseConnector connectionDetails works; the
-# SQL dialect is read from the live connection, so nothing else depends on how
-# it is built.
-#
-# Example (JDBC):
-#   connectionDetails <- DatabaseConnector::createConnectionDetails(
-#     dbms = "sql server", server = "host", user = "...", password = "...",
-#     extraSettings = "databaseName=db", pathToDriver = path.expand("~/.jdbc_drivers"))
-#   # NB: this driver has no "host/db" path-style syntax -- `server = "host/db"`
-#   # gets sent to it verbatim as `jdbc:sqlserver://host/db`, which it treats
-#   # as ONE hostname to resolve (fails with a "TCP/IP connection... has
-#   # failed" error that looks like a network/instance problem but isn't). Use
-#   # `extraSettings = "databaseName=..."` instead.
-#
-# Example (DBI / Azure token):
-#   connectionDetails <- DatabaseConnector::createDbiConnectionDetails(
-#     dbms = "sql server", drv = odbc::odbc(),
-#     Driver = "ODBC Driver 18 for SQL Server",
-#     Server = "...", Database = "...", Encrypt = "yes",
-#     TrustServerCertificate = "No",
-#     attributes = list("azure_token" = token$credentials$access_token))
-#
-# Example (Snowflake / RSA key-pair auth, e.g. IQVIA Posit Workbench):
-#   connectionDetails <- DatabaseConnector::createConnectionDetails(
-#     dbms = "snowflake",
-#     user = Sys.getenv("SNOWFLAKE_USER"),          # e.g. "u12345678"
-#     connectionString = paste0(
-#       "jdbc:snowflake://<account>.snowflakecomputing.com/",
-#       "?warehouse=<WAREHOUSE>&db=<DATABASE>&schema=<CDM_SCHEMA>",
-#       "&role=<ROLE>",
-#       "&private_key_file=", Sys.getenv("PRIV_KEY_FILE")))
-
+# Define however your site connects -- see README.md's Requirements section for examples.
 connectionDetails <- NULL   # <-- REPLACE with your connection
 
 # --- Site + OMOP CDM schemas ------------------------------------------------
@@ -117,67 +64,18 @@ settings <- list(
   episodeTable         = "bc_artemis_episodes",
   regimenClassTable    = "bc_regimen_classifications",
 
-  # --- Run settings ---------------------------------------------------------
+  # --- Run settings -- full detail on all of these in README.md's CONFIG settings reference ---
   minCellCount        = 5L,
-  # Index window for near-index eligibility inputs (labs, ECOG/PS) in Target
-  # 2a-2d, the covariate PS overlap (step (h)), eligibility-input coverage
-  # (step (e)), and lab value distributions (step (d)): how many days BEFORE
-  # and AFTER the index date a record may fall.
-  labWindowBeforeDays = 30L,
-  labWindowAfterDays  = 30L,
-  # Window for the pre-existing CONDITION flags in Target 2a-2d (liver
-  # metastasis, Gilbert's syndrome, neuropathy, skin disorders, hearing
-  # loss) -- separate from, and wider than, labWindowBeforeDays/AfterDays
-  # above, since these are pre-existing-condition checks, not near-index
-  # measurements.
-  conditionFlagWindowBeforeDays = 365L,
-  conditionFlagWindowAfterDays  = 30L,
-  # Index window for baseline weight/height/BMI (step (k)) — wider than the
-  # lab window above; matches onco-study-modules' own +/-90-day convention
-  # for body measurements.
-  bodyMeasurementsWindowDays = 90L,
-  # Exclude endocrine-therapy regimens (tamoxifen, abiraterone, GnRH agonists,
-  # ...) from the ARTEMIS reference. Applied via the is_endocrine column of
-  # cohorts/extras/regimen_reference.csv. TRUE = drop hormone therapy (default);
-  # FALSE = count endocrine therapy as anticancer treatment.
-  stripEndocrineTherapy = TRUE,
-  # --- Which drugs ARTEMIS encodes into each patient's alignment string ------
-  # Non-regimen / supportive drugs in the string are gap noise that lowers
-  # alignment scores and shrinks eras (DEVELOPMENT.md §10.4). Two composable
-  # filters (both applied when both active). Regimens whose components are
-  # filtered out can no longer align and are dropped from the reference (logged).
-  #   validDrugsRegimenComponents  TRUE (default) = keep only drugs that appear
-  #                                in a kept regimen; FALSE = keep all. This keeps
-  #                                validDrugs and the regimen file consistent —
-  #                                every kept regimen's components stay encodable,
-  #                                so every regimen stays alignable.
-  #   validDrugsAtcClasses         ATC 2nd-level classes to keep. DEFAULT
-  #                                character(0) (off): setting c("L01".."L04")
-  #                                further drops steroids/rescue agents for a
-  #                                cleaner string, but ALSO false-drops anticancer
-  #                                drugs whose special-formulation / fixed-dose-
-  #                                combo RxNorm concept isn't ATC-mapped in the
-  #                                vocab (nab-paclitaxel, liposomal doxorubicin,
-  #                                ADCs, ...) and their regimens — so it is opt-in.
-  validDrugsRegimenComponents = TRUE,
-  validDrugsAtcClasses = c("L01", "L02", "L03", "L04"),
-  # ATC 2nd-level classes whose descendant ingredients are kept in the ARTEMIS
-  # exposure assessment (drug_exposures / uncaptured / coverage in step (f)).
-  # NULL (default) mirrors the regimen anticancer filter: L01/L03/L04, plus L02
-  # when stripEndocrineTherapy is FALSE. Set an explicit vector (e.g. c("L01"))
-  # to override, or character(0) to keep every recognised ingredient.
-  assessmentAtcClasses = NULL,
-  # Which subject_strata.sql (age/sex) breakdowns get reported, on top of
-  # "overall", across every stratified output (lab_value_distribution,
-  # lab_timing_to_index, eligibility_input_coverage, cohort_counts,
-  # demographics, outcomes, guideline_relevance/adherence, baseline_body_measurements,
-  # treatment_pattern_*). One setting, read by activeStrataTypes()/
-  # activeStrataSpecs() (R/helpers.R) -- no per-step code needed to change
-  # it. DEFAULT c("age_group", "sex", "age_sex") (all three); a smaller
-  # partner whose subgroups censor too heavily to be useful can narrow this
-  # (e.g. c("sex")) or set character(0) to turn stratification off
-  # everywhere and only get "overall" rows.
-  strataColumns = c("age_group", "sex", "age_sex"),
+  labWindowBeforeDays = 30L,   # near-index eligibility inputs (labs, ECOG/PS): days before index
+  labWindowAfterDays  = 30L,   # same, days after index
+  conditionFlagWindowBeforeDays = 365L,   # pre-existing condition flags (liver mets, neuropathy, ...): days before index
+  conditionFlagWindowAfterDays  = 30L,    # same, days after index
+  bodyMeasurementsWindowDays = 90L,   # baseline weight/height/BMI: days before/after index
+  stripEndocrineTherapy = TRUE,   # drop endocrine-therapy regimens from the ARTEMIS reference
+  validDrugsRegimenComponents = TRUE,   # keep only drugs that appear in a kept regimen
+  validDrugsAtcClasses = c("L01", "L02", "L03", "L04"),   # ATC classes kept in the alignment string
+  assessmentAtcClasses = NULL,   # ATC classes kept in exposure assessment (step f); NULL mirrors the regimen filter above
+  strataColumns = c("age_group", "sex", "age_sex"),   # age/sex breakdowns reported on every stratified output
   outputFolder        = file.path("results")
 )
 
