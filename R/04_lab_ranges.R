@@ -60,7 +60,7 @@ message("  lab_value_distribution: ", nrow(labDist), " rows")
 # their own qualifying event; the T4-6/L01-initiated cohorts index on
 # treatment start instead).
 mBcId       <- cohortIdByName(mainManifest, cohortNames[["T1"]])
-pcAllowedId <- cohortIdByName(mainManifest, "Target 1A PC allowed")
+pcAllowedId <- cohortIdByName(mainManifest, paste0(cohortNames[["T1"]], " (PC allowed)"))
 metsCohortIds <- as.integer(stats::na.omit(c(mBcId, pcAllowedId)))
 
 labTiming <- querySqlFile(connection, "lab_timing_to_index_portable.sql",

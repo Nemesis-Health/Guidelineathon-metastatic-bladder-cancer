@@ -76,6 +76,15 @@ labCode  <- c(ev_pembro = "a", cisplatin = "b", carboplatin = "c",
 # T1 = the Target 1A JSON cohort (captured above by its file-derived name).
 jsonSet$cohortName[jsonSet$cohortId == cohort1Id] <- cohortNames[["T1"]]
 
+# PC-allowed variant of T1 (Target_1A_PC_allowed.json): same tree, with the
+# "no other cancer" rule loosened to allow prostate cancer. Renamed off its
+# file-derived "Target 1A PC allowed" onto T1's own name + the "(PC allowed)"
+# modifier, matching the L01-anchored PC-allowed cohort's naming below instead
+# of the raw filename.
+cohort1PcId <- cohortIdByName(jsonSet, "Target 1A PC allowed")
+stopifnot(!is.na(cohort1PcId))
+jsonSet$cohortName[jsonSet$cohortId == cohort1PcId] <- paste0(cohortNames[["T1"]], " (PC allowed)")
+
 # L01-anchored initiated cohorts (Target_1A_initiated_L01.json,
 # Target_1A_PC_allowed_initiated_L01.json): standalone ATLAS/Circe cohorts,
 # analogous to "mBC initiated base" below but indexed on the earliest

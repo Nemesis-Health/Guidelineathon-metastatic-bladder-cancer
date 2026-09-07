@@ -475,7 +475,7 @@ rule order doesn't affect either, since Circe rules are an unordered AND.
 
 | Column | Meaning |
 |---|---|
-| `cohortId`, `cohortName` | The Target 1A tree cohort (Target 1A / Target 1A PC allowed). |
+| `cohortId`, `cohortName` | The Target 1A tree cohort (`T1 Metastatic bladder cancer` / `T1 Metastatic bladder cancer (PC allowed)`). |
 | `ruleSequence` | `-1` (qualifying event, before any inclusion rule) or the rule's 0-based order. |
 | `ruleName` | Inclusion rule text, or `(qualifying event, before inclusion rules)` for `-1`. |
 | `personCount` | Subjects satisfying this rule alone (censored). |
@@ -704,7 +704,7 @@ direction).
 |---|---|
 | `stratum_type` | `overall`, `age_group`, `sex`, or `age_sex`. |
 | `stratum_value` | `overall`; `<=65`/`>65`; `Male`/`Female`/`Other-Unknown`; or the `age_sex` combination (`'<=65\|Male'`, ...). |
-| `cohort_definition_id` | Cohort id (Target 1A or Target 1A PC allowed). |
+| `cohort_definition_id` | Cohort id (`T1 Metastatic bladder cancer` or `T1 Metastatic bladder cancer (PC allowed)`). |
 | `cat` | Lab category / analyte code (one of the 14 in `sql/lab_cohorts.sql`). |
 | `direction` | `before`, `after`, or `any`. |
 | `n_0_14`, `n_0_30`, `n_0_60`, `n_0_90`, `n_0_180` | Subjects whose closest measurement in that direction is within 14/30/60/90/180 days of index (each censored independently). |
