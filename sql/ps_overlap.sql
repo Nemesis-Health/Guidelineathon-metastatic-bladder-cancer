@@ -6,7 +6,7 @@
 -- dated at the PS record. A member of a cohort in @cohort_definition_ids (the
 -- full main tree, same scope as covariate_overlap.sql above) counts toward a
 -- stratum if they have an ECOG record in that stratum's id-set within
--- @covariate_window_before_days days before to @covariate_window_after_days days after
+-- @lab_window_before_days days before to @lab_window_after_days days after
 -- THAT COHORT'S OWN index. Strata OVERLAP by design (e.g. PS 0-2 includes
 -- PS1/PS2) -- deliberately a near-index window, not the unbounded look-back
 -- covariate_overlap.sql uses for comorbidities: performance status is a
@@ -20,7 +20,7 @@
 -- SqlRender parameters:
 --   @work_database_schema @cohort_table @lab_cohort_table
 --   @cohort_definition_ids  comma-separated cohort_definition_id list
---   @covariate_window_before_days @covariate_window_after_days
+--   @lab_window_before_days @lab_window_after_days
 --   subject_strata_sql      pre-rendered fragment -- see the `strata` CTE below
 -- =============================================================================
 
@@ -73,8 +73,8 @@ SELECT tc_strat.stratum_type,
   JOIN @work_database_schema.@lab_cohort_table l
     ON l.subject_id = tc_strat.subject_id
    AND l.cohort_definition_id = pc.test_id
-   AND l.cohort_start_date BETWEEN DATEADD(day, -@covariate_window_before_days, tc_strat.cohort_start_date)
-                                AND DATEADD(day,  @covariate_window_after_days, tc_strat.cohort_start_date)
+   AND l.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc_strat.cohort_start_date)
+                                AND DATEADD(day,  @lab_window_after_days, tc_strat.cohort_start_date)
  GROUP BY tc_strat.stratum_type, tc_strat.stratum_value, tc_strat.cohort_definition_id,
           pc.code
 ;

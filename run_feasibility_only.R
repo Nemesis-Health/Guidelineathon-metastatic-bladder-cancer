@@ -65,17 +65,20 @@ settings <- list(
 
   # --- Run settings ---------------------------------------------------------
   minCellCount        = 5L,
-  # Index window for near-index eligibility inputs (labs, ECOG, condition/
-  # diagnosis limbs in Target 2a-2d): how many days BEFORE and AFTER the
-  # index date a record may fall.
+  # Index window for near-index eligibility inputs (labs, ECOG/PS) in Target
+  # 2a-2d, the covariate PS overlap (step (h)), eligibility-input coverage
+  # (step (e)), and lab value distributions (step (d)): how many days BEFORE
+  # and AFTER the index date a record may fall.
   labWindowBeforeDays = 30L,
   labWindowAfterDays  = 30L,
-  # Index window for the performance-status covariate overlap (step (h),
-  # R/08_covariates.R) — separate from labWindowBeforeDays/AfterDays above:
-  # eligibility and covariate reporting are different purposes and may need
-  # different windows.
-  covariateWindowBeforeDays = 14L,
-  covariateWindowAfterDays  = 7L,
+  # Window for the pre-existing CONDITION flags in Target 2a-2d (liver
+  # metastasis, Gilbert's syndrome, neuropathy, skin disorders, hearing
+  # loss) -- separate from labWindowBeforeDays/AfterDays above, since these
+  # are "any record on or before index + N days" checks (no lower bound),
+  # not near-index measurements. conditionFlagWindowBeforeDays is currently
+  # unused (kept for symmetry/future use); only AfterDays feeds the cutoff.
+  conditionFlagWindowBeforeDays = 14L,
+  conditionFlagWindowAfterDays  = 7L,
   # Index window for baseline weight/height/BMI (step (k)) — wider than the
   # lab window above; matches onco-study-modules' own +/-90-day convention
   # for vitals.

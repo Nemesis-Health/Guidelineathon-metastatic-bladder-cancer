@@ -524,10 +524,8 @@ to **that cohort's own index date**. Comorbidities count members with ≥1
 qualifying record **on/before their own index** — an unbounded look-back
 (prevalent baseline comorbidity), not a windowed one; performance-status
 strata count members with an ECOG record (KPS folded in) in the stratum
-within the index window (`covariateWindowBeforeDays` before /
-`covariateWindowAfterDays` after) of their own index — a separate, narrower
-window from `labWindowBeforeDays`/`labWindowAfterDays` (used by eligibility
-and lab-input reporting) — deliberately a near-index window, not the
+within the index window (`labWindowBeforeDays` before / `labWindowAfterDays`
+after) of their own index — deliberately a near-index window, not the
 comorbidities' unbounded look-back: PS is a point-in-time functional
 assessment, not a chronic condition flag. PS strata **overlap** by design
 (`PS 0-2` includes `PS1`/`PS2`). Comorbidity cohorts are generated into
@@ -1121,10 +1119,12 @@ callable interactively, not run automatically for every combination.
   atomic components, not combined rows.
 - **Gilbert's syndrome (test 29) is not encoded**, so the TBil ≤3× ULN
   branch is left ungated (over-permissive; excludes no one).
-- **Eligibility window is ±30 days around the Cohort 1 index** for lab
+- **Eligibility window is ±30 days around the Cohort 1 index** for lab/ECOG
   criteria — an intentional PI decision, not the protocol's literal 90-day
-  window. Non-lab condition criteria inherit the same window by
-  construction.
+  window. Pre-existing CONDITION criteria (liver-mets, Gilbert's syndrome,
+  neuropathy, skin, hearing) use a separate, narrower window instead: "any
+  record on or before index + 7 days" (`settings$conditionFlagWindowAfterDays`,
+  no lower bound).
 - **The treatment-initiated cohort's regimen-start window is
   `[index − 30, index + 90]`**, an author-chosen window rather than a
   literal transcription of the protocol text.

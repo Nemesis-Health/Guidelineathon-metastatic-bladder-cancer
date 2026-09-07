@@ -22,7 +22,8 @@ DROP TABLE IF EXISTS #elig2c_tmp;
 WITH base AS (
   SELECT tc.subject_id, tc.cohort_start_date, tc.cohort_end_date,
          DATEADD(day, -@lab_window_before_days, tc.cohort_start_date) AS win_lo,
-         DATEADD(day,  @lab_window_after_days,  tc.cohort_start_date) AS win_hi
+         DATEADD(day,  @lab_window_after_days,  tc.cohort_start_date) AS win_hi,
+         DATEADD(day,  @condition_flag_window_after_days, tc.cohort_start_date) AS win_hi_cond
     FROM @target_database_schema.@target_cohort_table tc
 
     /* ----- NOT enfortumab-eligible: exact anti-join on cohort 2a ----- */
@@ -51,12 +52,13 @@ WITH base AS (
          )
 ),
 labs AS (
-  SELECT b.subject_id, b.cohort_start_date, b.cohort_end_date, b.win_lo, b.win_hi,
+  SELECT b.subject_id, b.cohort_start_date, b.cohort_end_date, b.win_lo, b.win_hi, b.win_hi_cond,
          lab.cohort_definition_id AS test_id, lab.cohort_start_date AS lab_date
     FROM base b
     LEFT JOIN @target_database_schema.@lab_cohort_table lab
       ON lab.subject_id = b.subject_id
-     AND lab.cohort_start_date <= b.win_hi
+     -- every criterion below needs at most the wider of win_hi/win_hi_cond
+     AND lab.cohort_start_date <= (CASE WHEN b.win_hi >= b.win_hi_cond THEN b.win_hi ELSE b.win_hi_cond END)
 ),
 flags AS (
   SELECT subject_id, cohort_start_date, cohort_end_date,
@@ -73,18 +75,18 @@ flags AS (
     MAX(CASE WHEN test_id = 23            AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_tbil_gt15,
     MAX(CASE WHEN test_id = 9             AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_dbil,
     MAX(CASE WHEN test_id = 21            AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_tbil_le3,
-    MAX(CASE WHEN test_id = 29            AND lab_date <= win_hi                 THEN 1 ELSE 0 END) AS f_gilbert,
+    MAX(CASE WHEN test_id = 29            AND lab_date <= win_hi_cond            THEN 1 ELSE 0 END) AS f_gilbert,
     MAX(CASE WHEN test_id = 5             AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_ast_le25,
     MAX(CASE WHEN test_id = 6             AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_ast_le5,
-    MAX(CASE WHEN test_id = 28            AND lab_date <= win_hi                 THEN 1 ELSE 0 END) AS f_livermet,
+    MAX(CASE WHEN test_id = 28            AND lab_date <= win_hi_cond            THEN 1 ELSE 0 END) AS f_livermet,
     MAX(CASE WHEN test_id = 2             AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_alt_le25,
     MAX(CASE WHEN test_id = 3             AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_alt_le5,
     MAX(CASE WHEN test_id = 18            AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_inr,
     MAX(CASE WHEN test_id = 31            AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_anticoag,
     MAX(CASE WHEN test_id = 20            AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_pt,
     MAX(CASE WHEN test_id = 1             AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_aptt,
-    MAX(CASE WHEN test_id = 40            AND lab_date <= win_hi                 THEN 1 ELSE 0 END) AS f_hearing,
-    MAX(CASE WHEN test_id = 33            AND lab_date <= win_hi                 THEN 1 ELSE 0 END) AS f_neuropathy
+    MAX(CASE WHEN test_id = 40            AND lab_date <= win_hi_cond            THEN 1 ELSE 0 END) AS f_hearing,
+    MAX(CASE WHEN test_id = 33            AND lab_date <= win_hi_cond            THEN 1 ELSE 0 END) AS f_neuropathy
   FROM labs
   GROUP BY subject_id, cohort_start_date, cohort_end_date
 )
