@@ -99,6 +99,16 @@ stopifnot(!is.na(l01InitId), !is.na(l01InitPcAllowedId))
 jsonSet$cohortName[jsonSet$cohortId == l01InitId]          <- "mBC initiated base (L01)"
 jsonSet$cohortName[jsonSet$cohortId == l01InitPcAllowedId] <- "mBC initiated base (L01, PC allowed)"
 
+# Same pair, but qualifying on an L01 drug exposure OR a chemo/hormone/immuno/
+# targeted-chemo procedure (Target_1A_initiated_L01_or_procedure.json,
+# Target_1A_PC_allowed_initiated_L01_or_procedure.json) -- catches regimens
+# recorded only as a procedure code, with no matching drug exposure.
+l01OrProcInitId          <- cohortIdByName(jsonSet, "Target 1A initiated L01 or procedure")
+l01OrProcInitPcAllowedId <- cohortIdByName(jsonSet, "Target 1A PC allowed initiated L01 or procedure")
+stopifnot(!is.na(l01OrProcInitId), !is.na(l01OrProcInitPcAllowedId))
+jsonSet$cohortName[jsonSet$cohortId == l01OrProcInitId]          <- "mBC initiated base (L01 or procedure)"
+jsonSet$cohortName[jsonSet$cohortId == l01OrProcInitPcAllowedId] <- "mBC initiated base (L01 or procedure, PC allowed)"
+
 # --- initiated base ---------------------------------------------------------
 baseTemplate <- paste(readLines(file.path(sqlDir, "Target_1A_initiated_template.sql"),
                                 warn = FALSE), collapse = "\n")
