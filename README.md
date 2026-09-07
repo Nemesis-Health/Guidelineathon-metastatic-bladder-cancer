@@ -47,7 +47,7 @@ At the end of a run, each step's outputs are packaged into their own zip —
 >   (`R/00_prestudy_queries.R`). No ARTEMIS, CohortGenerator, or CirceR
 >   required. Use this if you're stuck on the ARTEMIS/Python setup but want
 >   diagnostics results now. Writes `results/diagnostics/` + `diagnostics.zip`.
-> - **`run_feasibility_only.R`** — just the eligibility/feasibility pipeline
+> - **`run_study_only.R`** — just the eligibility pipeline
 >   (steps a–m: ARTEMIS alignment through lab coverage by comorbidity
 >   subgroup). Use this once ARTEMIS is sorted, whether or not you've
 >   already run diagnostics separately.

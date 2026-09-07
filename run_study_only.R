@@ -1,9 +1,9 @@
 # ===========================================================================
-# run_feasibility_only.R  —  feasibility/eligibility pipeline only
+# run_study_only.R  —  eligibility/study pipeline only
 # ===========================================================================
 # Complement of run_diagnostics_only.R: runs everything in run.R EXCEPT the
 # pre-study diagnostics stage (0). Together, run_diagnostics_only.R +
-# run_feasibility_only.R cover exactly what run.R does.
+# run_study_only.R cover exactly what run.R does.
 #   (a) ARTEMIS regimen alignment            -> R/01_artemis.R
 #   (b) eligibility labs + cohorts -> 1 table -> R/02_eligibility_inputs.R
 #   (c) main cohort tree                      -> R/03_main_cohorts.R
@@ -14,15 +14,15 @@
 #   (h) covariate overlap with 1A             -> R/08_covariates.R
 #   (i) outcomes: DTI / OS / TTNT / TTD / TFI -> R/09_outcomes.R
 #   (j) guideline relevance + adherence       -> R/10_adherence.R
-#   (k) baseline vitals + Charlson CCI        -> R/11_baseline_characterization.R
+#   (k) baseline body measurements + Charlson CCI -> R/11_baseline_characterization.R
 #   (l) treatment patterns by LoT             -> R/12_treatment_patterns.R
 #   (m) lab coverage by comorbidity subgroup  -> R/13_covariate_lab_coverage.R
 #
 # Use this once ARTEMIS is sorted (see README.md) if you already have
 # diagnostics results from run_diagnostics_only.R and just need the
-# eligibility/feasibility cohorts now — no need to re-run diagnostics.
+# eligibility cohorts now — no need to re-run diagnostics.
 #
-# Usage: edit the CONFIG block below, then  source("run_feasibility_only.R")
+# Usage: edit the CONFIG block below, then  source("run_study_only.R")
 # Requires: DatabaseConnector, SqlRender, CohortGenerator, CirceR, ARTEMIS,
 #           dplyr, tibble, readr  (installed; NOT OncoStudyModules).
 # ===========================================================================
@@ -81,8 +81,8 @@ settings <- list(
   conditionFlagWindowAfterDays  = 30L,
   # Index window for baseline weight/height/BMI (step (k)) — wider than the
   # lab window above; matches onco-study-modules' own +/-90-day convention
-  # for vitals.
-  vitalsWindowDays    = 90L,
+  # for body measurements.
+  bodyMeasurementsWindowDays = 90L,
   # Exclude endocrine-therapy regimens (tamoxifen, abiraterone, GnRH agonists,
   # ...) from the ARTEMIS reference. Applied via the is_endocrine column of
   # cohorts/extras/regimen_reference.csv. TRUE = drop hormone therapy (default);

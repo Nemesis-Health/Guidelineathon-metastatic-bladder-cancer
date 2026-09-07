@@ -1,10 +1,10 @@
 # ===========================================================================
 # run.R  —  Bladder eligibility study (standalone; no OncoStudyModules dep)
 # ===========================================================================
-# Runs diagnostics + the eligibility/feasibility pipeline in one go. To run
-# either half on its own (e.g. diagnostics now, eligibility once ARTEMIS is
-# sorted), use run_diagnostics_only.R and run_feasibility_only.R instead —
-# together they do exactly what this file does.
+# Runs diagnostics + the eligibility pipeline in one go. To run either half
+# on its own (e.g. diagnostics now, eligibility once ARTEMIS is sorted), use
+# run_diagnostics_only.R and run_study_only.R instead — together they do
+# exactly what this file does.
 #
 # Stage: cohort creation.
 #   (0) pre-study diagnostics                -> R/00_prestudy_queries.R

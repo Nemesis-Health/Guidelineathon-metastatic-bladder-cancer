@@ -8,7 +8,7 @@
 # concepts, orphan concepts, visit context, index-event breakdown, incidence
 # rates, cohort relationship, and temporal characterization.
 #
-# Independent of run.R / run_feasibility_only.R — it does not touch
+# Independent of run.R / run_study_only.R — it does not touch
 # ARTEMIS regimen alignment, the SQL-templated cohorts (initiated base,
 # eligibility 2a-2e/3a-3e, ...), or any of the numbered outcome/adherence
 # steps, and writes to its own cohort table (settings$cohortTable below,
