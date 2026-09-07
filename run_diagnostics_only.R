@@ -3,7 +3,7 @@
 # ===========================================================================
 # Runs just the diagnostics stage (R/00_prestudy_queries.R) against the OMOP
 # CDM and stops there — it does NOT touch ARTEMIS, CohortGenerator, or CirceR,
-# and does not run any of the numbered eligibility steps (01-08).
+# and does not run any of the numbered study steps (01-13).
 #
 # Use this if you're stuck on the ARTEMIS/Python setup (see README.md) but
 # want the pre-study diagnostics results now; run the full `run.R` later once

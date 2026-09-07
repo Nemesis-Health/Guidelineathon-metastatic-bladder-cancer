@@ -1,4 +1,4 @@
-# Docs — bladder eligibility study
+# Docs — bladder study
 
 ## Authoritative (this project)
 - [`../README.md`](../README.md) — overview + run instructions + file map.

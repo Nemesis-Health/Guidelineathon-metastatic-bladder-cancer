@@ -1,8 +1,8 @@
 # ===========================================================================
-# run.R  —  Bladder eligibility study (standalone; no OncoStudyModules dep)
+# run.R  —  Bladder study (standalone; no OncoStudyModules dep)
 # ===========================================================================
-# Runs diagnostics + the eligibility pipeline in one go. To run either half
-# on its own (e.g. diagnostics now, eligibility once ARTEMIS is sorted), use
+# Runs diagnostics + the study pipeline in one go. To run either half
+# on its own (e.g. diagnostics now, the study pipeline once ARTEMIS is sorted), use
 # run_diagnostics_only.R and run_study_only.R instead — together they do
 # exactly what this file does.
 #
@@ -117,8 +117,8 @@ source("R/13_covariate_lab_coverage.R") # lab coverage by comorbidity subgroup (
 message("\n=== Done. Results under ", settings$outputFolder, "/eligibility/ ===")
 
 utils::zip(zipfile = file.path(settings$outputFolder, "diagnostics.zip"), files = list.files(file.path(settings$outputFolder, "diagnostics"), recursive = TRUE, full.names = TRUE, include.dirs = TRUE, all.files = TRUE), flags = "-q")
-utils::zip(zipfile = file.path(settings$outputFolder, "eligibility_results.zip"), files = list.files(file.path(settings$outputFolder, "eligibility"), recursive = TRUE, full.names = TRUE, include.dirs = TRUE, all.files = TRUE), flags = "-q")
+utils::zip(zipfile = file.path(settings$outputFolder, "study_results.zip"), files = list.files(file.path(settings$outputFolder, "eligibility"), recursive = TRUE, full.names = TRUE, include.dirs = TRUE, all.files = TRUE), flags = "-q")
 
-message("Wrote diagnostics.zip and eligibility_results.zip to ", settings$outputFolder)
+message("Wrote diagnostics.zip and study_results.zip to ", settings$outputFolder)
 
 DatabaseConnector::disconnect(connection)

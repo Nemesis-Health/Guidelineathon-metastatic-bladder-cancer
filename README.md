@@ -1,6 +1,7 @@
-# FACLON-Bladder Diagnostics and Feasibility 
+# FALCON-Bladder Study
 
-Eligibility stage for the **FALCON-Bladder/Guidelinathon** study.
+Diagnostics + full study pipeline (eligibility through outcomes, guideline
+adherence, and treatment patterns) for the **FALCON-Bladder/Guidelinathon** study.
 
 ---
 
@@ -16,15 +17,15 @@ A full run has two main steps, in order:
    standalone, without a separate checkout of that project.
    See [What it does — the diagnostics stage](#what-it-does--the-diagnostics-stage)
    and [Pre-study queries & result packaging](#pre-study-queries--result-packaging).
-2. **Eligibility** (`results/eligibility/`) — the main cohort-creation
-   pipeline: ARTEMIS regimen alignment, eligibility / lab test normalization,
+2. **Study** (`results/eligibility/`) — the main cohort-creation pipeline:
+   ARTEMIS regimen alignment, eligibility / lab test normalization,
    cohort creation, characterization (demographics, comorbidities, baseline
    body measurements, Charlson CCI), outcomes (survival + time-to-event), guideline
    adherence, and treatment patterns.
    See [What it does — the pipeline stages](#what-it-does--the-pipeline-stages).
 
 At the end of a run, each step's outputs are packaged into their own zip —
-`diagnostics.zip` and `eligibility_results.zip` respectively.
+`diagnostics.zip` and `study_results.zip` respectively.
 
 ---
 
@@ -51,7 +52,7 @@ At the end of a run, each step's outputs are packaged into their own zip —
 >   (steps a–m: ARTEMIS alignment through lab coverage by comorbidity
 >   subgroup). Use this once ARTEMIS is sorted, whether or not you've
 >   already run diagnostics separately.
->   Writes `results/eligibility/` + `eligibility_results.zip`.
+>   Writes `results/eligibility/` + `study_results.zip`.
 >
 > Each has its own CONFIG block (same fields as `run.R`) — edit and
 > `source()` the one you need.
@@ -332,7 +333,7 @@ At the end of a run, results are packaged into two archives:
   writing one CSV per chunk to `results/diagnostics/`; mirrored as-is,
   unfiltered (any cell-count suppression happens inside the SQL itself via
   `@min_cell_count`, same as the external project).
-- **`eligibility_results.zip`** — every CSV under `results/eligibility/`,
+- **`study_results.zip`** — every CSV under `results/eligibility/`,
   already censored at write time (subjects < `settings$minCellCount`) by
   each `R/0N_*.R` step — no additional filtering happens at packaging time.
 
@@ -428,7 +429,7 @@ objects (`mainManifest`, `episodes`, `artemis_result.rds`, ...) to
 later step without recomputing earlier ones. Unlike everything under
 `results*/`, these are **patient-level** (ARTEMIS episodes/alignments,
 drug exposures by `person_id`) — never zip or share this folder alongside
-`diagnostics.zip`/`eligibility_results.zip`. Keyed by the output folder's
+`diagnostics.zip`/`study_results.zip`. Keyed by the output folder's
 own name, so pointing `settings$outputFolder` at a fresh folder (e.g. for a
 clean re-run) also starts from a fresh cache — nothing carries over silently.
 
