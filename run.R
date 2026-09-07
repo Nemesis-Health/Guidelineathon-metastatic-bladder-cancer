@@ -20,6 +20,7 @@
 #   (j) guideline relevance + adherence       -> R/10_adherence.R
 #   (k) baseline vitals + Charlson CCI        -> R/11_baseline_characterization.R
 #   (l) treatment patterns by LoT             -> R/12_treatment_patterns.R
+#   (m) lab coverage by comorbidity subgroup  -> R/13_covariate_lab_coverage.R
 #
 # Usage: edit the CONFIG block below, then  source("run.R")
 # Requires: DatabaseConnector, SqlRender, CohortGenerator, CirceR, ARTEMIS,
@@ -213,6 +214,7 @@ source("R/09_outcomes.R")           # outcomes: DTI / OS / TTNT / TTD / TFI
 source("R/10_adherence.R")          # guideline relevance + adherence roll-up
 source("R/11_baseline_characterization.R") # weight/height/BMI + Charlson CCI
 source("R/12_treatment_patterns.R") # treatment patterns by line of therapy
+source("R/13_covariate_lab_coverage.R") # lab coverage by comorbidity subgroup (Target 1A)
 
 message("\n=== Done. Results under ", settings$outputFolder, "/eligibility/ ===")
 
