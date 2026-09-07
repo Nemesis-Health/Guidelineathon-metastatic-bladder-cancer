@@ -182,7 +182,11 @@ if (is.null(covSet) || nrow(covSet) == 0L) {
       subject_strata_sql     = strataFragment)
     names(components) <- tolower(names(components))
     components$cohort_definition_id <- as.integer(components$cohort_definition_id)
-    components$subject_id           <- as.integer(components$subject_id)
+    # subject_id kept as character, not as.integer() -- see R/eventBuilders.R's
+    # anchorEpisodes() comment: some sites' person_id exceeds int32.
+    # charlson_components.sql already CASTs to VARCHAR, so this is defense in
+    # depth, not the actual fix -- see that file's comment.
+    components$subject_id           <- as.character(components$subject_id)
 
     # metastatic_solid_tumor (weight 6) is DELIBERATELY excluded from CCI
     # here, unlike a standard Charlson score: every subject in every cohort

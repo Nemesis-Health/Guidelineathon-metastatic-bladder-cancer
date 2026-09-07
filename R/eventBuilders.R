@@ -34,13 +34,24 @@ anchorEpisodes <- function(episodes, anchorDates) {
       stop("`anchorDates` is missing column '", col, "'.", call. = FALSE)
   }
 
+  # person_id stays character on both sides of this join -- NOT as.integer()
+  # or as.double(): episodes$person_id is ARTEMIS's own wide person_id (see
+  # R/artemis.R's buildEpisodeTable() for why), which can exceed int32 at
+  # some sites, and narrowing it here would silently turn those rows to NA
+  # before the join ever runs. A double avoids that specific overflow but
+  # still has its own precision ceiling (2^53); character has none, so it's
+  # used throughout this file and every subject_id it meets in
+  # R/09_outcomes.R/R/10_adherence.R/R/11_baseline_characterization.R/
+  # R/12_treatment_patterns.R -- matching how R/artemis.R's buildEpisodeTable()
+  # already carries person_id. dplyr does NOT auto-coerce character<->numeric
+  # in a join or bind_rows(), so every side needs this cast, not just this one.
   anchors <- anchorDates |>
-    dplyr::transmute(person_id = as.integer(.data$subject_id),
+    dplyr::transmute(person_id = as.character(.data$subject_id),
                      .anchor = as.Date(.data$cohort_start_date)) |>
     dplyr::distinct()
 
   episodes |>
-    dplyr::mutate(person_id = as.integer(.data$person_id)) |>
+    dplyr::mutate(person_id = as.character(.data$person_id)) |>
     dplyr::inner_join(anchors, by = "person_id") |>
     dplyr::filter(.data$episode_start_date >= .data$.anchor) |>
     dplyr::select(-".anchor")
@@ -59,11 +70,16 @@ combineEarliestEvent <- function(...) {
   evs <- list(...)
   evs <- evs[vapply(evs, function(e) is.data.frame(e) && nrow(e) > 0, logical(1))]
   if (length(evs) == 0)
-    return(tibble::tibble(subject_id = integer(0), cohort_start_date = as.Date(character(0))))
+    return(tibble::tibble(subject_id = character(0), cohort_start_date = as.Date(character(0))))
+
+  # subject_id normalized to character on EACH input before bind_rows() --
+  # see anchorEpisodes()'s comment. bind_rows() errors on a type mismatch
+  # just like a join does, so every input must already agree by the time
+  # it's bound, not just after.
+  evs <- lapply(evs, function(e) dplyr::mutate(e, subject_id = as.character(.data$subject_id)))
 
   dplyr::bind_rows(evs) |>
-    dplyr::mutate(subject_id = as.integer(.data$subject_id),
-                  cohort_start_date = as.Date(.data$cohort_start_date)) |>
+    dplyr::mutate(cohort_start_date = as.Date(.data$cohort_start_date)) |>
     dplyr::summarise(cohort_start_date = min(.data$cohort_start_date, na.rm = TRUE),
                      .by = "subject_id")
 }
@@ -74,7 +90,7 @@ combineEarliestEvent <- function(...) {
 fetchDeathEvents <- function(connection, targetCohortIds) {
   targetCohortIds <- as.integer(stats::na.omit(targetCohortIds))
   if (length(targetCohortIds) == 0)
-    return(tibble::tibble(subject_id = integer(0),
+    return(tibble::tibble(subject_id = character(0),
                           cohort_start_date = as.Date(character(0))))
 
   result <- querySqlFile(connection, "fetch_death_events.sql",
@@ -83,6 +99,12 @@ fetchDeathEvents <- function(connection, targetCohortIds) {
     cdm_database_schema  = settings$cdmDatabaseSchema,
     target_cohort_ids    = paste(targetCohortIds, collapse = ", "))
   names(result) <- tolower(names(result))
+  # subject_id cast to character -- see anchorEpisodes()'s comment; this
+  # tibble ends up bound against ARTEMIS-episode-derived event tibbles in
+  # combineEarliestEvent(), which requires both sides to already agree.
+  # fetch_death_events.sql already CASTs to VARCHAR, so this is defense in
+  # depth, not the actual fix -- see that file's comment.
+  result$subject_id <- as.character(result$subject_id)
   tibble::as_tibble(result)
 }
 
@@ -118,7 +140,7 @@ buildLineOfTherapyEvents <- function(episodes,
     stop("`lineNumber` must be a positive integer.", call. = FALSE)
 
   if (nrow(episodes) == 0) {
-    return(tibble::tibble(subject_id = integer(0),
+    return(tibble::tibble(subject_id = character(0),
                           cohort_start_date = as.Date(character(0))))
   }
 
@@ -130,11 +152,13 @@ buildLineOfTherapyEvents <- function(episodes,
   targetLine <- if (eventType == "next_lot") lineNumber + 1L else lineNumber
   pick <- ranked |> dplyr::filter(.data$.lot == targetLine)
 
+  # subject_id stays character here too -- see anchorEpisodes()'s comment;
+  # pick$person_id is still ARTEMIS's own wide person_id at this point.
   if (eventType == "next_lot") {
-    tibble::tibble(subject_id = as.integer(pick$person_id),
+    tibble::tibble(subject_id = as.character(pick$person_id),
                    cohort_start_date = as.Date(pick$episode_start_date))
   } else {
-    tibble::tibble(subject_id = as.integer(pick$person_id),
+    tibble::tibble(subject_id = as.character(pick$person_id),
                    cohort_start_date = as.Date(pick$episode_end_date))
   }
 }
@@ -168,7 +192,7 @@ buildDtiEvents <- function(targetData, episodes, lineNumber = 1L) {
     stop("`lineNumber` must be a positive integer.", call. = FALSE)
 
   if (nrow(episodes) == 0)
-    return(tibble::tibble(subject_id = integer(0), time_diff = integer(0)))
+    return(tibble::tibble(subject_id = character(0), time_diff = integer(0)))
 
   ranked <- episodes |>
     dplyr::arrange(.data$person_id, .data$episode_start_date,
@@ -177,10 +201,16 @@ buildDtiEvents <- function(targetData, episodes, lineNumber = 1L) {
     dplyr::filter(.data$.lot == lineNumber) |>
     dplyr::select(subject_id = "person_id", lot_start_date = "episode_start_date")
 
+  # subject_id cast to character before this join, not after -- see
+  # anchorEpisodes()'s comment; targetData$subject_id here is cast the same
+  # way upstream (R/09_outcomes.R), so both sides already agree by this
+  # point in the real pipeline -- this cast is defense-in-depth for any
+  # other caller of this exported function.
   joined <- targetData |>
+    dplyr::mutate(subject_id = as.character(.data$subject_id)) |>
     dplyr::select("subject_id", "cohort_start_date") |>
     dplyr::inner_join(ranked, by = "subject_id")
 
-  tibble::tibble(subject_id = as.integer(joined$subject_id),
+  tibble::tibble(subject_id = joined$subject_id,
                  time_diff  = as.integer(joined$lot_start_date - joined$cohort_start_date))
 }

@@ -50,7 +50,11 @@ membership <- querySqlFile(connection, "outcome_target_data.sql",
   target_cohort_ids    = paste(relevantIds, collapse = ", "))
 names(membership) <- tolower(names(membership))
 membership$cohort_definition_id <- as.integer(membership$cohort_definition_id)
-membership$subject_id           <- as.integer(membership$subject_id)
+# subject_id kept as character, not as.integer() -- see R/eventBuilders.R's
+# anchorEpisodes() comment: some sites' person_id exceeds int32.
+# outcome_target_data.sql already CASTs to VARCHAR, so this is defense in
+# depth, not the actual fix -- see that file's comment.
+membership$subject_id           <- as.character(membership$subject_id)
 
 # subject_strata.sql is the single source of truth for age_group/sex/age_sex
 # bucketing (shared with demographics.sql, R/04/05/09/12). Both
@@ -64,7 +68,10 @@ strataTbl <- querySqlFile(connection, "subject_strata.sql",
   cdm_database_schema  = settings$cdmDatabaseSchema)
 names(strataTbl) <- tolower(names(strataTbl))
 strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
-strataTbl$subject_id           <- as.integer(strataTbl$subject_id)
+# subject_strata.sql is a widely-shared fragment -- see R/09_outcomes.R's
+# comment on the same line for why this uses format() instead of a SQL-side
+# VARCHAR cast.
+strataTbl$subject_id           <- format(strataTbl$subject_id, scientific = FALSE, trim = TRUE)
 membership <- dplyr::left_join(membership, strataTbl,
   by = c("cohort_definition_id", "subject_id"))
 

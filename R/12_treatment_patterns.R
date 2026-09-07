@@ -70,7 +70,11 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     cohort_table         = settings$cohortTable,
     target_cohort_ids    = as.character(t1Id))
   names(t1Members) <- tolower(names(t1Members))
-  t1Members$subject_id        <- as.integer(t1Members$subject_id)
+  # subject_id kept as character, not as.integer() -- see R/eventBuilders.R's
+  # anchorEpisodes() comment: some sites' person_id exceeds int32.
+  # outcome_target_data.sql already CASTs to VARCHAR, so this is defense in
+  # depth, not the actual fix -- see that file's comment.
+  t1Members$subject_id        <- as.character(t1Members$subject_id)
   t1Members$cohort_start_date <- as.Date(t1Members$cohort_start_date)
 
   if (nrow(t1Members) == 0L) {
@@ -107,7 +111,10 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
       cdm_database_schema  = settings$cdmDatabaseSchema)
     names(strataTbl) <- tolower(names(strataTbl))
     strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
-    strataTbl$subject_id           <- as.integer(strataTbl$subject_id)
+    # subject_strata.sql is a widely-shared fragment -- see R/09_outcomes.R's
+    # comment on the same line for why this uses format() instead of a
+    # SQL-side VARCHAR cast.
+    strataTbl$subject_id           <- format(strataTbl$subject_id, scientific = FALSE, trim = TRUE)
     t1Strata <- strataTbl[strataTbl$cohort_definition_id == t1Id,
                           c("subject_id", "age_group", "sex", "age_sex")]
 
@@ -225,7 +232,9 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
       target_cohort_ids    = paste(treatedCohortIds, collapse = ", "))
     names(treatedMembership) <- tolower(names(treatedMembership))
     treatedMembership$cohort_definition_id <- as.integer(treatedMembership$cohort_definition_id)
-    treatedMembership$subject_id           <- as.integer(treatedMembership$subject_id)
+    # outcome_target_data.sql already CASTs to VARCHAR, so this is defense in
+    # depth, not the actual fix -- see that file's comment.
+    treatedMembership$subject_id           <- as.character(treatedMembership$subject_id)
 
     nameMapTP <- dplyr::select(mainManifest, cohort_definition_id = "cohortId",
                                cohort_name = "cohortName")

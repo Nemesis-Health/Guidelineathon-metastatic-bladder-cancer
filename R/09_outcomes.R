@@ -96,7 +96,12 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     target_cohort_ids    = paste(allTargetCohortIds, collapse = ", "))
   names(targetData) <- tolower(names(targetData))
   targetData$cohort_definition_id <- as.integer(targetData$cohort_definition_id)
-  targetData$subject_id           <- as.integer(targetData$subject_id)
+  # subject_id kept as character, not as.integer() -- see R/eventBuilders.R's
+  # anchorEpisodes() comment: some sites' person_id exceeds int32, and this
+  # column has to join against ARTEMIS-episode-derived ids (also character).
+  # outcome_target_data.sql already CASTs to VARCHAR, so this is defense in
+  # depth, not the actual fix -- see that file's comment.
+  targetData$subject_id           <- as.character(targetData$subject_id)
   targetData$cohort_start_date    <- as.Date(targetData$cohort_start_date)
   targetData$cohort_end_date      <- as.Date(targetData$cohort_end_date)
 
@@ -106,7 +111,12 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     cdm_database_schema  = settings$cdmDatabaseSchema)
   names(strataTbl) <- tolower(names(strataTbl))
   strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
-  strataTbl$subject_id           <- as.integer(strataTbl$subject_id)
+  # subject_strata.sql is a widely-shared fragment (many SQL + R consumers),
+  # so its subject_id column can't be CAST to VARCHAR in SQL without risking
+  # other consumers' joins -- format(scientific = FALSE) avoids the
+  # scientific-notation risk of a bare as.character() on this double without
+  # touching the shared query (see sql/outcome_target_data.sql's comment).
+  strataTbl$subject_id           <- format(strataTbl$subject_id, scientific = FALSE, trim = TRUE)
 
   targetData <- dplyr::left_join(targetData, strataTbl,
     by = c("cohort_definition_id", "subject_id"))

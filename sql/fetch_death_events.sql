@@ -11,9 +11,11 @@
 --   @target_cohort_ids   comma-separated cohort_definition_id list
 -- ===========================================================================
 
+-- subject_id cast to VARCHAR here, not as.character() in R after the fact --
+-- see sql/outcome_target_data.sql's comment.
 SELECT DISTINCT
-       c.subject_id                AS subject_id,
-       d.death_date                AS cohort_start_date
+       CAST(c.subject_id AS VARCHAR) AS subject_id,
+       d.death_date                  AS cohort_start_date
   FROM @work_database_schema.@cohort_table c
   JOIN @cdm_database_schema.death d
     ON d.person_id = c.subject_id
