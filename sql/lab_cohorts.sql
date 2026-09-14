@@ -20,11 +20,11 @@
    re-runnable. The scratch/reference tables are left in @work_database_schema
    for auditing; drop them manually once results are validated.
 
-   PORTABILITY: logic is otherwise ANSI SQL (window fns, CASE); percentiles
-     use a ROW_NUMBER/COUNT/FLOOR interpolation (see step 1) because SqlRender
-     does not translate PERCENTILE_CONT.
-     Remaining dialect-specific bits, flagged inline: LOG10() and the
-     GREATEST-via-VALUES trick (SQL Server <2022).
+   PORTABILITY: logic is ANSI SQL only (window fns, CASE) -- no GREATEST(),
+     no VALUES-clause tricks, no dialect-specific functions besides LOG10().
+     Percentiles use a ROW_NUMBER/COUNT/FLOOR interpolation (see step 1)
+     because SqlRender does not translate PERCENTILE_CONT. Runs unchanged on
+     SQL Server (2008+), Snowflake, Postgres, Redshift, Oracle.
    ============================================================================ */
 
 /* ---------------------------------------------------------------------------
@@ -992,21 +992,32 @@ SELECT
       WHEN 'both'  THEN CASE WHEN g.p25 > 0 AND g.p75 > 0 AND n.range_low > 0 AND n.range_high > 0
           THEN ABS( (LOG10(n.range_low)+LOG10(n.range_high))/2
                   - (LOG10(g.p25*s.factor+s.val_offset)+LOG10(g.p75*s.factor+s.val_offset))/2 ) END
-      -- GREATEST-via-VALUES (the SQL Server <2022 compatibility trick this file's header
-      -- flags) fails on Snowflake specifically: a VALUES()-clause derived table there can't
-      -- reference outer-query columns ("Invalid expression [CORRELATION(...)] in VALUES
-      -- clause" -- confirmed via a minimal repro against live Snowflake). Native GREATEST()
-      -- works on Snowflake, Postgres, Redshift, Oracle, and SQL Server 2022+ (verified
-      -- SqlRender has no dialect-specific translation rule for GREATEST -- passes through
-      -- unchanged everywhere); only pre-2022 SQL Server loses compatibility here.
+      -- GREATEST-via-VALUES (the earlier compatibility trick) failed on Snowflake:
+      -- a VALUES()-clause derived table there can't reference outer-query columns
+      -- ("Invalid expression [CORRELATION(...)] in VALUES clause" -- confirmed via
+      -- a minimal repro against live Snowflake). Native GREATEST() then broke SQL
+      -- Server <2022 (no GREATEST() before that version). Neither trick nor native
+      -- GREATEST() is portable, so both are avoided: a plain CASE expression finds
+      -- the max of {0.0, X, Y} using only ANSI comparisons -- works unchanged on
+      -- every dialect this file targets, SQL Server 2008+ included.
       WHEN 'upper' THEN CASE WHEN g.p03 > 0 AND g.p97 > 0 AND n.range_high > 0
-          THEN GREATEST(0.0,
-                   (LOG10(n.range_high) - LOG10(g.p97*s.factor+s.val_offset)),
-                   (LOG10(g.p03*s.factor+s.val_offset) - LOG10(n.range_high)) ) END
+          THEN CASE
+                 WHEN (LOG10(n.range_high) - LOG10(g.p97*s.factor+s.val_offset)) >= (LOG10(g.p03*s.factor+s.val_offset) - LOG10(n.range_high))
+                  AND (LOG10(n.range_high) - LOG10(g.p97*s.factor+s.val_offset)) >= 0.0
+                 THEN (LOG10(n.range_high) - LOG10(g.p97*s.factor+s.val_offset))
+                 WHEN (LOG10(g.p03*s.factor+s.val_offset) - LOG10(n.range_high)) >= 0.0
+                 THEN (LOG10(g.p03*s.factor+s.val_offset) - LOG10(n.range_high))
+                 ELSE 0.0
+               END END
       WHEN 'lower' THEN CASE WHEN g.p03 > 0 AND g.p97 > 0 AND n.range_low > 0
-          THEN GREATEST(0.0,
-                   (LOG10(n.range_low) - LOG10(g.p97*s.factor+s.val_offset)),
-                   (LOG10(g.p03*s.factor+s.val_offset) - LOG10(n.range_low)) ) END
+          THEN CASE
+                 WHEN (LOG10(n.range_low) - LOG10(g.p97*s.factor+s.val_offset)) >= (LOG10(g.p03*s.factor+s.val_offset) - LOG10(n.range_low))
+                  AND (LOG10(n.range_low) - LOG10(g.p97*s.factor+s.val_offset)) >= 0.0
+                 THEN (LOG10(n.range_low) - LOG10(g.p97*s.factor+s.val_offset))
+                 WHEN (LOG10(g.p03*s.factor+s.val_offset) - LOG10(n.range_low)) >= 0.0
+                 THEN (LOG10(g.p03*s.factor+s.val_offset) - LOG10(n.range_low))
+                 ELSE 0.0
+               END END
     END
   END AS dist_decade
 INTO @work_database_schema.@scored_table
