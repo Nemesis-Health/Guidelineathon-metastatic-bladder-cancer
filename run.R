@@ -24,12 +24,12 @@
 #
 # Usage: edit the CONFIG block below, then  source("run.R")
 # Requires: DatabaseConnector, SqlRender, CohortGenerator, CirceR, ARTEMIS,
-#           dplyr, tibble, readr  (installed; NOT OncoStudyModules).
+#           dplyr, tibble, readr, survival, broom  (installed; NOT OncoStudyModules).
 # ===========================================================================
 
 for (p in c("DatabaseConnector", "SqlRender", "CohortGenerator", "CirceR",
             "ARTEMIS", "dplyr", "tibble", "readr", "cli", "rlang", "stringr",
-            "jsonlite", "ggplot2", "scales")) {
+            "jsonlite", "ggplot2", "scales", "survival", "broom")) {
   if (!requireNamespace(p, quietly = TRUE))
     stop("Required package not installed: ", p, call. = FALSE)
 }
