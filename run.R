@@ -96,6 +96,7 @@ source("R/setup.R")          # config checks + derived paths + executionSettings
 
 connection <- DatabaseConnector::connect(connectionDetails)
 .checkDbiPostgresBug(connection)
+.checkRedshiftBulkLoad(connection)
 
 message("\n=== Diagnostics: pre-study characterization queries ===")
 runPreStudyDiagnostics(connection, settings)      # (0)

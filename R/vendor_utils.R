@@ -41,6 +41,39 @@ if (!exists("%||%")) {
   }
 }
 
+# On Redshift, DatabaseConnector::insertTable() without bulk load falls back
+# to a single CREATE TABLE ... AS SELECT with one UNION ALL branch per row,
+# whose query planning alone takes minutes for the pipeline's reference
+# tables. Bulk load (staged through S3) avoids that. insertTable() only
+# bulk-loads when DATABASE_CONNECTOR_BULK_UPLOAD is "TRUE" and aborts at
+# the first insert if the S3 staging variables are missing, so check both
+# up front.
+.checkRedshiftBulkLoad <- function(connection) {
+  if (.getDbms(connection) != "redshift") return(invisible(NULL))
+  if (!identical(Sys.getenv("DATABASE_CONNECTOR_BULK_UPLOAD"), "TRUE")) {
+    warning(
+      "Redshift without bulk load: DatabaseConnector::insertTable() will use ",
+      "its slow CREATE TABLE AS fallback, which can take several minutes per ",
+      "table written. To enable bulk load, before running set ",
+      "Sys.setenv(DATABASE_CONNECTOR_BULK_UPLOAD = TRUE) plus the AWS_* ",
+      "S3 staging-bucket variables -- see \"turn on DatabaseConnector's ",
+      "built-in bulk-load switch\" in README.md.",
+      call. = FALSE, immediate. = TRUE)
+    return(invisible(NULL))
+  }
+  required <- c("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY",
+                "AWS_DEFAULT_REGION", "AWS_BUCKET_NAME")
+  missing <- required[Sys.getenv(required) == ""]
+  if (length(missing))
+    stop("DATABASE_CONNECTOR_BULK_UPLOAD = TRUE on Redshift, but ",
+         paste(missing, collapse = ", "), " not set: DatabaseConnector's ",
+         "bulk load stages data through S3 and needs all of ",
+         paste(required, collapse = ", "), ". Set them, or unset ",
+         "DATABASE_CONNECTOR_BULK_UPLOAD to use the slower default -- see ",
+         "README.md.", call. = FALSE)
+  invisible(NULL)
+}
+
 # Swap a package function in place: its namespace binding, the attached
 # package environment's copy if any, and, for a registered S3 method, the S3
 # methods table dispatch reads from. (utils::assignInNamespace() looks the S3

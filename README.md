@@ -215,6 +215,13 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(
 > Neither available to you? Simply don't set `DATABASE_CONNECTOR_BULK_UPLOAD`
 > — the pipeline runs correctly either way, just slower on those couple of
 > writes.
+>
+> **On Redshift this matters most:** without bulk load each of those writes
+> can take several minutes, so `run.R`/`run_study_only.R` warn at startup when
+> it isn't set. Redshift's bulk load stages data through S3, so it needs the
+> object-storage credentials above (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
+> `AWS_DEFAULT_REGION`, `AWS_BUCKET_NAME`); if the switch is on but any of those
+> is missing, the run stops at startup rather than partway through.
 
 ### Installing the dependencies
 
