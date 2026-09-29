@@ -43,7 +43,8 @@ message("\n== covariate overlap with the main cohort tree (comorbidities + perfo
 # Fortin/Reps/Ryan 2022 (BMC Med Inform Decis Mak 22:225, 2023 correction
 # 23:110), the standard OHDSI-authored SNOMED translation of the Quan 2005
 # Charlson coding algorithm — but they double as their own comorbidity rows
-# here for free.
+# here for free. MI is the exception: Myocardial_Infarction.json is OHDSI
+# PhenotypeLibrary cohort 510 (acute MI only) -- see README "Known gaps".
 comorbMap <- tibble::tribble(
   ~code,          ~cohortName,                   ~label,
   "T2DM",         "Type 2 Diabetes",             "Type 2 diabetes mellitus",
@@ -55,7 +56,7 @@ comorbMap <- tibble::tribble(
   "RenalDx",      "Renal Disease",                "Renal disease",
   "Dementia",     "Dementia",                     "Dementia",
   "HemeDx",       "Heme Disorders",               "Hematologic disorder",
-  "MI",           "Myocardial Infarction",        "Myocardial infarction",
+  "MI",           "Myocardial Infarction",        "Acute myocardial infarction",
   "CHF",          "Congestive Heart Failure",     "Congestive heart failure",
   "PVD",          "Peripheral Vascular Disease",  "Peripheral vascular disease",
   "COPD",         "Chronic Pulmonary Disease",    "Chronic pulmonary disease",
