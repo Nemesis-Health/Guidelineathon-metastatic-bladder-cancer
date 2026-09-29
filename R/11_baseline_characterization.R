@@ -24,7 +24,9 @@
 #     Mak 22:225; 2023 correction 23:110) — the standard OHDSI-authored
 #     SNOMED translation of the Quan 2005 Charlson coding algorithm — via
 #     comorbidity cohorts wired into R/08_covariates.R's `comorbMap`
-#     (Myocardial_Infarction.json, Congestive_Heart_Failure.json,
+#     (Myocardial_Infarction.json -- the exception: OHDSI PhenotypeLibrary
+#     cohort 510, acute MI only, see README "Known gaps" --
+#     Congestive_Heart_Failure.json,
 #     Peripheral_Vascular_Disease.json, Chronic_Pulmonary_Disease.json,
 #     Rheumatic_Disease.json, Peptic_Ulcer_Disease.json,
 #     Diabetes_With_Complications.json, Hemiplegia_Paraplegia.json,

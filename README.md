@@ -413,7 +413,8 @@ At the end of a run, results are packaged into two archives:
   `Type_2_Diabetes`, `Hypertension`, `Cardiovascular_Disease`, `Stroke`,
   `Venous_Thrombotic_Events`, `Renal_Disease`, `Dementia`, and — added for
   Charlson CCI, sourced from Fortin/Reps/Ryan 2022/2023 (see Known gaps) —
-  `Myocardial_Infarction`, `Congestive_Heart_Failure`,
+  `Myocardial_Infarction` (the exception: OHDSI PhenotypeLibrary cohort 510,
+  acute MI only — see Known gaps), `Congestive_Heart_Failure`,
   `Peripheral_Vascular_Disease`, `Chronic_Pulmonary_Disease`,
   `Rheumatic_Disease`, `Peptic_Ulcer_Disease`, `Diabetes_With_Complications`,
   `Hemiplegia_Paraplegia`, `AIDS_HIV`,
@@ -1238,6 +1239,12 @@ callable interactively, not run automatically for every combination.
   a data gap): every subject in every cohort here has metastatic bladder
   cancer by cohort definition, so counting it would put everyone in the
   `>=5` category regardless of anything else.
+- **Charlson MI component counts acute MI only.** `Myocardial_Infarction.json`
+  is OHDSI PhenotypeLibrary cohort 510 ("[P][R] Acute myocardial
+  infarction": 312327 and descendants), not the Fortin/Reps/Ryan concept set
+  used for the other components. Standard Charlson MI (Quan I21/I22/I25.2)
+  also includes old/healed MI, so patients with only an old-MI record are
+  missed and CCI is slightly understated for them.
 - **NYHA, PD-L1, and comorbidity-grade criteria are not evaluated**
   (assume-pass).
 - **Condition-based criteria use "present" concept sets** as a proxy for
