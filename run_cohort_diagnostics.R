@@ -44,15 +44,6 @@ settings <- list(
   cohortTable  = "bc_cohort_diagnostics",
   minCellCount = 5L,
   outputFolder = file.path("results"),
-
-  # FALSE skips (re)generating the cohort table and assumes cohortTable
-  # already holds subjects for cohortId 1..7 matching cohortDefinitionSet
-  # below (00_ARTEMIS then 01_Target, in that order) -- e.g. a table this
-  # same script generated on an earlier run. It is NOT safe to point this at
-  # run.R's own bc_cohort: step (c) (R/03_main_cohorts.R) regenerates that
-  # table with dropTables = TRUE for the Target tree alone, which drops the
-  # 00_ARTEMIS scan cohort step (a) had generated into it -- so a post-run.R
-  # bc_cohort never holds both cohort sets at once.
   regenerateCohorts = TRUE
 )
 
@@ -84,11 +75,6 @@ message("\n=== Cohort diagnostics: generating 00_ARTEMIS + 01_Target ===")
 jsonCohorts <- dplyr::bind_rows(
   readJsonCohorts(file.path(cohortsDir, "00_ARTEMIS")),
   readJsonCohorts(file.path(cohortsDir, "01_Target")))
-
-# generateStats = TRUE: bakes Circe's inclusion-rule-statistics SQL into
-# generation (harmless for ARTEMIS's cohort, which has no InclusionRules),
-# which is what populates the cohort_inclusion* tables CohortDiagnostics'
-# runInclusionStatistics reads back.
 cohortDefinitionSet <- buildCohortSet(jsonCohorts = jsonCohorts, startId = 1L,
                                        generateStats = TRUE)
 
