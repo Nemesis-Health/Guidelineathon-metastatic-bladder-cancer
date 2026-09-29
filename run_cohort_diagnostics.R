@@ -5,8 +5,8 @@
 # cohorts/01_Target/ — same cohorts 03_main_cohorts.R draws its JSON half
 # from) into their own work table, then runs CohortDiagnostics::
 # executeDiagnostics() over them: inclusion statistics, included source
-# concepts, orphan concepts, visit context, index-event breakdown, incidence
-# rates, and cohort relationship.
+# concepts, orphan concepts, visit context, index-event breakdown, and cohort
+# relationship.
 #
 # Independent of run.R / run_study_only.R — it does not touch
 # ARTEMIS regimen alignment, the SQL-templated cohorts (initiated base,
@@ -92,10 +92,10 @@ message("\n=== Cohort diagnostics: running CohortDiagnostics::executeDiagnostics
 exportFolder <- file.path(settings$outputFolder, "cohort_diagnostics")
 dir.create(exportFolder, recursive = TRUE, showWarnings = FALSE)
 
-# Temporal characterization is off (covered by the study's own
-# characterization outputs); every other check runs at executeDiagnostics()'s
-# defaults. runCohortDiagnostics() is executeDiagnostics() plus the
-# upstream-bug patches (R/helpers.R).
+# Temporal characterization and incidence rates are off (general
+# characterization, not phenotype evaluation); every other check runs at
+# executeDiagnostics()'s defaults. runCohortDiagnostics() is
+# executeDiagnostics() plus the upstream-bug patches (R/helpers.R).
 runCohortDiagnostics(
   connection               = connection,
   cohortDefinitionSet      = cohortDefinitionSet,
@@ -106,6 +106,7 @@ runCohortDiagnostics(
   vocabularyDatabaseSchema = settings$vocabDatabaseSchema,
   cohortTable              = settings$cohortTable,
   minCellCount             = settings$minCellCount,
+  runIncidenceRate                  = FALSE,
   runTemporalCohortCharacterization = FALSE)
 
 utils::zip(zipfile = file.path(settings$outputFolder, "cohort_diagnostics.zip"),
