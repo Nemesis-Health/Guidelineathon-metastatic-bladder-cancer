@@ -1261,11 +1261,32 @@ callable interactively, not run automatically for every combination.
   from another). For eligibility this may be an intentional permissive
   convention (one passing draw during screening is enough); for
   characterization/overlap reporting it can inflate apparent membership in
-  more than one bucket at once. Neither is changed yet: picking the single
+  more than one bucket at once. The inflation is substantial and scales with
+  how often a subject is drawn: mutually exclusive bands sum to 102% of
+  `n_tested` where subjects average one lab record, and up to 147% where they
+  average five to thirty. It is largest where the threshold sits inside the
+  bulk of the near-index distribution (Hb 9 g/dL, GFR 60 mL/min) and smallest
+  where the threshold is out in the tail (ANC 1.5, platelets 100, TBil
+  1.5× ULN). Neither side is changed yet: picking the single
   closest-to-index record per (cohort, subject, lab/ECOG) before classifying
-  would resolve the reporting side, but changing the eligibility side is a
+  resolves the reporting side — `lab_value_distribution.sql`'s `lab_near_index`
+  CTE already selects that record — but changing the eligibility side is a
   protocol-semantics decision, not a reporting fix, and needs sign-off
-  before it's made.
+  before it's made. Note that ever-in-window remains the correct semantics
+  for reading these flags as toxicity/safety rather than eligibility.
+- **Lab unit resolution accepts a recorded unit that is within 5× of the
+  best-scoring scale.** `lab_cohorts.sql` step 3 takes the recorded unit
+  whenever it scores under 0.7 decades, without comparing it to the best
+  scale. That floor is wider than the separation between Hb's g/dL and
+  mmol/L scales (0.207 decades) and between GFR's mL/min and mL/min/1.73m²
+  scales (0.238); every other category separates by ≥0.95 decades and is
+  unaffected. Hb and GFR therefore carry `is_ambiguous = 1` at most sites,
+  and a site whose values are mis-scaled by those factors will produce
+  shifted strata rather than an error. `is_ambiguous` is reported in
+  `lab_results_rollup.csv` but does not gate the cohort INSERT, and
+  `std_value` has no plausibility bound beyond `value_as_number > 0`, so
+  sentinel values and mis-scaled streams survive into `bc_lab_cohort`.
+  Check `lab_results_rollup.csv` per site before using Hb or GFR strata.
 - **Cohorts 4/5/6(a–f) are three independent, non-exclusive regimen
   classifications** (`class_eau` / `class_hemonc_mbc` / `class_any`), not
   the protocol's exclusive tiers.
