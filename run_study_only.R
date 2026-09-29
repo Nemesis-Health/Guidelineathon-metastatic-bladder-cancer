@@ -91,6 +91,7 @@ source("R/setup.R")          # config checks + derived paths + executionSettings
 
 connection <- DatabaseConnector::connect(connectionDetails)
 .checkDbiPostgresBug(connection)
+.checkRedshiftBulkLoad(connection)
 
 source("R/01_artemis.R")            # (a)
 source("R/02_eligibility_inputs.R") # (b)
