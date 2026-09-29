@@ -1,21 +1,12 @@
 # ===========================================================================
 # run_cohort_diagnostics.R  —  OHDSI CohortDiagnostics on the main cohorts
 # ===========================================================================
-# Generates the 00_ARTEMIS + 01_Target JSON cohorts (cohorts/00_ARTEMIS/,
-# cohorts/01_Target/ — same cohorts 03_main_cohorts.R draws its JSON half
-# from) into their own work table, then runs CohortDiagnostics::
+# Generates the 01_Target JSON cohorts (cohorts/01_Target/) into their own work table, then runs CohortDiagnostics::
 # executeDiagnostics() over them: inclusion statistics, included source
 # concepts, orphan concepts, visit context, index-event breakdown, and cohort
 # relationship.
 #
-# Independent of run.R / run_study_only.R — it does not touch
-# ARTEMIS regimen alignment, the SQL-templated cohorts (initiated base,
-# eligibility 2a-2e/3a-3e, ...), or any of the numbered outcome/adherence
-# steps, and writes to its own cohort table (settings$cohortTable below,
-# default "bc_cohort_diagnostics") so it can't clobber a cohort table
-# already populated by a full run.R pass in the same work schema.
-#
-# Usage: edit the CONFIG block below, then  source("run_cohort_diagnostics.R")
+# Usage: edit the CONFIG block below
 # Requires: DatabaseConnector, SqlRender, CohortGenerator, CirceR,
 #           CohortDiagnostics, dplyr, tibble, readr  (installed).
 # ===========================================================================
@@ -68,12 +59,9 @@ source("R/helpers.R")        # readJsonCohorts(), buildCohortSet(), generateCoho
 connection <- DatabaseConnector::connect(connectionDetails)
 .checkDbiPostgresBug(connection)
 
-message("\n=== Cohort diagnostics: generating 00_ARTEMIS + 01_Target ===")
+message("\n=== Cohort diagnostics: generating 01_Target ===")
 
-# Same two JSON directories 03_main_cohorts.R draws its JSON half from; read
-# together (ARTEMIS first) so cohortId assignment stays deterministic.
 jsonCohorts <- dplyr::bind_rows(
-  readJsonCohorts(file.path(cohortsDir, "00_ARTEMIS")),
   readJsonCohorts(file.path(cohortsDir, "01_Target")))
 cohortDefinitionSet <- buildCohortSet(jsonCohorts = jsonCohorts, startId = 1L,
                                        generateStats = TRUE)
@@ -92,10 +80,6 @@ message("\n=== Cohort diagnostics: running CohortDiagnostics::executeDiagnostics
 exportFolder <- file.path(settings$outputFolder, "cohort_diagnostics")
 dir.create(exportFolder, recursive = TRUE, showWarnings = FALSE)
 
-# Temporal characterization and incidence rates are off (general
-# characterization, not phenotype evaluation); every other check runs at
-# executeDiagnostics()'s defaults. runCohortDiagnostics() is
-# executeDiagnostics() plus the upstream-bug patches (R/helpers.R).
 runCohortDiagnostics(
   connection               = connection,
   cohortDefinitionSet      = cohortDefinitionSet,
