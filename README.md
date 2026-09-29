@@ -80,7 +80,7 @@ less-obvious run settings lives here instead.
 
 ### Requirements
 
-**R 4.5.1** (the version the lockfile pins) and the fourteen direct R packages below (the set `run.R` itself checks for on startup). Everything else in `renv.lock` is a transitive dependency of these.
+**R 4.5.1** (the version the lockfile pins) and the sixteen direct R packages below (the set `run.R` itself checks for on startup). Everything else in `renv.lock` is a transitive dependency of these.
 
 | Package | Version | Source |
 |---|---|---|
@@ -98,14 +98,15 @@ less-obvious run settings lives here instead.
 | `jsonlite` | 2.0.0 | CRAN |
 | `ggplot2` | 4.0.1 | CRAN |
 | `scales` | 1.4.0 | CRAN |
+| `survival` | 3.8-3 | CRAN (ships with R as a recommended package) |
+| `broom` | 1.0.7 | CRAN |
 
 Everything except ARTEMIS comes from CRAN.
 
-The outcomes step (`R/09_outcomes.R`, via `R/timeToEvent.R`) also calls
-`survival::` and `broom::` unconditionally for the Kaplan-Meier engine.
-`survival` ships with R itself (a base "recommended" package), but `broom`
-does not and is not currently pinned in `renv.lock` — install it separately
-if a fresh `renv::restore()` doesn't already have it available.
+`survival` and `broom` are used by the outcomes step's Kaplan-Meier engine
+(`R/09_outcomes.R`, via `R/timeToEvent.R`). The run stops if either is
+missing rather than producing outcomes without the KM, median-survival and
+milestone files.
 
 You also need a driver for your database: a **JDBC driver** if you connect with
 `createConnectionDetails()` (download once with
@@ -233,8 +234,8 @@ renv::restore()            # install every pinned package from renv.lock into it
 `renv::activate()` is what makes the restore project-local; skip it and
 `renv::restore()` installs into your normal library instead. Every entry in
 `renv.lock` is required to run the study (the recursive dependency closure of the
-fourteen packages — no dev/report extras); renv does not resolve unrecorded
-dependencies, which is why it lists ~110 packages rather than fourteen.
+sixteen packages — no dev/report extras); renv does not resolve unrecorded
+dependencies, which is why it lists ~110 packages rather than sixteen.
 
 **Option 2 — just make sure they're installed.** You don't strictly need renv or
 the exact pinned versions — the study only needs each package at **≥ the version
@@ -245,7 +246,7 @@ these; update anything older, and install ARTEMIS from GitHub:
 install.packages(c("DatabaseConnector", "CirceR", "CohortGenerator",
                    "SqlRender", "dplyr", "tibble", "readr",
                    "cli", "rlang", "stringr", "jsonlite", "ggplot2",
-                   "scales", "remotes"))
+                   "scales", "survival", "broom", "remotes"))
 remotes::install_github("OHDSI/Artemis@242b5a24864b85a44c62d95a98cbaa2d16c55539")
 ```
 
@@ -254,12 +255,12 @@ To see what you already have first:
 ```r
 for (p in c("DatabaseConnector", "CirceR", "CohortGenerator", "SqlRender",
             "dplyr", "tibble", "readr", "cli", "rlang", "stringr", "ARTEMIS",
-            "jsonlite", "ggplot2", "scales"))
+            "jsonlite", "ggplot2", "scales", "survival", "broom"))
   cat(sprintf("%-18s %s\n", p,
       tryCatch(as.character(packageVersion(p)), error = function(e) "MISSING")))
 ```
 
-`run.R` checks all fourteen are present and stops with a clear message if any
+`run.R` checks all sixteen are present and stops with a clear message if any
 is missing. (ARTEMIS is the exception to "newer is fine": use the commit
 above, which is the tested one — see the ARTEMIS note.)
 

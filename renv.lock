@@ -306,6 +306,26 @@
       ],
       "Hash": "40415719b5a479b87949f3aa0aee737c"
     },
+    "broom": {
+      "Package": "broom",
+      "Version": "1.0.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "backports",
+        "dplyr",
+        "generics",
+        "glue",
+        "lifecycle",
+        "purrr",
+        "rlang",
+        "stringr",
+        "tibble",
+        "tidyr"
+      ],
+      "Hash": "8fcc818f3b9887aebaf206f141437cc9"
+    },
     "bslib": {
       "Package": "bslib",
       "Version": "0.9.0",
@@ -1305,6 +1325,22 @@
         "vctrs"
       ],
       "Hash": "d47392652eedc68bf916657347ff2526"
+    },
+    "survival": {
+      "Package": "survival",
+      "Version": "3.8-3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "Matrix",
+        "R",
+        "graphics",
+        "methods",
+        "splines",
+        "stats",
+        "utils"
+      ],
+      "Hash": "fe42836742a4f065b3f3f5de81fccab9"
     },
     "tibble": {
       "Package": "tibble",

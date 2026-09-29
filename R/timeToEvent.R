@@ -176,17 +176,12 @@ computeTimeToEvent <- function(targetData,
   kmData         <- tibble::tibble()
   medianSurvival <- tibble::tibble()
 
-  hasSurvival <- requireNamespace("survival", quietly = TRUE)
-  hasBroom    <- requireNamespace("broom", quietly = TRUE)
-  if (!hasSurvival || !hasBroom) {
-    missingPkgs <- c("survival", "broom")[!c(hasSurvival, hasBroom)]
-    warning("Kaplan-Meier outputs (km, median survival, milestones) skipped: ",
-            "required package(s) not available: ",
-            paste(missingPkgs, collapse = ", "), ". Install them and re-run.",
-            call. = FALSE)
+  for (p in c("survival", "broom")) {
+    if (!requireNamespace(p, quietly = TRUE))
+      stop("Required package not installed: ", p, call. = FALSE)
   }
 
-  if (hasSurvival && hasBroom && nrow(ds) > 0) {
+  if (nrow(ds) > 0) {
     km <- .fitSurvival(ds, strata)
     kmData         <- km$kmData
     medianSurvival <- km$medianSurvival
