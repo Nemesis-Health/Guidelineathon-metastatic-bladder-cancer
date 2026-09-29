@@ -200,35 +200,26 @@ runArtemis <- function(executionSettings,
     "Drug exposure extracted: {nrow(conDF)} records for cohort ID {artemisCohortId}"
   )
 
-  # --- Canonicalise drug tokens to the ARTEMIS regimen vocabulary -----------
-  # ARTEMIS::stringDF_from_cdm() builds each patient's alignment token straight
-  # from the CDM *ingredient* concept_name and uses validDrugs only to filter,
-  # never to rename. But the regimen shortStrings are tokenised from ARTEMIS's
-  # own drug names (validDrugs$name). These coincide for most drugs, so alignment
-  # "just works" — EXCEPT for antibody-drug conjugates, where RxNorm names the
-  # ingredient by the antibody alone: CDM "enfortumab" vs regimen "enfortumab
-  # vedotin" (same for brentuximab / polatuzumab / tisotumab vedotin, ...). The
-  # tokens never match, so no such regimen ever aligns and those exposures go
-  # silently UNCAPTURED — this is why the EV-Pembro cohort was 0 despite present
-  # enfortumab exposures. Overwrite the token with the matching validDrugs$name
-  # so the patient and regimen strings share one vocabulary; lower-cased to match
-  # the regimen tokens' convention (stringDF_from_cdm strips the spaces). A no-op
-  # where the names already agree (verified: every regimen token that has a
-  # validDrugs entry equals cleaned validDrugs$name, so this cannot regress a
-  # currently-aligning drug). This is an upstream ARTEMIS bug (any drug whose
-  # RxNorm ingredient name != HemOnc component name is affected) — patched here
-  # rather than in the vendored package.
-  vdKeep  <- !is.na(validDrugs$name) & nzchar(validDrugs$name)
-  vdName  <- stats::setNames(tolower(as.character(validDrugs$name[vdKeep])),
-                             as.character(validDrugs$valid_concept_id[vdKeep]))
-  vdKey   <- as.character(conDF$ancestor_concept_id)
-  vdHit   <- vdKey %in% names(vdName)
-  conDF$concept_name[vdHit] <- vdName[vdKey[vdHit]]
+  # --- Align drug tokens to the ARTEMIS regimen vocabulary ------------------
+  # ARTEMIS::stringDF_from_cdm() builds each patient's alignment token from the
+  # CDM ingredient concept_name, but the regimen shortStrings are tokenised from
+  # ARTEMIS's own drug names (validDrugs$name). Where they differ (CDM
+  # "enfortumab" vs regimen "enfortumab vedotin") no regimen containing the drug
+  # can align. artemis_name holds the token used for alignment; concept_name
+  # stays the CDM name for every reported output.
+  #
+  # validDrugs maps several names to one ingredient id (formulations such as
+  # "Azacitidine oral", combination products such as "Nivolumab and
+  # relatlimab"), so a name is only substituted when the CDM name is not
+  # already one of that id's names and the id has exactly one name.
+  artemisCandidates <- .artemisNameCandidates(validDrugs)
+  conDF$artemis_name <- .alignDrugNames(conDF$ancestor_concept_id,
+                                        conDF$concept_name, artemisCandidates)
 
   # --- Step 2: Build string representations ---------------------------------
   cli::cli_progress_step("Building drug string representations")
   stringDF <- ARTEMIS::stringDF_from_cdm(
-    con_df     = conDF,
+    con_df     = transform(conDF, concept_name = artemis_name),
     validDrugs = validDrugs
   )
 
@@ -576,4 +567,43 @@ writeArtemisEpisodes <- function(connection,
     episode_source_value      = character(0),
     episode_source_concept_id = integer(0)
   )
+}
+
+
+#' Lower-cased ARTEMIS drug names per ingredient id
+#' @return named list, valid_concept_id -> unique lower-cased validDrugs names
+#' @noRd
+.artemisNameCandidates <- function(validDrugs) {
+  keep <- !is.na(validDrugs$name) & nzchar(validDrugs$name)
+  lapply(split(tolower(as.character(validDrugs$name[keep])),
+               as.character(validDrugs$valid_concept_id[keep])), unique)
+}
+
+
+#' Alignment token name for each exposure
+#'
+#' Keeps the CDM name when it is already one of the ingredient's ARTEMIS names
+#' (compared ignoring case and whitespace); otherwise substitutes the ARTEMIS
+#' name when the ingredient has exactly one. An ingredient with several names,
+#' none matching the CDM name, keeps the CDM name and is reported.
+#' @noRd
+.alignDrugNames <- function(ingredientIds, cdmNames, candidates) {
+  clean <- function(x) tolower(gsub("[[:space:]]+", "", x))
+  out   <- as.character(cdmNames)
+  ids   <- as.character(ingredientIds)
+  ambiguous <- character(0)
+  for (id in intersect(unique(ids), names(candidates))) {
+    cand <- candidates[[id]]
+    rows <- which(ids == id)
+    miss <- rows[!(clean(out[rows]) %in% clean(cand))]
+    if (length(miss) == 0L) next
+    if (length(cand) == 1L) out[miss] <- cand
+    else ambiguous <- c(ambiguous, sprintf("%s (%s)", unique(out[miss]), id))
+  }
+  if (length(ambiguous) > 0L)
+    cli::cli_alert_warning(c(
+      "CDM ingredient name matches none of its several ARTEMIS names, left ",
+      "unchanged (regimens using those names cannot align): ",
+      "{paste(unique(ambiguous), collapse = ', ')}"))
+  out
 }

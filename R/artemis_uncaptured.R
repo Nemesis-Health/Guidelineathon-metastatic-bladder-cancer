@@ -43,7 +43,9 @@ regimenIngredientMap <- function(regimens) {
 
 #' Row indices of validExp that are CAPTURED (ingredient-aware, grace-padded)
 #'
-#' @param validExp      exposures (person_id, drug_exposure_start_date, concept_name)
+#' @param validExp      exposures (person_id, drug_exposure_start_date, and
+#'                      artemis_name, the alignment token name; falls back to
+#'                      concept_name when absent)
 #' @param episodes      aligned episodes (person_id, episode_start_date,
 #'                      episode_end_date, episode_source_value = regName)
 #' @param regIngredients regName -> ingredient tokens, from regimenIngredientMap()
@@ -57,7 +59,8 @@ capturedExposureRids <- function(validExp, episodes, regIngredients,
     .rid       = seq_len(nrow(validExp)),
     person_id  = as.character(validExp$person_id),
     date       = as.Date(validExp$drug_exposure_start_date),
-    ingredient = .cleanName(validExp$concept_name),
+    ingredient = .cleanName(if ("artemis_name" %in% names(validExp))
+                              validExp$artemis_name else validExp$concept_name),
     stringsAsFactors = FALSE)
   ep <- data.frame(
     person_id = as.character(episodes$person_id),
