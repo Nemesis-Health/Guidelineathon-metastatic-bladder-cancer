@@ -62,8 +62,8 @@ projectRoot <- normalizePath(".", mustWork = FALSE)
 cohortsDir  <- file.path(projectRoot, "cohorts")
 dir.create(settings$outputFolder, recursive = TRUE, showWarnings = FALSE)
 
-source("R/vendor_utils.R")   # .getDbms, %||%
-source("R/helpers.R")        # readJsonCohorts(), buildCohortSet(), generateCohorts()
+source("R/vendor_utils.R")   # .getDbms, %||%, upstream-bug patches
+source("R/helpers.R")        # readJsonCohorts(), buildCohortSet(), generateCohorts(), runCohortDiagnostics()
 
 connection <- DatabaseConnector::connect(connectionDetails)
 .checkDbiPostgresBug(connection)
@@ -94,13 +94,14 @@ dir.create(exportFolder, recursive = TRUE, showWarnings = FALSE)
 
 # All runXxx flags left at executeDiagnostics()'s own defaults (every check
 # except runTimeSeries) -- pass e.g. runOrphanConcepts = FALSE here if a run
-# is taking too long on a large CDM.
-CohortDiagnostics::executeDiagnostics(
+# is taking too long on a large CDM. runCohortDiagnostics() is
+# executeDiagnostics() plus the upstream-bug patches (R/helpers.R).
+runCohortDiagnostics(
+  connection               = connection,
   cohortDefinitionSet      = cohortDefinitionSet,
   exportFolder             = exportFolder,
   databaseId               = settings$databaseId,
   cohortDatabaseSchema     = settings$workDatabaseSchema,
-  connection               = connection,
   cdmDatabaseSchema        = settings$cdmDatabaseSchema,
   vocabularyDatabaseSchema = settings$vocabDatabaseSchema,
   cohortTable              = settings$cohortTable,

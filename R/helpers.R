@@ -130,6 +130,20 @@ generateCohorts <- function(connection, cohortDefinitionSet, dropTables = TRUE,
                    by = "cohortId")
 }
 
+# --- CohortDiagnostics::executeDiagnostics() with upstream-bug patches -----
+# Same arguments as CohortDiagnostics::executeDiagnostics(). Applies the
+# patches in R/vendor_utils.R that this connection's dialect/driver needs
+# (each is a no-op otherwise) for the duration of the call only, restoring
+# the original functions on exit -- also on error -- so anything run later
+# in the same session gets stock DatabaseConnector/CohortGenerator.
+runCohortDiagnostics <- function(connection, ...) {
+  patches <- list()
+  on.exit(for (p in rev(patches)) .restorePatchedFunctions(p), add = TRUE)
+  patches[[1]] <- .patchDbiTempTableInsert(connection)
+  patches[[2]] <- .patchBigQueryInclusionRuleIds(connection)
+  CohortDiagnostics::executeDiagnostics(connection = connection, ...)
+}
+
 # --- fail loudly on a NULL/missing SqlRender parameter, instead of letting
 # SqlRender silently substitute it as an empty string (e.g. a NULL
 # `settings$someKey` turning `-@some_param` into a bare `-`, which only
