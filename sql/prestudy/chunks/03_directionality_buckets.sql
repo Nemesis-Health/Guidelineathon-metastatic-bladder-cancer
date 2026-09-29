@@ -68,7 +68,7 @@ SELECT
     x.pair,
     x.index_year,
     x.direction,
-    CASE WHEN x.n_patients <= @min_cell_count THEN -@min_cell_count ELSE x.n_patients END AS n_patients
+    CASE WHEN x.n_patients > 0 AND x.n_patients <= @min_cell_count THEN -@min_cell_count ELSE x.n_patients END AS n_patients
 FROM (
     -- Restructured as tag-then-aggregate-once (raw rows tagged OVERALL/
     -- per-year for each pair, unioned, then ONE outer GROUP BY) rather than

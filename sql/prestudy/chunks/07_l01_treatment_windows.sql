@@ -128,8 +128,8 @@ SELECT
     a.anchor_event,
     a.window_index,
     a.n_eligible,
-    CASE WHEN a.n_observed          <= @min_cell_count THEN -@min_cell_count ELSE a.n_observed          END AS n_observed,
-    CASE WHEN a.n_patients_with_l01 <= @min_cell_count THEN -@min_cell_count ELSE a.n_patients_with_l01 END AS n_patients_with_l01
+    CASE WHEN a.n_observed          > 0 AND a.n_observed          <= @min_cell_count THEN -@min_cell_count ELSE a.n_observed          END AS n_observed,
+    CASE WHEN a.n_patients_with_l01 > 0 AND a.n_patients_with_l01 <= @min_cell_count THEN -@min_cell_count ELSE a.n_patients_with_l01 END AS n_patients_with_l01
 FROM agg a
 ORDER BY a.anchor_event, a.window_index
 ;

@@ -7,7 +7,10 @@ SELECT
     x.concept_id,
     CASE WHEN x.n_patients <= @min_cell_count THEN -@min_cell_count ELSE x.n_records END AS n_records,
     CASE WHEN x.n_patients <= @min_cell_count THEN -@min_cell_count ELSE x.n_patients END AS n_patients,
-    CASE WHEN x.n_patients <= @min_cell_count THEN -@min_cell_count ELSE COALESCE(ts.n_patients_with_code_timing, tba.n_patients_with_code_timing) END AS n_patients_with_code_timing,
+    CASE WHEN COALESCE(ts.n_patients_with_code_timing, tba.n_patients_with_code_timing) BETWEEN 1 AND @min_cell_count
+         THEN -@min_cell_count
+         ELSE COALESCE(ts.n_patients_with_code_timing, tba.n_patients_with_code_timing)
+    END AS n_patients_with_code_timing,
     CASE WHEN x.n_patients <= @min_cell_count THEN NULL ELSE COALESCE(ts.lq_days_first,       tba.lq_days_first)       END AS lq_days_first,
     CASE WHEN x.n_patients <= @min_cell_count THEN NULL ELSE COALESCE(ts.median_days_first,   tba.median_days_first)   END AS median_days_first,
     CASE WHEN x.n_patients <= @min_cell_count THEN NULL ELSE COALESCE(ts.uq_days_first,       tba.uq_days_first)       END AS uq_days_first,
