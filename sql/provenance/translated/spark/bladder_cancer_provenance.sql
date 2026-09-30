@@ -1,6 +1,6 @@
 -- Generated from bladder_cancer_provenance.sql by translate.R for spark.
--- Replace @cdm_database_schema, @vocabulary_database_schema and
--- @cohort_database_schema before running.
+-- Replace @cdm_database_schema and @vocabulary_database_schema
+-- before running.
 
 WITH bc_concepts AS (
  SELECT ca.descendant_concept_id AS concept_id
@@ -12,14 +12,28 @@ WITH bc_concepts AS (
  WHERE ancestor_concept_id IN (4200889, 4280899, 4289374, 4280900,
  4283614, 4289097, 4280901, 4312566))
 ),
+met_index AS (
+ SELECT m.person_id, MIN(m.measurement_date) AS index_date
+ FROM @cdm_database_schema.measurement m
+ WHERE m.measurement_concept_id IN (
+ SELECT descendant_concept_id
+ FROM @vocabulary_database_schema.concept_ancestor
+ WHERE ancestor_concept_id IN (1633308, 1635142, 36769180))
+ GROUP BY m.person_id
+),
+population AS (
+ SELECT DISTINCT mi.person_id
+ FROM met_index mi
+ JOIN @cdm_database_schema.condition_occurrence co ON co.person_id = mi.person_id
+ JOIN bc_concepts c ON c.concept_id = co.condition_concept_id
+ WHERE co.condition_start_date >= DATEADD(day, -180, mi.index_date)
+ AND co.condition_start_date <= DATEADD(day, 30, mi.index_date)
+),
 bc AS (
  SELECT co.person_id, COALESCE(co.condition_type_concept_id, 0) AS type_concept_id
  FROM @cdm_database_schema.condition_occurrence co
  JOIN bc_concepts c ON c.concept_id = co.condition_concept_id
- JOIN (SELECT DISTINCT subject_id
- FROM @cohort_database_schema.bc_cohort
- WHERE cohort_definition_id = 1) coh
- ON coh.subject_id = co.person_id
+ JOIN population p ON p.person_id = co.person_id
 ),
 counts AS (
  SELECT type_concept_id,

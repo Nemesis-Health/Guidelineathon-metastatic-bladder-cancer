@@ -1,20 +1,48 @@
 -- Generated from other_malignancy_provenance.sql by translate.R for bigquery.
--- Replace @cdm_database_schema, @vocabulary_database_schema and
--- @cohort_database_schema before running.
+-- Replace @cdm_database_schema and @vocabulary_database_schema
+-- before running.
 
--- "Other malignancy" condition records for patients in an already generated
--- cohort (e.g. Target 1A), split by provenance
--- (condition_type_concept_id: EHR, claims, registry, ...).
+-- "Other malignancy" condition records for patients with metastatic bladder
+-- cancer, split by provenance (condition_type_concept_id: EHR, claims,
+-- registry, ...).
 -- Concept set is [GDE] Excluded primaries (codeset 3 in Target_1A.json), the
 -- set T1A's "no other cancer" rule excludes on.
 -- One row per condition_type_concept_id, plus an 'ALL' row (NULL type id).
--- Counts every record for a cohort patient, not only those near index.
+-- Counts every record for a population patient, not only those near index.
+-- Population: first metastasis measurement per patient ([GDE] metastasis
+-- (measurement), codeset 0 in Target_1A.json), limited to patients with a
+-- bladder cancer code ([GDE] Bladder Cancer, codeset 5) from 180 days before
+-- to 30 days after it. T1A's age and other-cancer rules are not applied.
 --
--- SqlRender parameters: cdm_database_schema, vocabulary_database_schema,
---   cohort_database_schema, cohort_table, cohort_id
--- Defaults: run.R's cohort table, and Target 1A's id (JSON cohorts are
--- numbered from 1 in sorted file order; Target_1A.json sorts first).
-with om_concepts as (
+-- SqlRender parameters: cdm_database_schema, vocabulary_database_schema
+with bc_concepts as (
+  select ca.descendant_concept_id as concept_id
+    from @vocabulary_database_schema.concept_ancestor ca
+   where ca.ancestor_concept_id = 197508
+     and ca.descendant_concept_id not in (
+       select descendant_concept_id
+         from @vocabulary_database_schema.concept_ancestor
+        where ancestor_concept_id in (4200889, 4280899, 4289374, 4280900,
+                                      4283614, 4289097, 4280901, 4312566))
+),
+met_index as (
+   select m.person_id, min(m.measurement_date) as index_date
+     from @cdm_database_schema.measurement m
+   where m.measurement_concept_id in (
+     select descendant_concept_id
+       from @vocabulary_database_schema.concept_ancestor
+      where ancestor_concept_id in (1633308, 1635142, 36769180))
+    group by  m.person_id
+ ),
+population as (
+  select distinct mi.person_id
+    from met_index mi
+    join @cdm_database_schema.condition_occurrence co on co.person_id = mi.person_id
+    join bc_concepts c on c.concept_id = co.condition_concept_id
+   where co.condition_start_date >= DATE_ADD(IF(SAFE_CAST(mi.index_date  AS DATE) IS NULL,PARSE_DATE('%Y%m%d', cast(mi.index_date  AS STRING)),SAFE_CAST(mi.index_date  AS DATE)), INTERVAL -180 DAY)
+     and co.condition_start_date <= DATE_ADD(IF(SAFE_CAST(mi.index_date  AS DATE) IS NULL,PARSE_DATE('%Y%m%d', cast(mi.index_date  AS STRING)),SAFE_CAST(mi.index_date  AS DATE)), INTERVAL 30 DAY)
+),
+om_concepts as (
   select i.concept_id
     from (
       select descendant_concept_id as concept_id
@@ -39,10 +67,7 @@ om as (
   select co.person_id, coalesce(cast(co.condition_type_concept_id as int64), 0) as type_concept_id
     from @cdm_database_schema.condition_occurrence co
     join om_concepts c on c.concept_id = co.condition_concept_id
-    join (select distinct subject_id
-            from @cohort_database_schema.bc_cohort
-           where cohort_definition_id = 1) coh
-      on coh.subject_id = co.person_id
+    join population p on p.person_id = co.person_id
 ),
 counts as (
    select type_concept_id,

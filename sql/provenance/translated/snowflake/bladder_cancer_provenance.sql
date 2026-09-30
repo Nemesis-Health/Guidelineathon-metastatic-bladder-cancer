@@ -1,18 +1,19 @@
 -- Generated from bladder_cancer_provenance.sql by translate.R for snowflake.
--- Replace @cdm_database_schema, @vocabulary_database_schema and
--- @cohort_database_schema before running.
+-- Replace @cdm_database_schema and @vocabulary_database_schema
+-- before running.
 
--- Bladder cancer condition records for patients in an already generated
--- cohort (e.g. Target 1A), split by provenance
--- (condition_type_concept_id: EHR, claims, registry, ...).
+-- Bladder cancer condition records for patients with metastatic bladder
+-- cancer, split by provenance (condition_type_concept_id: EHR, claims,
+-- registry, ...).
 -- Concept set is [GDE] Bladder Cancer (codeset 5 in Target_1A.json).
 -- One row per condition_type_concept_id, plus an 'ALL' row (NULL type id).
--- Counts every record for a cohort patient, not only those near index.
+-- Counts every record for a population patient, not only those near index.
+-- Population: first metastasis measurement per patient ([GDE] metastasis
+-- (measurement), codeset 0 in Target_1A.json), limited to patients with a
+-- bladder cancer code ([GDE] Bladder Cancer, codeset 5) from 180 days before
+-- to 30 days after it. T1A's age and other-cancer rules are not applied.
 --
--- SqlRender parameters: cdm_database_schema, vocabulary_database_schema,
---   cohort_database_schema, cohort_table, cohort_id
--- Defaults: run.R's cohort table, and Target 1A's id (JSON cohorts are
--- numbered from 1 in sorted file order; Target_1A.json sorts first).
+-- SqlRender parameters: cdm_database_schema, vocabulary_database_schema
 WITH bc_concepts AS (
   SELECT ca.descendant_concept_id AS concept_id
     FROM @vocabulary_database_schema.concept_ancestor ca
@@ -23,14 +24,28 @@ WITH bc_concepts AS (
         WHERE ancestor_concept_id IN (4200889, 4280899, 4289374, 4280900,
                                       4283614, 4289097, 4280901, 4312566))
 ),
+met_index AS (
+  SELECT m.person_id, MIN(m.measurement_date) AS index_date
+    FROM @cdm_database_schema.measurement m
+   WHERE m.measurement_concept_id IN (
+     SELECT descendant_concept_id
+       FROM @vocabulary_database_schema.concept_ancestor
+      WHERE ancestor_concept_id IN (1633308, 1635142, 36769180))
+   GROUP BY m.person_id
+),
+population AS (
+  SELECT DISTINCT mi.person_id
+    FROM met_index mi
+    JOIN @cdm_database_schema.condition_occurrence co ON co.person_id = mi.person_id
+    JOIN bc_concepts c ON c.concept_id = co.condition_concept_id
+   WHERE co.condition_start_date >= DATEADD(day, -180, mi.index_date)
+     AND co.condition_start_date <= DATEADD(day, 30, mi.index_date)
+),
 bc AS (
   SELECT co.person_id, COALESCE(co.condition_type_concept_id, 0) AS type_concept_id
     FROM @cdm_database_schema.condition_occurrence co
     JOIN bc_concepts c ON c.concept_id = co.condition_concept_id
-    JOIN (SELECT DISTINCT subject_id
-            FROM @cohort_database_schema.bc_cohort
-           WHERE cohort_definition_id = 1) coh
-      ON coh.subject_id = co.person_id
+    JOIN population p ON p.person_id = co.person_id
 ),
 counts AS (
   SELECT type_concept_id,
