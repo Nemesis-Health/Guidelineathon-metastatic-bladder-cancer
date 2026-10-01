@@ -62,3 +62,7 @@ docs/SQL_SERVER.md
 # === DatabaseConnector debug output (written on a SQL error; may contain
 # schema/SQL details) ===
 errorReportSql.txt
+
+# === Local environment / secrets ===
+.env
+docs/ARTEMIS_RESULTS_CONTRACT.md
