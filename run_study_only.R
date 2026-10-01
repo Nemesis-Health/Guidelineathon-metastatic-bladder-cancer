@@ -17,6 +17,7 @@
 #   (k) baseline body measurements + Charlson CCI -> R/11_baseline_characterization.R
 #   (l) treatment patterns by LoT             -> R/12_treatment_patterns.R
 #   (m) lab coverage by comorbidity subgroup  -> R/13_covariate_lab_coverage.R
+#   (n) condition-code record provenance     -> R/14_provenance.R
 #
 # Use this once ARTEMIS is sorted (see README.md) if you already have
 # diagnostics results from run_diagnostics_only.R and just need the
@@ -106,6 +107,7 @@ source("R/10_adherence.R")          # guideline relevance + adherence roll-up
 source("R/11_baseline_characterization.R") # weight/height/BMI + Charlson CCI
 source("R/12_treatment_patterns.R") # treatment patterns by line of therapy
 source("R/13_covariate_lab_coverage.R") # lab coverage by comorbidity subgroup (Target 1A)
+source("R/14_provenance.R")         # record provenance of Target 1A condition codes
 
 message("\n=== Done. Results under ", settings$outputFolder, "/eligibility/ ===")
 
