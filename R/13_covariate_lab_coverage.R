@@ -36,7 +36,7 @@ covariateIdFor <- function(name) {
   hit <- covSet$cohortId[covSet$cohortName == name]
   if (length(hit) == 0L)
     stop("Covariate cohort '", name, "' not found in covSet -- is its JSON present in ",
-         "cohorts/02_Covariate/ and listed in R/08_covariates.R's comorbMap?", call. = FALSE)
+         "cohorts/02_Comorbidity/ or 05_Lab_coverage/ and listed in R/08_covariates.R's comorbMap?", call. = FALSE)
   as.integer(hit[1])
 }
 

@@ -43,7 +43,7 @@ eligMap <- tibble::tribble(
   "Gilberts Syndrome",           29L
 )
 
-covJson <- readJsonCohorts(file.path(cohortsDir, "02_Covariate"))
+covJson <- readJsonCohorts(file.path(cohortsDir, "04_Eligibility"))
 eligJson <- covJson[covJson$cohortName %in% eligMap$cohortName, ]
 missing  <- setdiff(eligMap$cohortName, eligJson$cohortName)
 if (length(missing)) stop("Missing eligibility cohort JSON(s): ",
