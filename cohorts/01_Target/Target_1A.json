@@ -1036,7 +1036,7 @@
   },
   "InclusionRules": [
     {
-      "name": "age>18",
+      "name": "age >= 18",
       "expression": {
         "Type": "ALL",
         "CriteriaList": [],
@@ -1084,7 +1084,7 @@
       }
     },
     {
-      "name": "No other cancer (ever prior to 30d after)",
+      "name": "No other cancer (365 prior to 30d after)",
       "expression": {
         "Type": "ALL",
         "CriteriaList": [

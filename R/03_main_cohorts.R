@@ -19,7 +19,7 @@ message("\n== (c) main cohorts ==")
 # them would just be a throwaway duplicate. Only Target 1A + the drug-comparison
 # leaves go into the final bc_cohort.
 jsonCohorts <- readJsonCohorts(file.path(cohortsDir, "01_Target"))
-# generateStats = TRUE: Target 1A's 3 named InclusionRules (age>18, prior
+# generateStats = TRUE: Target 1A's 3 named InclusionRules (age >= 18, prior
 # bladder cancer, no other cancer) get Circe's inclusion-rule-statistics SQL,
 # so the standard OHDSI attrition table can be pulled after generation below.
 jsonSet <- buildCohortSet(jsonCohorts = jsonCohorts, startId = 1L, generateStats = TRUE)
@@ -259,7 +259,7 @@ writeResultCsv(cohortCountsOut, "cohort_counts", "characterization")
 print(tibble::as_tibble(cohortCountsOut), n = Inf)
 
 # --- standard OHDSI inclusion-rule attrition (01_Target JSON cohorts) -------
-# Every JSON cohort under cohorts/01_Target/ (Target 1A: age>18; prior bladder
+# Every JSON cohort under cohorts/01_Target/ (Target 1A: age >= 18; prior bladder
 # cancer; no other cancer) was built with generateStats = TRUE above, so Circe
 # already computed the rule stats during generation — just read them back.
 # Cohorts with no InclusionRules simply produce no rows.
