@@ -28,7 +28,9 @@
 # n_overlap / n_cohort, computable downstream.
 #
 # Comorbidity cohorts are generated into their OWN table (covariateCohortTable),
-# never bc_cohort. TO ADD A COMORBIDITY: drop its JSON into cohorts/02_Covariate/
+# never bc_cohort. They are read from cohorts/02_Comorbidity/ (reported),
+# 03_Charlson/ (Charlson-only components) and 05_Lab_coverage/ (lab-coverage
+# subgroups only). TO ADD ONE: drop its JSON into the matching folder
 # with a filename whose "_"->" " form matches a `cohortName` in comorbMap below
 # (e.g. Renal_Disease.json -> "Renal Disease"). Missing entries are skipped with
 # a message, so the file is all that is needed once its row is listed here.
@@ -115,12 +117,13 @@ denomTbl <- dplyr::bind_rows(
 denomTbl <- denomTbl[denomTbl$stratum_type %in% activeStrataTypes(), ]
 
 # --- comorbidities: generate the present JSONs into a SEPARATE table ---------
-covJson  <- readJsonCohorts(file.path(cohortsDir, "02_Covariate"))
+covDirs  <- c("02_Comorbidity", "03_Charlson", "05_Lab_coverage")
+covJson  <- dplyr::bind_rows(lapply(file.path(cohortsDir, covDirs), readJsonCohorts))
 present  <- comorbMap[comorbMap$cohortName %in% covJson$cohortName, ]
 absent   <- comorbMap[!comorbMap$cohortName %in% covJson$cohortName, ]
 if (nrow(absent))
   message("  skipping ", nrow(absent), " comorbidity cohort(s) with no JSON in ",
-          "cohorts/02_Covariate/ (add the file to include): ",
+          "cohorts/{", paste(covDirs, collapse = ","), "}/ (add the file to include): ",
           paste(absent$code, collapse = ", "))
 
 comorbRows <- tibble::tibble()

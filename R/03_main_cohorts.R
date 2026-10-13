@@ -11,7 +11,7 @@
 message("\n== (c) main cohorts ==")
 
 # --- JSON cohorts (Target only) ---------------------------------------------
-# We deliberately do NOT regenerate 00_ARTEMIS or 02_Covariate here:
+# We deliberately do NOT regenerate 00_ARTEMIS or the covariate folders here:
 #   * the ARTEMIS scan cohort is only needed by runArtemis() in step (a);
 #   * the eligibility-input covariates are already materialised in bc_lab_cohort
 #     by step (b) (under their test-id slots).
