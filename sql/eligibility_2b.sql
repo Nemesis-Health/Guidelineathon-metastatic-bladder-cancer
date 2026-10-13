@@ -49,7 +49,8 @@ WITH base AS (
 ),
 labs AS (
   SELECT b.subject_id, b.cohort_start_date, b.cohort_end_date, b.win_lo, b.win_hi, b.win_lo_cond, b.win_hi_cond,
-         lab.cohort_definition_id AS test_id, lab.cohort_start_date AS lab_date
+         lab.cohort_definition_id AS test_id, lab.cohort_start_date AS lab_date,
+         lab.cohort_end_date AS lab_end_date
     FROM base b
     LEFT JOIN @target_database_schema.@lab_cohort_table lab
       ON lab.subject_id = b.subject_id
@@ -58,31 +59,31 @@ labs AS (
 ),
 flags AS (
   SELECT subject_id, cohort_start_date, cohort_end_date,
-    MAX(CASE WHEN test_id IN (24, 25, 26) AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_ecog_0_2,
-    MAX(CASE WHEN test_id IN (24, 25)     AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_ecog_0_1,
-    MAX(CASE WHEN test_id = 14            AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_gfr30,
-    MAX(CASE WHEN test_id = 13            AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_gfr60,
-    MAX(CASE WHEN test_id = 4             AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_anc,
-    MAX(CASE WHEN test_id = 19            AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_plt,
-    MAX(CASE WHEN test_id = 15            AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_hb,
-    MAX(CASE WHEN test_id = 8             AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_cr,
-    MAX(CASE WHEN test_id = 7             AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_crcl,
-    MAX(CASE WHEN test_id = 22            AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_tbil_le15,
-    MAX(CASE WHEN test_id = 23            AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_tbil_gt15,
-    MAX(CASE WHEN test_id = 9             AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_dbil,
-    MAX(CASE WHEN test_id = 21            AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_tbil_le3,
-    MAX(CASE WHEN test_id = 29            AND lab_date BETWEEN win_lo_cond AND win_hi_cond THEN 1 ELSE 0 END) AS f_gilbert,
-    MAX(CASE WHEN test_id = 5             AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_ast_le25,
-    MAX(CASE WHEN test_id = 6             AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_ast_le5,
-    MAX(CASE WHEN test_id = 28            AND lab_date BETWEEN win_lo_cond AND win_hi_cond THEN 1 ELSE 0 END) AS f_livermet,
-    MAX(CASE WHEN test_id = 2             AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_alt_le25,
-    MAX(CASE WHEN test_id = 3             AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_alt_le5,
-    MAX(CASE WHEN test_id = 18            AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_inr,
-    MAX(CASE WHEN test_id = 31            AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_anticoag,
-    MAX(CASE WHEN test_id = 20            AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_pt,
-    MAX(CASE WHEN test_id = 1             AND lab_date BETWEEN win_lo AND win_hi THEN 1 ELSE 0 END) AS f_aptt,
-    MAX(CASE WHEN test_id = 40            AND lab_date BETWEEN win_lo_cond AND win_hi_cond THEN 1 ELSE 0 END) AS f_hearing,
-    MAX(CASE WHEN test_id = 33            AND lab_date BETWEEN win_lo_cond AND win_hi_cond THEN 1 ELSE 0 END) AS f_neuropathy
+    MAX(CASE WHEN test_id IN (24, 25, 26) AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_ecog_0_2,
+    MAX(CASE WHEN test_id IN (24, 25)     AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_ecog_0_1,
+    MAX(CASE WHEN test_id = 14            AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_gfr30,
+    MAX(CASE WHEN test_id = 13            AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_gfr60,
+    MAX(CASE WHEN test_id = 4             AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_anc,
+    MAX(CASE WHEN test_id = 19            AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_plt,
+    MAX(CASE WHEN test_id = 15            AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_hb,
+    MAX(CASE WHEN test_id = 8             AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_cr,
+    MAX(CASE WHEN test_id = 7             AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_crcl,
+    MAX(CASE WHEN test_id = 22            AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_tbil_le15,
+    MAX(CASE WHEN test_id = 23            AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_tbil_gt15,
+    MAX(CASE WHEN test_id = 9             AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_dbil,
+    MAX(CASE WHEN test_id = 21            AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_tbil_le3,
+    MAX(CASE WHEN test_id = 29            AND lab_date <= win_hi_cond AND lab_end_date >= win_lo_cond THEN 1 ELSE 0 END) AS f_gilbert,
+    MAX(CASE WHEN test_id = 5             AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_ast_le25,
+    MAX(CASE WHEN test_id = 6             AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_ast_le5,
+    MAX(CASE WHEN test_id = 28            AND lab_date <= win_hi_cond AND lab_end_date >= win_lo_cond THEN 1 ELSE 0 END) AS f_livermet,
+    MAX(CASE WHEN test_id = 2             AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_alt_le25,
+    MAX(CASE WHEN test_id = 3             AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_alt_le5,
+    MAX(CASE WHEN test_id = 18            AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_inr,
+    MAX(CASE WHEN test_id = 31            AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_anticoag,
+    MAX(CASE WHEN test_id = 20            AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_pt,
+    MAX(CASE WHEN test_id = 1             AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_aptt,
+    MAX(CASE WHEN test_id = 40            AND lab_date <= win_hi_cond AND lab_end_date >= win_lo_cond THEN 1 ELSE 0 END) AS f_hearing,
+    MAX(CASE WHEN test_id = 33            AND lab_date <= win_hi_cond AND lab_end_date >= win_lo_cond THEN 1 ELSE 0 END) AS f_neuropathy
   FROM labs
   GROUP BY subject_id, cohort_start_date, cohort_end_date
 )

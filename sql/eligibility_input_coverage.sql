@@ -4,8 +4,11 @@
 --   n_tested  = had the measurement at all (from @raw_lab_results_table; labs only)
 --   n_passed  = met the criterion / has the cohort (from @lab_cohort_table)
 -- both within @lab_window_before_days days before to @lab_window_after_days days after
--- that cohort's own index date. ECOG/condition slots (24-27, 33-40) have no
--- n_tested (not lab measurements).
+-- that cohort's own index date, except the condition flags (28, 29, 33, 34, 40),
+-- whose n_passed uses @condition_flag_window_before_days/after_days -- the same
+-- windows eligibility_2*.sql checks. A row passes when its [cohort_start_date,
+-- cohort_end_date] overlaps the window, also as there. ECOG/condition slots
+-- (24-40) have no n_tested (not lab measurements).
 --
 -- Also stratified: every (cohort, test_id) row is computed four times --
 -- overall, and split by age_group / sex / age_sex (subject_strata.sql --
@@ -18,7 +21,9 @@
 -- SqlRender params: @work_database_schema, @cohort_table, @lab_cohort_table,
 --                   @raw_lab_results_table, @cohort_definition_ids
 --                   (comma-separated cohort_definition_id list),
---                   @lab_window_before_days, @lab_window_after_days
+--                   @lab_window_before_days, @lab_window_after_days,
+--                   @condition_flag_window_before_days,
+--                   @condition_flag_window_after_days
 --                   subject_strata_sql (pre-rendered fragment, not a plain
 --                   schema/table name -- see the `strata` CTE below)
 WITH target_cohorts AS (
@@ -56,8 +61,15 @@ passed AS (
     FROM tc_strat
     JOIN @work_database_schema.@lab_cohort_table lab
       ON lab.subject_id = tc_strat.subject_id
-     AND lab.cohort_start_date BETWEEN DATEADD(day, -@lab_window_before_days, tc_strat.cohort_start_date)
-                                   AND DATEADD(day,  @lab_window_after_days, tc_strat.cohort_start_date)
+     AND (
+           (lab.cohort_definition_id NOT IN (28, 29, 33, 34, 40)
+            AND lab.cohort_start_date <= DATEADD(day,  @lab_window_after_days,  tc_strat.cohort_start_date)
+            AND lab.cohort_end_date   >= DATEADD(day, -@lab_window_before_days, tc_strat.cohort_start_date))
+           OR
+           (lab.cohort_definition_id IN (28, 29, 33, 34, 40)
+            AND lab.cohort_start_date <= DATEADD(day,  @condition_flag_window_after_days,  tc_strat.cohort_start_date)
+            AND lab.cohort_end_date   >= DATEADD(day, -@condition_flag_window_before_days, tc_strat.cohort_start_date))
+         )
    GROUP BY tc_strat.stratum_type, tc_strat.stratum_value, tc_strat.cohort_definition_id,
             lab.cohort_definition_id
 ),
