@@ -129,59 +129,6 @@
       }
     },
     {
-      "id": 17,
-      "name": "Metastasis",
-      "expression": {
-        "items": [
-          {
-            "concept": {
-              "CONCEPT_CLASS_ID": "Metastasis",
-              "CONCEPT_CODE": "OMOP4998856",
-              "CONCEPT_ID": 36769180,
-              "CONCEPT_NAME": "Metastasis",
-              "DOMAIN_ID": "Measurement",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
-              "VOCABULARY_ID": "Cancer Modifier"
-            },
-            "includeDescendants": true
-          },
-          {
-            "concept": {
-              "CONCEPT_CLASS_ID": "Staging/Grading",
-              "CONCEPT_CODE": "AJCC/UICC-M1",
-              "CONCEPT_ID": 1635142,
-              "CONCEPT_NAME": "AJCC/UICC M1 Category",
-              "DOMAIN_ID": "Measurement",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
-              "VOCABULARY_ID": "Cancer Modifier"
-            },
-            "includeDescendants": true
-          },
-          {
-            "concept": {
-              "CONCEPT_CLASS_ID": "Staging/Grading",
-              "CONCEPT_CODE": "AJCC/UICC-Stage-4",
-              "CONCEPT_ID": 1633308,
-              "CONCEPT_NAME": "AJCC/UICC Stage 4",
-              "DOMAIN_ID": "Measurement",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
-              "VOCABULARY_ID": "Cancer Modifier"
-            },
-            "includeDescendants": true
-          }
-        ]
-      }
-    },
-    {
       "id": 18,
       "name": "ECOG 0 ",
       "expression": {
