@@ -23,7 +23,7 @@
 -- test_id reference (lab_cohorts.sql #criteria, ids 1-23):
 --   1  aPTT <= 1.5 ULN          14 GFR >= 30 mL/min
 --   2  ALT <= 2.5 ULN            15 Hb >= 9.0 g/dL
---   3  ALT <= 5 ULN              16 HbA1c 7-8%
+--   3  ALT <= 5 ULN              16 HbA1c >= 7% and < 8%
 --   4  ANC >= 1500/uL            17 HbA1c < 6%
 --   5  AST <= 2.5 ULN            18 INR <= 1.5 ULN
 --   6  AST <= 5 ULN              19 Platelets >= 100k/uL
@@ -162,7 +162,7 @@ SELECT subject_id, cohort_start_date, cohort_end_date
 
    /* ----- Enfortumab-eligible ----- */
 
-   -- HbA1c: [17] < 6%  OR  ([16] 7-8% AND (NO polyuria [35] OR NO polydipsia [36]))
+   -- HbA1c: [17] < 6%  OR  ([16] 7% <= HbA1c < 8% AND (NO polyuria [35] OR NO polydipsia [36]))
    --
    -- NOTE — polyuria/polydipsia limb follows the LITERAL Cohort logics.pdf spec,
    -- which is a fixed study requirement (implemented verbatim, not by discretion):

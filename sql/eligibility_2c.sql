@@ -119,7 +119,7 @@ SELECT subject_id, cohort_start_date, cohort_end_date
    /* ----- Carboplatin-eligible (any one) ----- */
    AND (
          f_ecog2      = 1   -- [26] ECOG 2
-         OR f_gfr_30_60 = 1 -- [11] GFR 30-60 mL/min
+         OR f_gfr_30_60 = 1 -- [11] 30 < GFR < 60 mL/min
          -- NYHA class >= III: IGNORED for now (no NYHA concept set).
          OR f_hearing   = 1 -- [40] audiometric hearing loss present (grade >= 2 proxy)
          OR f_neuropathy = 1 -- [33] peripheral neuropathy present (grade >= 2 proxy)
