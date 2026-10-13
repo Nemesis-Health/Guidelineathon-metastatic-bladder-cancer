@@ -71,9 +71,9 @@ less-obvious run settings lives here instead.
 |---|---|---|
 | `labWindowBeforeDays`, `labWindowAfterDays` | `30`, `30` | Days before/after index a record may fall for near-index eligibility inputs: labs, ECOG/PS in Target 2a-2d, the covariate PS overlap (step (h)), eligibility-input coverage (step (e)), lab value distributions (step (d)). |
 | `treatedLabWindowBeforeDays`, `treatedLabWindowAfterDays` | `30`, `0` | The same window for cohorts indexed on treatment start (the initiated bases, T3-T6) in eligibility-input coverage and lab value distributions: 30 days before up to and including the start date, so results taken after treatment began don't count. Condition flags use it too for these cohorts. |
-| `labValueSelection` | `"closest"` | How labs and ECOG decide eligibility in Target 2a-2d and T1-CE. `"closest"`: per lab, the one result closest to index within the lab window decides every test of that lab (ties: before index wins; on the same day the worst value counts). `"any"`: a test passes if any passing result falls in the window. See docs/ELIGIBILITY_LOGIC.md. |
+| `labValueSelection` | `"closest"` | How labs and ECOG decide eligibility in Target 2a-2d and T1-CE. `"closest"`: per lab, the one result closest to index within the lab window decides every test of that lab (ties: before index wins; on the same day the worst value counts). `"any"`: a test passes if any passing result falls in the window. |
 | `conditionFlagWindowBeforeDays`, `conditionFlagWindowAfterDays` | `30`, `30` | Window for the CONDITION flags in Target 2a-2d and eligibility-input coverage (step (e)): liver metastasis, Gilbert's syndrome, neuropathy, skin disorders, hearing loss. A flag counts when its cohort era overlaps the window, and these cohorts stay live to the end of observation, so any earlier record counts; how long a condition lasts is set by its cohort's end strategy, not here. |
-| `maintenanceMerge`, `maintenanceMaxGapDays` | `TRUE`, `180` | Fold maintenance therapy into the line of therapy it maintains before lines are numbered (outcomes and treatment patterns), e.g. avelumab after platinum-based chemotherapy is part of line 1, not line 2. A maintenance episode must start within `maintenanceMaxGapDays` of the earlier regimen's end. The rules are `maintenanceRules` in `R/eventBuilders.R`; see `docs/MAINTENANCE_LINES.md`. `FALSE` numbers every ARTEMIS episode as its own line. |
+| `maintenanceMerge`, `maintenanceMaxGapDays` | `TRUE`, `180` | Fold maintenance therapy into the line of therapy it maintains before lines are numbered (outcomes and treatment patterns), e.g. avelumab after platinum-based chemotherapy is part of line 1, not line 2. A maintenance episode must start within `maintenanceMaxGapDays` of the earlier regimen's end. The rules are `maintenanceRules` in `R/eventBuilders.R`. `FALSE` numbers every ARTEMIS episode as its own line. |
 | `bodyMeasurementsWindowDays` | `90` | Index window for baseline weight/height/BMI (step (k)) — wider than the lab window, matching onco-study-modules' own convention for body measurements. |
 | `stripEndocrineTherapy` | `TRUE` | Excludes endocrine-therapy regimens (tamoxifen, abiraterone, GnRH agonists, ...) from the ARTEMIS reference, via `is_endocrine` in `cohorts/extras/regimen_reference.csv`. `FALSE` counts endocrine therapy as anticancer treatment. |
 | `validDrugsRegimenComponents` | `TRUE` | Controls which drugs ARTEMIS encodes into each patient's alignment string — non-regimen/supportive drugs are gap noise that lowers alignment scores and shrinks eras (DEVELOPMENT.md §10.4). `TRUE` keeps only drugs that appear in a kept regimen (keeps `validDrugs` and the regimen file consistent — every kept regimen's components stay encodable); `FALSE` keeps all. Composes with `validDrugsAtcClasses` below (both apply when both active); regimens whose components get filtered out can no longer align and are dropped from the reference (logged). |
@@ -426,8 +426,7 @@ At the end of a run, results are packaged into two archives:
 of them also feed Charlson CCI scoring (step (k)); `Liver_Disease` and
 `Renal_Disease` are also lab-coverage subgroups (step (m)). ·
 `03_Charlson/` Charlson components that are not reported as comorbidities
-(`show = FALSE`), sourced from Fortin/Reps/Ryan 2022/2023 (see Known gaps;
-per-component sources in `docs/CHARLSON.md`):
+(`show = FALSE`), sourced from Fortin/Reps/Ryan 2022/2023 (see Known gaps):
 `Myocardial_Infarction` (the exception: OHDSI PhenotypeLibrary cohort 510,
 acute MI only — see Known gaps), `Congestive_Heart_Failure`,
 `Peripheral_Vascular_Disease`, `Chronic_Pulmonary_Disease`,
@@ -1514,8 +1513,7 @@ callable interactively, not run automatically for every combination.
   `metastatic_solid_tumor`/`any_malignancy` are deliberately excluded (not
   a data gap): every subject in every cohort here has metastatic bladder
   cancer by cohort definition, so counting it would put everyone in the
-  `>=5` category regardless of anything else. Per-component sources, and the
-  five components not taken from Fortin/Reps/Ryan, are in `docs/CHARLSON.md`.
+  `>=5` category regardless of anything else.
 - **Charlson MI component counts acute MI only.** `Myocardial_Infarction.json`
   is OHDSI PhenotypeLibrary cohort 510 ("[P][R] Acute myocardial
   infarction": 312327 and descendants), not the Fortin/Reps/Ryan concept set
@@ -1551,8 +1549,7 @@ callable interactively, not run automatically for every combination.
   BSC is treatment-naive, not combination-eligible and not PD-L1-eligible. 2e
   is every Cohort 1 patient not in 2a–2d, so it also holds previously treated
   patients and combination-eligible patients who fit no arm. Whether to split
-  those out into their own groups is not decided yet. Per-cohort limitations
-  are in `docs/ELIGIBILITY_LOGIC.md`.
+  those out into their own groups is not decided yet.
 - **4e and 6e are always empty.** No regimen carries `other_recommended` in
   the EAU or the any-regimen lens, so these cohorts have no members by
   construction. They are kept so that all three lenses report the same
@@ -1570,13 +1567,12 @@ callable interactively, not run automatically for every combination.
   overlap outputs still count any record in the window.** With the default
   `labValueSelection = "closest"`, Target 2a-2d and T1-CE score each lab
   (and ECOG) on the single result closest to index, so their bands are
-  mutually exclusive per patient (see docs/ELIGIBILITY_LOGIC.md).
+  mutually exclusive per patient.
   `eligibility_input_coverage.sql`'s `n_passed` and `ps_overlap.sql`'s
   PS-strata counts still treat any row in the window as a pass, so a subject
   with two draws can fall in mutually exclusive bands at once (e.g. GFR >60
-  and GFR <30; ECOG 0 and ECOG 2). The excess scales with how often a
-  subject is drawn: bands sum to 102% of `n_tested` where subjects average
-  one lab record, and up to 147% where they average five to thirty.
+  and GFR <30; ECOG 0 and ECOG 2). The excess grows with how often a
+  subject is drawn, so bands can sum to well over 100% of `n_tested`.
   Ever-in-window remains the right reading for toxicity/safety.
   The closest-value rule still needs PI sign-off.
 - **Lab unit resolution can still pick the wrong scale for Hb and GFR.**

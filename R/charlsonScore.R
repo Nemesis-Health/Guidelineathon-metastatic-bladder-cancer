@@ -4,7 +4,7 @@
 # Ported verbatim from onco-study-modules R/comorbidities.R
 # (computeCharlsonScore() / .charlsonWeights) — pure dplyr over a per-subject
 # flag data frame, no DB/OSM-class dependency, so it needs no adaptation.
-# Weights: the original Charlson 1987 weights (see docs/CHARLSON.md).
+# Weights: the original Charlson 1987 weights.
 #
 # Wiring (which cohorts supply which component flag) lives in
 # R/11_baseline_characterization.R, not here — this file is just the scoring

@@ -91,7 +91,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     baseMembers$subject_id <- as.character(baseMembers$subject_id)
 
     # lines of therapy by the base cohort's rules; maintenance folded in
-    # (mergeMaintenance(); docs/MAINTENANCE_LINES.md)
+    # (mergeMaintenance())
     treatedPatients <- treatedLines(episodes, baseMembers, t1Members, regimenClass,
         maintenance = settings$maintenanceMerge, maxGapDays = settings$maintenanceMaxGapDays) |>
       dplyr::left_join(regimenClass, by = c(episode_source_value = "regName"))
