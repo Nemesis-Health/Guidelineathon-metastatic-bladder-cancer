@@ -28,8 +28,8 @@
               "DOMAIN_ID": "Observation",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "LOINC"
             }
           },
@@ -142,8 +142,8 @@
               "DOMAIN_ID": "Observation",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             }
           }
@@ -171,8 +171,8 @@
               "CONCEPT_ID": 36309245,
               "CONCEPT_NAME": "Ambulatory and capable of all selfcare but unable to carry out any work activities. Up and about more than 50% of waking hours",
               "DOMAIN_ID": "Meas Value",
-              "INVALID_REASON_CAPTION": "Unknown",
-              "STANDARD_CONCEPT_CAPTION": "Unknown",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
               "VOCABULARY_ID": "LOINC"
             }
           ]
@@ -197,8 +197,8 @@
               "CONCEPT_ID": 36311005,
               "CONCEPT_NAME": "Requires considerable assistance and frequent medical care",
               "DOMAIN_ID": "Meas Value",
-              "INVALID_REASON_CAPTION": "Unknown",
-              "STANDARD_CONCEPT_CAPTION": "Unknown",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "LOINC"
             },
             {
@@ -206,8 +206,8 @@
               "CONCEPT_ID": 36309822,
               "CONCEPT_NAME": "Requires occasional assistance but is able to care for most needs",
               "DOMAIN_ID": "Meas Value",
-              "INVALID_REASON_CAPTION": "Unknown",
-              "STANDARD_CONCEPT_CAPTION": "Unknown",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "LOINC"
             }
           ]

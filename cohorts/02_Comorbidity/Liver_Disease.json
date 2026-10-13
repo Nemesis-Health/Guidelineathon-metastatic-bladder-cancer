@@ -7,7 +7,7 @@
         "items": [
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "9953008",
               "CONCEPT_ID": 201343,
               "CONCEPT_NAME": "Acute alcoholic liver disease",
@@ -22,7 +22,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "420054005",
               "CONCEPT_ID": 196463,
               "CONCEPT_NAME": "Alcoholic cirrhosis",
@@ -37,7 +37,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "50325005",
               "CONCEPT_ID": 193256,
               "CONCEPT_NAME": "Alcoholic fatty liver",
@@ -52,7 +52,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "235880004",
               "CONCEPT_ID": 4340385,
               "CONCEPT_NAME": "Alcoholic fibrosis and sclerosis of liver",
@@ -67,7 +67,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "235875008",
               "CONCEPT_ID": 4340383,
               "CONCEPT_NAME": "Alcoholic hepatitis",
@@ -82,7 +82,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "41309000",
               "CONCEPT_ID": 201612,
               "CONCEPT_NAME": "Alcoholic liver damage",
@@ -97,8 +97,8 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1082601000119100",
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1082601000119104",
               "CONCEPT_ID": 46269816,
               "CONCEPT_NAME": "Ascites due to alcoholic cirrhosis",
               "DOMAIN_ID": "Condition",
@@ -112,7 +112,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "408335007",
               "CONCEPT_ID": 200762,
               "CONCEPT_NAME": "Autoimmune hepatitis",
@@ -127,7 +127,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "1761006",
               "CONCEPT_ID": 192675,
               "CONCEPT_NAME": "Biliary cirrhosis",
@@ -142,7 +142,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "197364000",
               "CONCEPT_ID": 4058696,
               "CONCEPT_NAME": "Central hemorrhagic necrosis of liver",
@@ -157,7 +157,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "197284004",
               "CONCEPT_ID": 4026125,
               "CONCEPT_NAME": "Chronic active hepatitis",
@@ -172,7 +172,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "76783007",
               "CONCEPT_ID": 200763,
               "CONCEPT_NAME": "Chronic hepatitis",
@@ -187,7 +187,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "128302006",
               "CONCEPT_ID": 198964,
               "CONCEPT_NAME": "Chronic hepatitis C",
@@ -202,7 +202,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "57339008",
               "CONCEPT_ID": 4238978,
               "CONCEPT_NAME": "Chronic lobular hepatitis",
@@ -217,7 +217,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "79720007",
               "CONCEPT_ID": 201613,
               "CONCEPT_NAME": "Chronic nonalcoholic liver disease",
@@ -232,7 +232,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "41889008",
               "CONCEPT_ID": 199867,
               "CONCEPT_NAME": "Chronic persistent hepatitis",
@@ -247,7 +247,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "10295004",
               "CONCEPT_ID": 4012113,
               "CONCEPT_NAME": "Chronic viral hepatitis",
@@ -262,7 +262,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "235869004",
               "CONCEPT_ID": 192240,
               "CONCEPT_NAME": "Chronic viral hepatitis B with hepatitis D",
@@ -277,7 +277,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "186639003",
               "CONCEPT_ID": 439674,
               "CONCEPT_NAME": "Chronic viral hepatitis B without delta-agent",
@@ -292,7 +292,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "435101000124104",
               "CONCEPT_ID": 763021,
               "CONCEPT_NAME": "Chronic viral hepatitis C with hepatic coma",
@@ -307,7 +307,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "266468003",
               "CONCEPT_ID": 194692,
               "CONCEPT_NAME": "Cirrhosis - non-alcoholic",
@@ -322,22 +322,22 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "197279005",
               "CONCEPT_ID": 4059284,
               "CONCEPT_NAME": "Cirrhosis and chronic liver disease",
               "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "INVALID_REASON": "D",
+              "INVALID_REASON_CAPTION": "Invalid",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "19943007",
               "CONCEPT_ID": 4064161,
               "CONCEPT_NAME": "Cirrhosis of liver",
@@ -352,7 +352,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "235856003",
               "CONCEPT_ID": 194984,
               "CONCEPT_NAME": "Disease of liver",
@@ -367,8 +367,8 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1092801000119100",
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1092801000119102",
               "CONCEPT_ID": 46273476,
               "CONCEPT_NAME": "Hepatic ascites co-occurrent with chronic active hepatitis due to toxic liver disease",
               "DOMAIN_ID": "Condition",
@@ -382,8 +382,8 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1085021000119100",
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1085021000119106",
               "CONCEPT_ID": 46269835,
               "CONCEPT_NAME": "Hepatic ascites due to chronic alcoholic hepatitis",
               "DOMAIN_ID": "Condition",
@@ -397,7 +397,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "186624004",
               "CONCEPT_ID": 439675,
               "CONCEPT_NAME": "Hepatic coma due to acute hepatitis B with delta agent",
@@ -412,7 +412,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "424340000",
               "CONCEPT_ID": 4308946,
               "CONCEPT_NAME": "Hepatic coma due to chronic hepatitis B",
@@ -427,7 +427,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "40946000",
               "CONCEPT_ID": 196029,
               "CONCEPT_NAME": "Hepatic coma due to viral hepatitis",
@@ -442,7 +442,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "62484002",
               "CONCEPT_ID": 4267417,
               "CONCEPT_NAME": "Hepatic fibrosis",
@@ -457,7 +457,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "235901004",
               "CONCEPT_ID": 4340948,
               "CONCEPT_NAME": "Hepatic fibrosis with hepatic sclerosis",
@@ -472,7 +472,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "17890003",
               "CONCEPT_ID": 194417,
               "CONCEPT_NAME": "Hepatic infarction",
@@ -487,7 +487,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "87248009",
               "CONCEPT_ID": 4337543,
               "CONCEPT_NAME": "Hepatic necrosis",
@@ -502,7 +502,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "235899008",
               "CONCEPT_ID": 4340394,
               "CONCEPT_NAME": "Hepatic sclerosis",
@@ -517,7 +517,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "371067004",
               "CONCEPT_ID": 4159144,
               "CONCEPT_NAME": "Hepatopulmonary syndrome",
@@ -532,7 +532,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "128241005",
               "CONCEPT_ID": 194990,
               "CONCEPT_NAME": "Inflammatory disease of liver",
@@ -547,7 +547,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "58008004",
               "CONCEPT_ID": 4240725,
               "CONCEPT_NAME": "Peliosis hepatis",
@@ -562,7 +562,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "31712002",
               "CONCEPT_ID": 4135822,
               "CONCEPT_NAME": "Primary biliary cholangitis",
@@ -577,7 +577,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "12368000",
               "CONCEPT_ID": 4046123,
               "CONCEPT_NAME": "Secondary biliary cirrhosis",
@@ -592,10 +592,10 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "197321007",
               "CONCEPT_ID": 4059290,
-              "CONCEPT_NAME": "Steatosis of liver",
+              "CONCEPT_NAME": "Steatotic liver disease",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -607,45 +607,45 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "197361008",
               "CONCEPT_ID": 4059299,
               "CONCEPT_NAME": "Toxic liver disease with chronic active hepatitis",
               "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "INVALID_REASON": "D",
+              "INVALID_REASON_CAPTION": "Invalid",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "197359004",
               "CONCEPT_ID": 4059298,
               "CONCEPT_NAME": "Toxic liver disease with chronic persistent hepatitis",
               "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "INVALID_REASON": "D",
+              "INVALID_REASON_CAPTION": "Invalid",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "197362001",
               "CONCEPT_ID": 4058695,
               "CONCEPT_NAME": "Toxic liver disease with fibrosis and cirrhosis of liver",
               "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "INVALID_REASON": "D",
+              "INVALID_REASON_CAPTION": "Invalid",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
@@ -656,7 +656,7 @@
               "CONCEPT_CODE": "737297006",
               "CONCEPT_ID": 42537742,
               "CONCEPT_NAME": "Transplanted liver present",
-              "DOMAIN_ID": "Condition",
+              "DOMAIN_ID": "Observation",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
               "STANDARD_CONCEPT": "S",
@@ -667,7 +667,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "111891008",
               "CONCEPT_ID": 198683,
               "CONCEPT_NAME": "Viral hepatitis B without hepatic coma",
@@ -682,7 +682,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "111896003",
               "CONCEPT_ID": 193693,
               "CONCEPT_NAME": "Viral hepatitis without hepatic coma",

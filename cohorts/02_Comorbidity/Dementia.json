@@ -7,7 +7,7 @@
         "items": [
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "52448006",
               "CONCEPT_ID": 4182210,
               "CONCEPT_NAME": "Dementia",
@@ -22,7 +22,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "51928006",
               "CONCEPT_ID": 377788,
               "CONCEPT_NAME": "General paresis - neurosyphilis",
@@ -38,7 +38,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "40425004",
               "CONCEPT_ID": 372610,
               "CONCEPT_NAME": "Postconcussion syndrome",
@@ -54,7 +54,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "733184002",
               "CONCEPT_ID": 37116464,
               "CONCEPT_NAME": "Dementia caused by heavy metal exposure",
@@ -70,7 +70,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "9345005",
               "CONCEPT_ID": 4244346,
               "CONCEPT_NAME": "Dialysis dementia",
@@ -86,7 +86,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "713488003",
               "CONCEPT_ID": 37017247,
               "CONCEPT_NAME": "Presenile dementia co-occurrent with human immunodeficiency virus infection",
@@ -102,7 +102,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "713844000",
               "CONCEPT_ID": 37017549,
               "CONCEPT_NAME": "Dementia co-occurrent with human immunodeficiency virus infection",

@@ -7,10 +7,10 @@
         "items": [
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "420662003",
               "CONCEPT_ID": 443735,
-              "CONCEPT_NAME": "Coma associated with diabetes mellitus",
+              "CONCEPT_NAME": "Coma due to diabetes mellitus",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -22,10 +22,10 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "421920002",
               "CONCEPT_ID": 4225656,
-              "CONCEPT_NAME": "Diabetic cataract associated with type 1 diabetes mellitus",
+              "CONCEPT_NAME": "Cataract due to diabetes mellitus type 1",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -38,10 +38,10 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "25093002",
               "CONCEPT_ID": 443767,
-              "CONCEPT_NAME": "Diabetic oculopathy",
+              "CONCEPT_NAME": "Disorder of eye due to diabetes mellitus",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -53,10 +53,10 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "127013003",
               "CONCEPT_ID": 192279,
-              "CONCEPT_NAME": "Diabetic renal disease",
+              "CONCEPT_NAME": "Disorder of kidney due to diabetes mellitus",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -68,10 +68,10 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "420789003",
               "CONCEPT_ID": 4227210,
-              "CONCEPT_NAME": "Diabetic retinopathy associated with type 1 diabetes mellitus",
+              "CONCEPT_NAME": "Retinopathy due to type 1 diabetes mellitus",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -84,7 +84,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "420868002",
               "CONCEPT_ID": 435216,
               "CONCEPT_NAME": "Disorder due to type 1 diabetes mellitus",
@@ -100,7 +100,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "422014003",
               "CONCEPT_ID": 443732,
               "CONCEPT_NAME": "Disorder due to type 2 diabetes mellitus",
@@ -115,7 +115,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "368601000119102",
               "CONCEPT_ID": 37016355,
               "CONCEPT_NAME": "Hyperosmolar coma due to secondary diabetes mellitus",
@@ -131,10 +131,10 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "421437000",
               "CONCEPT_ID": 4228112,
-              "CONCEPT_NAME": "Hypoglycemic coma in type 1 diabetes mellitus",
+              "CONCEPT_NAME": "Hypoglycemic coma due to type 1 diabetes mellitus",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -147,10 +147,10 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "421075007",
               "CONCEPT_ID": 4224254,
-              "CONCEPT_NAME": "Ketoacidotic coma in type 1 diabetes mellitus",
+              "CONCEPT_NAME": "Ketoacidotic coma due to type 1 diabetes mellitus",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -163,10 +163,10 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "421326000",
               "CONCEPT_ID": 376065,
-              "CONCEPT_NAME": "Neurologic disorder associated with type 2 diabetes mellitus",
+              "CONCEPT_NAME": "Disorder of nervous system due to type 2 diabetes mellitus",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -178,10 +178,10 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "422166005",
               "CONCEPT_ID": 443729,
-              "CONCEPT_NAME": "Peripheral circulatory disorder associated with type 2 diabetes mellitus",
+              "CONCEPT_NAME": "Peripheral circulatory disorder due to type 2 diabetes mellitus",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -193,10 +193,10 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "421893009",
               "CONCEPT_ID": 200687,
-              "CONCEPT_NAME": "Renal disorder associated with type 1 diabetes mellitus",
+              "CONCEPT_NAME": "Renal disorder due to type 1 diabetes mellitus",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -209,7 +209,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "46635009",
               "CONCEPT_ID": 201254,
               "CONCEPT_NAME": "Type 1 diabetes mellitus",
@@ -225,10 +225,10 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "190330002",
               "CONCEPT_ID": 201531,
-              "CONCEPT_NAME": "Type 1 diabetes mellitus with hyperosmolar coma",
+              "CONCEPT_NAME": "Hyperosmolar coma due to type 1 diabetes mellitus",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -241,15 +241,15 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "401110002",
               "CONCEPT_ID": 4295011,
               "CONCEPT_NAME": "Type 1 diabetes mellitus with persistent microalbuminuria",
               "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "INVALID_REASON": "U",
+              "INVALID_REASON_CAPTION": "Invalid",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "isExcluded": true,
@@ -257,7 +257,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "44054006",
               "CONCEPT_ID": 201826,
               "CONCEPT_NAME": "Type 2 diabetes mellitus",

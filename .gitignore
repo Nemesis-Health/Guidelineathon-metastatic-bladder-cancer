@@ -3,6 +3,7 @@
 # or repair outputs from older runs.
 run_artemis_assessment.R
 fix_cohort_counts.R
+refresh_concept_details.R
 
 # === Claude / agent tooling (never commit) ===
 .claude/
