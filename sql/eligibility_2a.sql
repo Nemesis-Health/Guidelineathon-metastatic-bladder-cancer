@@ -20,7 +20,7 @@
 -- condition flags (liver metastasis [28], Gilbert's syndrome [29], neuropathy
 -- [33], skin disorders [34]), which use their own [index -
 -- conditionFlagWindowBeforeDays, index + conditionFlagWindowAfterDays] window
--- (settings$conditionFlagWindowBeforeDays/AfterDays, default 365/30).
+-- (settings$conditionFlagWindowBeforeDays/AfterDays, default 30/30).
 --
 -- test_id reference (lab_cohorts.sql #criteria, ids 1-23):
 --   1  aPTT <= 1.5 ULN          14 GFR >= 30 mL/min

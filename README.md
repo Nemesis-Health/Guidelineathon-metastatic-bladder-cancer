@@ -70,7 +70,7 @@ less-obvious run settings lives here instead.
 | Setting | Default | What it does |
 |---|---|---|
 | `labWindowBeforeDays`, `labWindowAfterDays` | `30`, `30` | Days before/after index a record may fall for near-index eligibility inputs: labs, ECOG/PS in Target 2a-2d, the covariate PS overlap (step (h)), eligibility-input coverage (step (e)), lab value distributions (step (d)). |
-| `conditionFlagWindowBeforeDays`, `conditionFlagWindowAfterDays` | `365`, `30` | Separate, wider window for the pre-existing CONDITION flags in Target 2a-2d (liver metastasis, Gilbert's syndrome, neuropathy, skin disorders, hearing loss) — these are pre-existing-condition checks, not near-index measurements, so they don't share the lab window above. |
+| `conditionFlagWindowBeforeDays`, `conditionFlagWindowAfterDays` | `30`, `30` | Window for the CONDITION flags in Target 2a-2d and eligibility-input coverage (step (e)): liver metastasis, Gilbert's syndrome, neuropathy, skin disorders, hearing loss. A flag counts when its cohort era overlaps the window, and these cohorts stay live to the end of observation, so any earlier record counts; how long a condition lasts is set by its cohort's end strategy, not here. |
 | `bodyMeasurementsWindowDays` | `90` | Index window for baseline weight/height/BMI (step (k)) — wider than the lab window, matching onco-study-modules' own convention for body measurements. |
 | `stripEndocrineTherapy` | `TRUE` | Excludes endocrine-therapy regimens (tamoxifen, abiraterone, GnRH agonists, ...) from the ARTEMIS reference, via `is_endocrine` in `cohorts/extras/regimen_reference.csv`. `FALSE` counts endocrine therapy as anticancer treatment. |
 | `validDrugsRegimenComponents` | `TRUE` | Controls which drugs ARTEMIS encodes into each patient's alignment string — non-regimen/supportive drugs are gap noise that lowers alignment scores and shrinks eras (DEVELOPMENT.md §10.4). `TRUE` keeps only drugs that appear in a kept regimen (keeps `validDrugs` and the regimen file consistent — every kept regimen's components stay encodable); `FALSE` keeps all. Composes with `validDrugsAtcClasses` below (both apply when both active); regimens whose components get filtered out can no longer align and are dropped from the reference (logged). |
@@ -1284,14 +1284,12 @@ callable interactively, not run automatically for every combination.
   confirm aPTT exists in your CDM (absent at HUS).
 - **Composite lab panels** (Cr, TBil, AST, ALT, INR/PT) appear only as
   atomic components, not combined rows.
-- **Gilbert's syndrome (test 29) is not encoded**, so the TBil ≤3× ULN
-  branch is left ungated (over-permissive; excludes no one).
 - **Eligibility window is ±30 days around the Cohort 1 index** for lab/ECOG
   criteria — an intentional PI decision, not the protocol's literal 90-day
-  window. Pre-existing CONDITION criteria (liver-mets, Gilbert's syndrome,
-  neuropathy, skin, hearing) use a separate, wider window instead: [index -
-  365, index + 30] days (`settings$conditionFlagWindowBeforeDays`/
-  `conditionFlagWindowAfterDays`).
+  window. CONDITION criteria (liver-mets, Gilbert's syndrome, neuropathy,
+  skin, hearing) also use ±30 days (`settings$conditionFlagWindowBeforeDays`/
+  `conditionFlagWindowAfterDays`), but their cohorts stay live to the end of
+  observation, so any record before index counts.
 - **The treatment-initiated cohort's regimen-start window is
   `[index − 30, index + 90]`**, an author-chosen window rather than a
   literal transcription of the protocol text.

@@ -65,7 +65,7 @@ settings <- list(
   minCellCount        = 5L,
   labWindowBeforeDays = 30L,   # near-index eligibility inputs (labs, ECOG/PS): days before index
   labWindowAfterDays  = 30L,   # same, days after index
-  conditionFlagWindowBeforeDays = 365L,   # pre-existing condition flags (liver mets, neuropathy, ...): days before index
+  conditionFlagWindowBeforeDays = 30L,    # condition flags (liver mets, neuropathy, ...): days before index a live record may end
   conditionFlagWindowAfterDays  = 30L,    # same, days after index
   bodyMeasurementsWindowDays = 90L,   # baseline weight/height/BMI: days before/after index
   stripEndocrineTherapy = TRUE,   # drop endocrine-therapy regimens from the ARTEMIS reference

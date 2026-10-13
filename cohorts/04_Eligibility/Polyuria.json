@@ -72,7 +72,7 @@
   "EndStrategy": {
     "DateOffset": {
       "DateField": "StartDate",
-      "Offset": 1
+      "Offset": 30
     }
   },
   "CensoringCriteria": [],

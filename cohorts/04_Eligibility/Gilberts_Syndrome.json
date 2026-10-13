@@ -26,7 +26,6 @@
   "QualifiedLimit": { "Type": "All" },
   "ExpressionLimit": { "Type": "All" },
   "InclusionRules": [],
-  "EndStrategy": { "DateOffset": { "DateField": "StartDate", "Offset": 1 } },
   "CensoringCriteria": [],
   "CollapseSettings": { "CollapseType": "ERA", "EraPad": 0 },
   "CensorWindow": {},
