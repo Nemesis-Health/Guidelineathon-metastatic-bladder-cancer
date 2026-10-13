@@ -1291,6 +1291,20 @@ callable interactively, not run automatically for every combination.
 - **The treatment-initiated cohort's regimen-start window is
   `[index − 30, index + 90]`**, an author-chosen window rather than a
   literal transcription of the protocol text.
+- **The washout stops 30 days before index.** The spec says no treatment
+  "within a year prior"; the SQL looks for regimens overlapping
+  `[index − 365, index − 30)`. This is intentional: treatment from 30 days
+  before index counts as first-line initiation, so the washout ends where that
+  window starts.
+- **2c (carboplatin) also excludes 2b (cisplatin) patients.** The spec only
+  excludes EV-eligible patients. The extra exclusion is intentional, so that
+  2a–2e are mutually exclusive.
+- **2e is a residual, not the spec's best supportive care group.** The spec's
+  BSC is treatment-naive, not combination-eligible and not PD-L1-eligible. 2e
+  is every Cohort 1 patient not in 2a–2d, so it also holds previously treated
+  patients and combination-eligible patients who fit no arm. Whether to split
+  those out into their own groups is not decided yet. Per-cohort limitations
+  are in `docs/ELIGIBILITY_LOGIC.md`.
 - **"No other cancer" looks back 180 days, not "at any time prior".** The
   Target 1A cohorts exclude other primaries recorded from 180 days before to
   30 days after index, an intentional choice rather than the protocol's
