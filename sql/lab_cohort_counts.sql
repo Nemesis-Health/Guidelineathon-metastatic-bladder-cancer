@@ -1,4 +1,4 @@
--- Whole-population counts of the unified eligibility table (labs 1-23/44-48 +
+-- Whole-population counts of the unified eligibility table (labs 1-23/44-49 +
 -- ECOG 24-27 + conditions 33-40), per test-id slot. NOT crossed with any target
 -- cohort — this is the raw content of @lab_cohort_table.
 --

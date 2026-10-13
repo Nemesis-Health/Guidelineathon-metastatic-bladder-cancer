@@ -22,7 +22,7 @@ inputLabels <- c(
   "14"="GFR>=30","15"="Hb>=9","16"="HbA1c7-<8%","17"="HbA1c<6%","18"="INR<=1.5xULN",
   "19"="PLT>=100k","20"="PT<=1.5xULN","21"="TBil<=3xULN","22"="TBil<=1.5xULN",
   "23"="TBil>1.5xULN","44"="ANC<1500","45"="PLT<100k","46"="HbA1c>=8%",
-  "47"="Hb<9","48"="GFR30-60excl",
+  "47"="Hb<9","48"="GFR30-60excl","49"="HbA1c<7%",
   "24"="ECOG 0","25"="ECOG 1","26"="ECOG 2","27"="ECOG >=3",
   "28"="Liver metastasis","29"="Gilbert's syndrome","31"="Anticoagulant therapy",
   "33"="Neuropathy (present)","34"="Skin disorders (present)",

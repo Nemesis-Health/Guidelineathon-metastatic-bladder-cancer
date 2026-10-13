@@ -2,7 +2,7 @@
 # 02_eligibility_inputs.R  —  (b) eligibility labs AND cohorts -> one table
 # ===========================================================================
 # Approach A: every eligibility input lands in @labCohortTable.
-#   1. lab_cohorts.sql  -> labs (test_ids 1-23, 44-48) + raw normalised rows
+#   1. lab_cohorts.sql  -> labs (test_ids 1-23, 44-49) + raw normalised rows
 #   2. generate ECOG + condition cohorts
 #   3. INSERT their membership into @labCohortTable under reserved test-id slots
 # The eligibility_2*.sql templates (step 03) then read one table uniformly.
