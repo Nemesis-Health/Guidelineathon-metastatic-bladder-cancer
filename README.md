@@ -1240,10 +1240,10 @@ callable interactively, not run automatically for every combination.
 
 ## Known limitations
 
-- **Universal eligibility criteria are only partially enforced.** Prior
-  observation (≥365 days), the 6-month follow-up buffer before each
-  database's latest date, and a 2010-01-01 study-period floor are not
-  currently applied. Treat absolute cohort sizes and cross-site comparisons
+- **Universal eligibility criteria are only partially enforced.** The Target
+  cohorts require 30 days of prior observation and an index on or after
+  2015-01-01, but no 6-month follow-up buffer before each database's latest
+  date is applied. Treat absolute cohort sizes and cross-site comparisons
   with that in mind.
 - **No formal data-quality assessment** (Achilles / DQD / CohortDiagnostics)
   runs as part of this pipeline; `03_main_cohorts.R`'s Circe inclusion-rule
@@ -1291,10 +1291,15 @@ callable interactively, not run automatically for every combination.
 - **The treatment-initiated cohort's regimen-start window is
   `[index − 30, index + 90]`**, an author-chosen window rather than a
   literal transcription of the protocol text.
-- **"No other cancer" looks back 365 days, not "at any time prior".** The
-  Target 1A cohorts exclude other primaries recorded from 365 days before to
+- **"No other cancer" looks back 180 days, not "at any time prior".** The
+  Target 1A cohorts exclude other primaries recorded from 180 days before to
   30 days after index, an intentional choice rather than the protocol's
   unbounded look-back.
+- **Study start is anchored on the first-ever metastasis record.** A person
+  whose first metastasis record predates 2015-01-01 is excluded rather than
+  entering on a later record. The L01-initiated cohorts apply the date to
+  that same metastasis record, while their 30-day prior-observation
+  requirement is measured from treatment start.
 - **Lab/ECOG "pass" flags reflect any qualifying record within the window,
   not the single closest one.** `bc_lab_cohort` (`lab_cohorts.sql`) stores
   one row per qualifying measurement across a subject's whole history, and

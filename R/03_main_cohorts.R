@@ -19,8 +19,8 @@ message("\n== (c) main cohorts ==")
 # them would just be a throwaway duplicate. Only Target 1A + the drug-comparison
 # leaves go into the final bc_cohort.
 jsonCohorts <- readJsonCohorts(file.path(cohortsDir, "01_Target"))
-# generateStats = TRUE: Target 1A's 3 named InclusionRules (age >= 18, prior
-# bladder cancer, no other cancer) get Circe's inclusion-rule-statistics SQL,
+# generateStats = TRUE: Target 1A's 4 named InclusionRules (study start, age >= 18,
+# prior bladder cancer, no other cancer) get Circe's inclusion-rule-statistics SQL,
 # so the standard OHDSI attrition table can be pulled after generation below.
 jsonSet <- buildCohortSet(jsonCohorts = jsonCohorts, startId = 1L, generateStats = TRUE)
 
@@ -84,6 +84,13 @@ jsonSet$cohortName[jsonSet$cohortId == cohort1Id] <- cohortNames[["T1"]]
 cohort1PcId <- cohortIdByName(jsonSet, "Target 1A PC allowed")
 stopifnot(!is.na(cohort1PcId))
 jsonSet$cohortName[jsonSet$cohortId == cohort1PcId] <- paste0(cohortNames[["T1"]], " (PC allowed)")
+
+# Mixed bag variant of T1 (Target_1A_mixed_bag.json): the "no other cancer"
+# rule inverted to require another primary in the same window; exit at death
+# only, since every member already has another primary at entry.
+cohort1MixedId <- cohortIdByName(jsonSet, "Target 1A mixed bag")
+stopifnot(!is.na(cohort1MixedId))
+jsonSet$cohortName[jsonSet$cohortId == cohort1MixedId] <- paste0(cohortNames[["T1"]], " (mixed bag)")
 
 # L01-anchored initiated cohorts (Target_1A_initiated_L01.json,
 # Target_1A_PC_allowed_initiated_L01.json): standalone ATLAS/Circe cohorts,
@@ -259,8 +266,8 @@ writeResultCsv(cohortCountsOut, "cohort_counts", "characterization")
 print(tibble::as_tibble(cohortCountsOut), n = Inf)
 
 # --- standard OHDSI inclusion-rule attrition (01_Target JSON cohorts) -------
-# Every JSON cohort under cohorts/01_Target/ (Target 1A: age >= 18; prior bladder
-# cancer; no other cancer) was built with generateStats = TRUE above, so Circe
+# Every JSON cohort under cohorts/01_Target/ (Target 1A: study start; age >= 18;
+# prior bladder cancer; no other cancer) was built with generateStats = TRUE above, so Circe
 # already computed the rule stats during generation — just read them back.
 # Cohorts with no InclusionRules simply produce no rows.
 tableNames <- CohortGenerator::getCohortTableNames(cohortTable = settings$cohortTable)

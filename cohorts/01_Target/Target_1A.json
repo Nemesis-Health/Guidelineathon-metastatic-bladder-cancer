@@ -751,7 +751,7 @@
       }
     ],
     "ObservationWindow": {
-      "PriorDays": 0,
+      "PriorDays": 30,
       "PostDays": 0
     },
     "PrimaryCriteriaLimit": {
@@ -765,6 +765,22 @@
     "Type": "All"
   },
   "InclusionRules": [
+    {
+      "name": "Index on or after 2015-01-01",
+      "expression": {
+        "Type": "ALL",
+        "CriteriaList": [],
+        "DemographicCriteriaList": [
+          {
+            "OccurrenceStartDate": {
+              "Value": "2015-01-01",
+              "Op": "gte"
+            }
+          }
+        ],
+        "Groups": []
+      }
+    },
     {
       "name": "age >= 18",
       "expression": {
@@ -814,7 +830,7 @@
       }
     },
     {
-      "name": "No other cancer (365 prior to 30d after)",
+      "name": "No other cancer (180d prior to 30d after)",
       "expression": {
         "Type": "ALL",
         "CriteriaList": [
@@ -826,7 +842,7 @@
             },
             "StartWindow": {
               "Start": {
-                "Days": 365,
+                "Days": 180,
                 "Coeff": -1
               },
               "End": {
@@ -851,6 +867,9 @@
       "ConditionOccurrence": {
         "CodesetId": 3
       }
+    },
+    {
+      "Death": {}
     }
   ],
   "CollapseSettings": {
