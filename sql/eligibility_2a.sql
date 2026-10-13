@@ -176,8 +176,7 @@ SELECT f.subject_id, f.cohort_start_date, f.cohort_end_date
    -- polydipsia [36] live within 7 days of that HbA1c (see a1c CTE).
    -- Draft pending study-lead sign-off, following EV-302's exclusion
    -- ("HbA1c >= 8%, or 7 to < 8% with polyuria or polydipsia"); the Cohort
-   -- logics spec has "< 6%" and "NO Polyuria OR NO Polydipsia". See
-   -- docs/ELIGIBILITY_LOGIC.md, 2a.
+   -- logics spec has "< 6%" and "NO Polyuria OR NO Polydipsia".
    AND (
          f_hba1c_lt7 = 1
          OR a1c.f_hba1c_7_8_nosym = 1

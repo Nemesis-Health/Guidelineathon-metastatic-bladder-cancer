@@ -4,6 +4,9 @@
 run_artemis_assessment.R
 fix_cohort_counts.R
 refresh_concept_details.R
+sync_atlas.R
+run_update.R
+R/update_cohorts.R
 
 # === Claude / agent tooling (never commit) ===
 .claude/
@@ -13,7 +16,7 @@ CLAUDE.md
 
 # === Granular internal notes / working documentation ===
 DEVELOPMENT.md
-docs/reference/
+docs/
 
 # === Source binaries (protocol drafts, reference PDFs) ===
 *.docx
@@ -52,18 +55,9 @@ renv/sandbox/
 # === OS ===
 .DS_Store
 
-# === Multi-dialect testing reference docs (this repo's own testing process,
-# not part of the study package -- kept on disk, deliberately never tracked) ===
-docs/BIGQUERY.md
-docs/BULK_LOAD.md
-docs/HANDOFF.md
-docs/REDSHIFT.md
-docs/SQL_SERVER.md
-
 # === DatabaseConnector debug output (written on a SQL error; may contain
 # schema/SQL details) ===
 errorReportSql.txt
 
 # === Local environment / secrets ===
 .env
-docs/ARTEMIS_RESULTS_CONTRACT.md

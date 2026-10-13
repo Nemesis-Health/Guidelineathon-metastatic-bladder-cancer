@@ -197,7 +197,7 @@ fetchDeathEvents <- function(connection, targetCohortIds) {
 
 # --- mergeMaintenance() -----------------------------------------------------
 # Folds maintenance episodes into the line they maintain, so they aren't
-# counted as a new line of therapy (docs/MAINTENANCE_LINES.md). An episode is
+# counted as a new line of therapy. An episode is
 # maintenance when it matches a rule below against the episode immediately
 # before it (same person) and starts no more than `maxGapDays` after that
 # episode ends (overlap allowed). A merged line keeps the earlier episode's

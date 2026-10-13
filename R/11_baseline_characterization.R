@@ -23,7 +23,7 @@
 #     no date bound at all). Flags + strata are computed entirely in SQL via
 #     conditional aggregation, not pulled per-subject and joined/pivoted in R.
 #     15 of 19 canonical components are wired (R/charlsonScore.R for the
-#     full list; docs/CHARLSON.md for each component's source), 10 of them
+#     full list), 10 of them
 #     sourced from Fortin/Reps/Ryan 2022 (BMC Med Inform Decis
 #     Mak 22:261; 2023 correction 23:109) — the standard OHDSI-authored
 #     SNOMED translation of the Quan 2005 Charlson coding algorithm — via
