@@ -7,7 +7,7 @@
         "items": [
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "239920006",
               "CONCEPT_ID": 4344166,
               "CONCEPT_NAME": "Adult onset Still's disease",
@@ -22,7 +22,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "1212005",
               "CONCEPT_ID": 4005037,
               "CONCEPT_NAME": "Childhood type dermatomyositis",
@@ -37,7 +37,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "31848007",
               "CONCEPT_ID": 4135937,
               "CONCEPT_NAME": "CREST syndrome",
@@ -52,7 +52,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "396230008",
               "CONCEPT_ID": 80182,
               "CONCEPT_NAME": "Dermatomyositis",
@@ -67,7 +67,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "238935002",
               "CONCEPT_ID": 4081250,
               "CONCEPT_NAME": "Dermatomyositis sine myositis",
@@ -82,22 +82,22 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "239901009",
               "CONCEPT_ID": 4344161,
               "CONCEPT_NAME": "Dermatomyositis with malignant disease",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "201436003",
               "CONCEPT_ID": 4063581,
               "CONCEPT_NAME": "Drug-induced systemic lupus erythematosus",
@@ -112,7 +112,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "72181000119109",
               "CONCEPT_ID": 46273369,
               "CONCEPT_NAME": "Endocarditis due to systemic lupus erythematosus",
@@ -127,7 +127,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "57160007",
               "CONCEPT_ID": 81097,
               "CONCEPT_NAME": "Felty's syndrome",
@@ -142,7 +142,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "239938009",
               "CONCEPT_ID": 4343935,
               "CONCEPT_NAME": "Giant cell arteritis with polymyalgia rheumatica",
@@ -157,7 +157,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "417373000",
               "CONCEPT_ID": 74125,
               "CONCEPT_NAME": "Inflammatory polyarthropathy",
@@ -172,7 +172,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "311671000119100",
               "CONCEPT_ID": 37395588,
               "CONCEPT_NAME": "Juvenile dermatomyositis co-occurrent with respiratory involvement",
@@ -187,7 +187,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "196136009",
               "CONCEPT_ID": 4055369,
               "CONCEPT_NAME": "Lung disease with polymyositis",
@@ -202,7 +202,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "196138005",
               "CONCEPT_ID": 4055640,
               "CONCEPT_NAME": "Lung disease with systemic lupus erythematosus",
@@ -217,7 +217,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "196133001",
               "CONCEPT_ID": 255304,
               "CONCEPT_NAME": "Lung disease with systemic sclerosis",
@@ -232,7 +232,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "193250002",
               "CONCEPT_ID": 4107913,
               "CONCEPT_NAME": "Myopathy due to rheumatoid arthritis",
@@ -247,10 +247,10 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "193252005",
               "CONCEPT_ID": 4105026,
-              "CONCEPT_NAME": "Myopathy due to systemic sclerosis",
+              "CONCEPT_NAME": "Myopathy due to scleroderma",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -262,7 +262,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "276657008",
               "CONCEPT_ID": 4079978,
               "CONCEPT_NAME": "Overlap syndrome",
@@ -277,7 +277,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "65323003",
               "CONCEPT_ID": 255348,
               "CONCEPT_NAME": "Polymyalgia rheumatica",
@@ -292,7 +292,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "31384009",
               "CONCEPT_ID": 80800,
               "CONCEPT_NAME": "Polymyositis",
@@ -307,7 +307,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "322461000119108",
               "CONCEPT_ID": 46270482,
               "CONCEPT_NAME": "Polyneuropathy due to systemic sclerosis",
@@ -322,7 +322,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "193180002",
               "CONCEPT_ID": 4102493,
               "CONCEPT_NAME": "Polyneuropathy in rheumatoid arthritis",
@@ -337,25 +337,25 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "444133002",
               "CONCEPT_ID": 40485046,
               "CONCEPT_NAME": "Progressive systemic sclerosis",
               "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "INVALID_REASON": "D",
+              "INVALID_REASON_CAPTION": "Invalid",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "307755009",
               "CONCEPT_ID": 4145240,
-              "CONCEPT_NAME": "Renal tubulo-interstitial disorder in systemic lupus erythematosus",
+              "CONCEPT_NAME": "Renal tubulo-interstitial disorder due to systemic lupus erythematosus",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -367,7 +367,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "69896004",
               "CONCEPT_ID": 80809,
               "CONCEPT_NAME": "Rheumatoid arthritis",
@@ -382,7 +382,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "287008006",
               "CONCEPT_ID": 4117687,
               "CONCEPT_NAME": "Rheumatoid arthritis - ankle and/or foot",
@@ -397,7 +397,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "287007001",
               "CONCEPT_ID": 4115161,
               "CONCEPT_NAME": "Rheumatoid arthritis - hand joint",
@@ -412,7 +412,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "201769002",
               "CONCEPT_ID": 4116440,
               "CONCEPT_NAME": "Rheumatoid arthritis of elbow",
@@ -427,7 +427,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "201775006",
               "CONCEPT_ID": 4116150,
               "CONCEPT_NAME": "Rheumatoid arthritis of hip",
@@ -442,7 +442,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "201777003",
               "CONCEPT_ID": 4116151,
               "CONCEPT_NAME": "Rheumatoid arthritis of knee",
@@ -457,8 +457,8 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1073711000119100",
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1073711000119105",
               "CONCEPT_ID": 42534834,
               "CONCEPT_NAME": "Rheumatoid arthritis of left hand",
               "DOMAIN_ID": "Condition",
@@ -472,8 +472,8 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1073721000119100",
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1073721000119103",
               "CONCEPT_ID": 42534835,
               "CONCEPT_NAME": "Rheumatoid arthritis of left hip",
               "DOMAIN_ID": "Condition",
@@ -487,7 +487,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "1073731000119100",
               "CONCEPT_ID": 37108590,
               "CONCEPT_NAME": "Rheumatoid arthritis of left knee",
@@ -502,8 +502,8 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1073741000119100",
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1073741000119109",
               "CONCEPT_ID": 35609009,
               "CONCEPT_NAME": "Rheumatoid arthritis of left shoulder",
               "DOMAIN_ID": "Condition",
@@ -517,8 +517,8 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1073751000119100",
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1073751000119106",
               "CONCEPT_ID": 36685020,
               "CONCEPT_NAME": "Rheumatoid arthritis of left wrist",
               "DOMAIN_ID": "Condition",
@@ -532,7 +532,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "287006005",
               "CONCEPT_ID": 4117686,
               "CONCEPT_NAME": "Rheumatoid arthritis of multiple joints",
@@ -547,8 +547,8 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1073771000119100",
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1073771000119102",
               "CONCEPT_ID": 36685022,
               "CONCEPT_NAME": "Rheumatoid arthritis of right elbow",
               "DOMAIN_ID": "Condition",
@@ -562,8 +562,8 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1073791000119100",
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1073791000119101",
               "CONCEPT_ID": 42534836,
               "CONCEPT_NAME": "Rheumatoid arthritis of right hand",
               "DOMAIN_ID": "Condition",
@@ -577,7 +577,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "1073801000119100",
               "CONCEPT_ID": 42534837,
               "CONCEPT_NAME": "Rheumatoid arthritis of right hip",
@@ -592,8 +592,8 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1073811000119100",
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1073811000119102",
               "CONCEPT_ID": 37108591,
               "CONCEPT_NAME": "Rheumatoid arthritis of right knee",
               "DOMAIN_ID": "Condition",
@@ -607,8 +607,8 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1073821000119100",
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1073821000119109",
               "CONCEPT_ID": 35609010,
               "CONCEPT_NAME": "Rheumatoid arthritis of right shoulder",
               "DOMAIN_ID": "Condition",
@@ -622,8 +622,8 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
-              "CONCEPT_CODE": "1073831000119100",
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1073831000119107",
               "CONCEPT_ID": 36685024,
               "CONCEPT_NAME": "Rheumatoid arthritis of right wrist",
               "DOMAIN_ID": "Condition",
@@ -637,7 +637,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "201766009",
               "CONCEPT_ID": 4114439,
               "CONCEPT_NAME": "Rheumatoid arthritis of shoulder",
@@ -652,7 +652,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "201771002",
               "CONCEPT_ID": 4116441,
               "CONCEPT_NAME": "Rheumatoid arthritis of wrist",
@@ -667,22 +667,22 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "459911000124100",
               "CONCEPT_ID": 36684997,
               "CONCEPT_NAME": "Rheumatoid factor positive rheumatoid arthritis",
               "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "INVALID_REASON": "U",
+              "INVALID_REASON_CAPTION": "Invalid",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "398726004",
               "CONCEPT_ID": 256197,
               "CONCEPT_NAME": "Rheumatoid lung disease",
@@ -697,25 +697,25 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "319841000119107",
               "CONCEPT_ID": 37395590,
               "CONCEPT_NAME": "Rheumatoid lung disease with rheumatoid arthritis",
               "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "INVALID_REASON": "U",
+              "INVALID_REASON_CAPTION": "Invalid",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "398640008",
               "CONCEPT_ID": 4162539,
-              "CONCEPT_NAME": "Rheumatoid pneumoconiosis",
+              "CONCEPT_NAME": "Rheumatoid arthritis with pneumoconiosis",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -727,22 +727,22 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "400054000",
               "CONCEPT_ID": 4271003,
-              "CONCEPT_NAME": "Rheumatoid vasculitis",
+              "CONCEPT_NAME": "Rheumatoid arthritis with vasculitis",
               "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "INVALID_REASON": "D",
+              "INVALID_REASON_CAPTION": "Invalid",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "239792003",
               "CONCEPT_ID": 4083556,
               "CONCEPT_NAME": "Seronegative rheumatoid arthritis",
@@ -757,7 +757,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "239791005",
               "CONCEPT_ID": 4035611,
               "CONCEPT_NAME": "Seropositive rheumatoid arthritis",
@@ -772,7 +772,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "83901003",
               "CONCEPT_ID": 254443,
               "CONCEPT_NAME": "Sjögren's syndrome",
@@ -787,7 +787,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "68815009",
               "CONCEPT_ID": 4285717,
               "CONCEPT_NAME": "SLE glomerulonephritis syndrome",
@@ -802,7 +802,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "33719002",
               "CONCEPT_ID": 4142899,
               "CONCEPT_NAME": "Subcutaneous rheumatoid nodule",
@@ -817,7 +817,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "55464009",
               "CONCEPT_ID": 257628,
               "CONCEPT_NAME": "Systemic lupus erythematosus",
@@ -832,7 +832,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "239887007",
               "CONCEPT_ID": 4344158,
               "CONCEPT_NAME": "Systemic lupus erythematosus with organ/system involvement",
@@ -847,7 +847,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "309762007",
               "CONCEPT_ID": 4149913,
               "CONCEPT_NAME": "Systemic lupus erythematosus with pericarditis",
@@ -862,7 +862,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "89155008",
               "CONCEPT_ID": 134442,
               "CONCEPT_NAME": "Systemic sclerosis",
@@ -877,22 +877,22 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "201443009",
               "CONCEPT_ID": 4063582,
               "CONCEPT_NAME": "Systemic sclerosis induced by drugs and chemicals",
               "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "INVALID_REASON": "U",
+              "INVALID_REASON_CAPTION": "Invalid",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "400130008",
               "CONCEPT_ID": 4290976,
               "CONCEPT_NAME": "Temporal arteritis",

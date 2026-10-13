@@ -28,8 +28,8 @@
               "DOMAIN_ID": "Observation",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "LOINC"
             }
           },
@@ -142,8 +142,8 @@
               "DOMAIN_ID": "Observation",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             }
           },
@@ -156,8 +156,8 @@
               "DOMAIN_ID": "Observation",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             }
           },
@@ -170,8 +170,8 @@
               "DOMAIN_ID": "Observation",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             }
           }
@@ -199,8 +199,8 @@
               "CONCEPT_ID": 45880868,
               "CONCEPT_NAME": "Dead",
               "DOMAIN_ID": "Meas Value",
-              "INVALID_REASON_CAPTION": "Unknown",
-              "STANDARD_CONCEPT_CAPTION": "Unknown",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
               "VOCABULARY_ID": "LOINC"
             },
             {
@@ -208,8 +208,8 @@
               "CONCEPT_ID": 36308589,
               "CONCEPT_NAME": "Completely disabled. Cannot carry on any selfcare. Totally confined to bed or chair",
               "DOMAIN_ID": "Meas Value",
-              "INVALID_REASON_CAPTION": "Unknown",
-              "STANDARD_CONCEPT_CAPTION": "Unknown",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
               "VOCABULARY_ID": "LOINC"
             },
             {
@@ -217,8 +217,8 @@
               "CONCEPT_ID": 36308652,
               "CONCEPT_NAME": "Capable of only limited selfcare, confined to bed or chair more than 50% of waking hours",
               "DOMAIN_ID": "Meas Value",
-              "INVALID_REASON_CAPTION": "Unknown",
-              "STANDARD_CONCEPT_CAPTION": "Unknown",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
               "VOCABULARY_ID": "LOINC"
             }
           ]
@@ -243,8 +243,8 @@
               "CONCEPT_ID": 45880868,
               "CONCEPT_NAME": "Dead",
               "DOMAIN_ID": "Meas Value",
-              "INVALID_REASON_CAPTION": "Unknown",
-              "STANDARD_CONCEPT_CAPTION": "Unknown",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
               "VOCABULARY_ID": "LOINC"
             },
             {
@@ -252,8 +252,8 @@
               "CONCEPT_ID": 36310215,
               "CONCEPT_NAME": "Moribund; fatal processes progressing rapidly",
               "DOMAIN_ID": "Meas Value",
-              "INVALID_REASON_CAPTION": "Unknown",
-              "STANDARD_CONCEPT_CAPTION": "Unknown",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "LOINC"
             },
             {
@@ -261,8 +261,8 @@
               "CONCEPT_ID": 36309106,
               "CONCEPT_NAME": "Very sick; hospitalization necessary; active supportive treatment necessary",
               "DOMAIN_ID": "Meas Value",
-              "INVALID_REASON_CAPTION": "Unknown",
-              "STANDARD_CONCEPT_CAPTION": "Unknown",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "LOINC"
             },
             {
@@ -270,8 +270,8 @@
               "CONCEPT_ID": 36310627,
               "CONCEPT_NAME": "Severely disabled; hospitalization is indicated, although death not imminent",
               "DOMAIN_ID": "Meas Value",
-              "INVALID_REASON_CAPTION": "Unknown",
-              "STANDARD_CONCEPT_CAPTION": "Unknown",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "LOINC"
             },
             {
@@ -279,8 +279,8 @@
               "CONCEPT_ID": 36309699,
               "CONCEPT_NAME": "Disabled; requires special care and assistance",
               "DOMAIN_ID": "Meas Value",
-              "INVALID_REASON_CAPTION": "Unknown",
-              "STANDARD_CONCEPT_CAPTION": "Unknown",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "LOINC"
             }
           ]

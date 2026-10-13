@@ -7,7 +7,7 @@
         "items": [
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "50620007",
               "CONCEPT_ID": 4175440,
               "CONCEPT_NAME": "Autonomic neuropathy due to diabetes mellitus",
@@ -22,7 +22,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "712882000",
               "CONCEPT_ID": 37016767,
               "CONCEPT_NAME": "Autonomic neuropathy due to type 1 diabetes mellitus",
@@ -37,7 +37,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "712883005",
               "CONCEPT_ID": 37016768,
               "CONCEPT_NAME": "Autonomic neuropathy due to type 2 diabetes mellitus",
@@ -52,7 +52,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "43959009",
               "CONCEPT_ID": 376979,
               "CONCEPT_NAME": "Cataract due to diabetes mellitus",
@@ -67,7 +67,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "421920002",
               "CONCEPT_ID": 4225656,
               "CONCEPT_NAME": "Cataract due to diabetes mellitus type 1",
@@ -82,7 +82,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "420756003",
               "CONCEPT_ID": 4221495,
               "CONCEPT_NAME": "Cataract due to diabetes mellitus type 2",
@@ -97,7 +97,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "771000119108",
               "CONCEPT_ID": 43531578,
               "CONCEPT_NAME": "Chronic kidney disease due to type 2 diabetes mellitus",
@@ -112,7 +112,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "74627003",
               "CONCEPT_ID": 442793,
               "CONCEPT_NAME": "Complication due to diabetes mellitus",
@@ -127,7 +127,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "230577008",
               "CONCEPT_ID": 4048028,
               "CONCEPT_NAME": "Diabetic mononeuropathy",
@@ -142,7 +142,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "420868002",
               "CONCEPT_ID": 435216,
               "CONCEPT_NAME": "Disorder due to type 1 diabetes mellitus",
@@ -157,7 +157,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "422014003",
               "CONCEPT_ID": 443732,
               "CONCEPT_NAME": "Disorder due to type 2 diabetes mellitus",
@@ -172,7 +172,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "25093002",
               "CONCEPT_ID": 443767,
               "CONCEPT_NAME": "Disorder of eye due to diabetes mellitus",
@@ -187,7 +187,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "421256007",
               "CONCEPT_ID": 4224419,
               "CONCEPT_NAME": "Disorder of eye due to malnutrition related diabetes mellitus",
@@ -202,7 +202,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "739681000",
               "CONCEPT_ID": 42538169,
               "CONCEPT_NAME": "Disorder of eye due to type 1 diabetes mellitus",
@@ -217,7 +217,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "422099009",
               "CONCEPT_ID": 443733,
               "CONCEPT_NAME": "Disorder of eye due to type 2 diabetes mellitus",
@@ -232,7 +232,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "127013003",
               "CONCEPT_ID": 192279,
               "CONCEPT_NAME": "Disorder of kidney due to diabetes mellitus",
@@ -247,7 +247,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "422088007",
               "CONCEPT_ID": 443730,
               "CONCEPT_NAME": "Disorder of nervous system due to diabetes mellitus",
@@ -262,7 +262,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "420683009",
               "CONCEPT_ID": 4224879,
               "CONCEPT_NAME": "Disorder of nervous system due to malnutrition related diabetes mellitus",
@@ -277,7 +277,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "421468001",
               "CONCEPT_ID": 377821,
               "CONCEPT_NAME": "Disorder of nervous system due to type 1 diabetes mellitus",
@@ -292,7 +292,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "421326000",
               "CONCEPT_ID": 376065,
               "CONCEPT_NAME": "Disorder of nervous system due to type 2 diabetes mellitus",
@@ -307,7 +307,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "422275004",
               "CONCEPT_ID": 4226354,
               "CONCEPT_NAME": "Gangrene due to diabetes mellitus",
@@ -322,7 +322,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "420825003",
               "CONCEPT_ID": 4223303,
               "CONCEPT_NAME": "Gangrene due to type 1 diabetes mellitus",
@@ -337,7 +337,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "421631007",
               "CONCEPT_ID": 4222876,
               "CONCEPT_NAME": "Gangrene due to type 2 diabetes mellitus",
@@ -352,7 +352,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "39058009",
               "CONCEPT_ID": 4191611,
               "CONCEPT_NAME": "Lumbosacral radiculoplexus neuropathy due to diabetes mellitus",
@@ -367,7 +367,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "427571000",
               "CONCEPT_ID": 4143857,
               "CONCEPT_NAME": "Lumbosacral radiculoplexus neuropathy due to type 1 diabetes mellitus",
@@ -382,7 +382,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "427027005",
               "CONCEPT_ID": 4140466,
               "CONCEPT_NAME": "Lumbosacral radiculoplexus neuropathy due to type 2 diabetes mellitus",
@@ -397,7 +397,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "97331000119101",
               "CONCEPT_ID": 45770830,
               "CONCEPT_NAME": "Macular edema and retinopathy due to type 2 diabetes mellitus",
@@ -412,7 +412,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "312912001",
               "CONCEPT_ID": 380097,
               "CONCEPT_NAME": "Macular edema due to diabetes mellitus",
@@ -427,37 +427,37 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "190410002",
               "CONCEPT_ID": 4096671,
               "CONCEPT_NAME": "Malnutrition-related diabetes mellitus with peripheral circulatory complications",
               "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "INVALID_REASON": "U",
+              "INVALID_REASON_CAPTION": "Invalid",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "190407009",
               "CONCEPT_ID": 4096670,
               "CONCEPT_NAME": "Malnutrition-related diabetes mellitus with renal complications",
               "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "INVALID_REASON": "U",
+              "INVALID_REASON_CAPTION": "Invalid",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "312903003",
               "CONCEPT_ID": 378743,
               "CONCEPT_NAME": "Mild nonproliferative retinopathy due to diabetes mellitus",
@@ -472,7 +472,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "138881000119106",
               "CONCEPT_ID": 37016179,
               "CONCEPT_NAME": "Mild nonproliferative retinopathy due to type 1 diabetes mellitus",
@@ -487,7 +487,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "138911000119106",
               "CONCEPT_ID": 45757435,
               "CONCEPT_NAME": "Mild nonproliferative retinopathy due to type 2 diabetes mellitus",
@@ -502,7 +502,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "312904009",
               "CONCEPT_ID": 377552,
               "CONCEPT_NAME": "Moderate nonproliferative retinopathy due to diabetes mellitus",
@@ -517,7 +517,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "138891000119109",
               "CONCEPT_ID": 37016180,
               "CONCEPT_NAME": "Moderate nonproliferative retinopathy due to type 1 diabetes mellitus",
@@ -532,7 +532,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "138921000119104",
               "CONCEPT_ID": 45770881,
               "CONCEPT_NAME": "Moderate nonproliferative retinopathy due to type 2 diabetes mellitus",
@@ -547,7 +547,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "420918009",
               "CONCEPT_ID": 4225055,
               "CONCEPT_NAME": "Mononeuropathy due to type 1 diabetes mellitus",
@@ -562,7 +562,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "420436000",
               "CONCEPT_ID": 4222415,
               "CONCEPT_NAME": "Mononeuropathy due to type 2 diabetes mellitus",
@@ -577,37 +577,37 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "441628001",
               "CONCEPT_ID": 40480000,
               "CONCEPT_NAME": "Multiple complications due to diabetes mellitus",
               "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "INVALID_REASON": "U",
+              "INVALID_REASON_CAPTION": "Invalid",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "190411003",
               "CONCEPT_ID": 4099652,
               "CONCEPT_NAME": "Multiple complications due to malnutrition related diabetes",
               "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "INVALID_REASON": "U",
+              "INVALID_REASON_CAPTION": "Invalid",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "230572002",
               "CONCEPT_ID": 4044391,
               "CONCEPT_NAME": "Neuropathy due to diabetes mellitus",
@@ -622,7 +622,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "60961000119107",
               "CONCEPT_ID": 45763583,
               "CONCEPT_NAME": "Nonproliferative diabetic retinopathy due to type 1 diabetes mellitus",
@@ -637,7 +637,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "1551000119108",
               "CONCEPT_ID": 43530656,
               "CONCEPT_NAME": "Nonproliferative retinopathy due to type 2 diabetes mellitus",
@@ -652,7 +652,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "127014009",
               "CONCEPT_ID": 4131908,
               "CONCEPT_NAME": "Peripheral angiopathy due to diabetes mellitus",
@@ -667,7 +667,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "421365002",
               "CONCEPT_ID": 318712,
               "CONCEPT_NAME": "Peripheral circulatory disorder due to type 1 diabetes mellitus",
@@ -682,7 +682,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "422166005",
               "CONCEPT_ID": 443729,
               "CONCEPT_NAME": "Peripheral circulatory disorder due to type 2 diabetes mellitus",
@@ -697,7 +697,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "421895002",
               "CONCEPT_ID": 321822,
               "CONCEPT_NAME": "Peripheral vascular disorder due to diabetes mellitus",
@@ -712,7 +712,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "49455004",
               "CONCEPT_ID": 376112,
               "CONCEPT_NAME": "Polyneuropathy due to diabetes mellitus",
@@ -727,7 +727,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "713705003",
               "CONCEPT_ID": 37017431,
               "CONCEPT_NAME": "Polyneuropathy due to type 1 diabetes mellitus",
@@ -742,7 +742,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "713706002",
               "CONCEPT_ID": 37017432,
               "CONCEPT_NAME": "Polyneuropathy due to type 2 diabetes mellitus",
@@ -757,7 +757,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "59276001",
               "CONCEPT_ID": 380096,
               "CONCEPT_NAME": "Proliferative retinopathy due to diabetes mellitus",
@@ -772,7 +772,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "60971000119101",
               "CONCEPT_ID": 45763584,
               "CONCEPT_NAME": "Proliferative retinopathy due to type 1 diabetes mellitus",
@@ -787,7 +787,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "1501000119109",
               "CONCEPT_ID": 43530685,
               "CONCEPT_NAME": "Proliferative retinopathy due to type 2 diabetes mellitus",
@@ -802,7 +802,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "421893009",
               "CONCEPT_ID": 200687,
               "CONCEPT_NAME": "Renal disorder due to type 1 diabetes mellitus",
@@ -817,7 +817,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "420279001",
               "CONCEPT_ID": 443731,
               "CONCEPT_NAME": "Renal disorder due to type 2 diabetes mellitus",
@@ -832,7 +832,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "4855003",
               "CONCEPT_ID": 4174977,
               "CONCEPT_NAME": "Retinopathy due to diabetes mellitus",
@@ -847,7 +847,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "420789003",
               "CONCEPT_ID": 4227210,
               "CONCEPT_NAME": "Retinopathy due to type 1 diabetes mellitus",
@@ -862,7 +862,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "312905005",
               "CONCEPT_ID": 376114,
               "CONCEPT_NAME": "Severe nonproliferative retinopathy due to diabetes mellitus",
@@ -877,7 +877,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "399872003",
               "CONCEPT_ID": 4290822,
               "CONCEPT_NAME": "Severe nonproliferative retinopathy with clinically significant macular edema due to diabetes mellitus",
@@ -892,7 +892,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "399873008",
               "CONCEPT_ID": 4266637,
               "CONCEPT_NAME": "Severe nonproliferative retinopathy without macular edema due to diabetes mellitus",
@@ -907,7 +907,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "232023006",
               "CONCEPT_ID": 4338901,
               "CONCEPT_NAME": "Traction detachment of retina due to diabetes mellitus",
@@ -922,7 +922,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "82571000119107",
               "CONCEPT_ID": 45769873,
               "CONCEPT_NAME": "Traction detachment of retina due to type 1 diabetes mellitus",
@@ -937,7 +937,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "82541000119100",
               "CONCEPT_ID": 45773064,
               "CONCEPT_NAME": "Traction detachment of retina due to type 2 diabetes mellitus",

@@ -11,7 +11,7 @@
         "items": [
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "57054005",
               "CONCEPT_ID": 312327,
               "CONCEPT_NAME": "Acute myocardial infarction",

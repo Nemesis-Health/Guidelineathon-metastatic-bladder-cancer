@@ -7,7 +7,7 @@
         "items": [
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "17263003",
               "CONCEPT_ID": 435616,
               "CONCEPT_NAME": "Amniotic fluid embolism",
@@ -23,7 +23,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "49956009",
               "CONCEPT_ID": 435887,
               "CONCEPT_NAME": "Antepartum deep vein thrombosis",
@@ -39,7 +39,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "82385007",
               "CONCEPT_ID": 196715,
               "CONCEPT_NAME": "Budd-Chiari syndrome",
@@ -55,7 +55,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "200259003",
               "CONCEPT_ID": 4062269,
               "CONCEPT_NAME": "Cerebral venous thrombosis in pregnancy",
@@ -71,7 +71,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "200286003",
               "CONCEPT_ID": 442055,
               "CONCEPT_NAME": "Obstetric air pulmonary embolism",
@@ -87,10 +87,10 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "200299000",
               "CONCEPT_ID": 433832,
-              "CONCEPT_NAME": "Obstetric blood-clot pulmonary embolism",
+              "CONCEPT_NAME": "Obstetric pulmonary thromboembolism",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -103,7 +103,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "200284000",
               "CONCEPT_ID": 435026,
               "CONCEPT_NAME": "Obstetric pulmonary embolism",
@@ -119,7 +119,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "267284008",
               "CONCEPT_ID": 440477,
               "CONCEPT_NAME": "Obstetric pyemic and septic pulmonary embolism",
@@ -135,15 +135,15 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "192753009",
               "CONCEPT_ID": 318137,
               "CONCEPT_NAME": "Phlebitis and thrombophlebitis of intracranial sinuses",
               "DOMAIN_ID": "Condition",
-              "INVALID_REASON": "V",
-              "INVALID_REASON_CAPTION": "Valid",
-              "STANDARD_CONCEPT": "S",
-              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "INVALID_REASON": "D",
+              "INVALID_REASON_CAPTION": "Invalid",
+              "STANDARD_CONCEPT": "N",
+              "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "isExcluded": true,
@@ -151,7 +151,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "17920008",
               "CONCEPT_ID": 199837,
               "CONCEPT_NAME": "Portal vein thrombosis",
@@ -167,10 +167,10 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "56272000",
               "CONCEPT_ID": 438820,
-              "CONCEPT_NAME": "Postpartum deep phlebothrombosis",
+              "CONCEPT_NAME": "Deep venous thrombosis in puerperium",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -183,7 +183,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "59282003",
               "CONCEPT_ID": 440417,
               "CONCEPT_NAME": "Pulmonary embolism",
@@ -198,7 +198,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "64662007",
               "CONCEPT_ID": 254662,
               "CONCEPT_NAME": "Pulmonary infarction",
@@ -213,7 +213,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "439731006",
               "CONCEPT_ID": 4235812,
               "CONCEPT_NAME": "Septic thrombophlebitis",
@@ -229,7 +229,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "75955007",
               "CONCEPT_ID": 195294,
               "CONCEPT_NAME": "Thrombosed hemorrhoids",
@@ -245,7 +245,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "46085004",
               "CONCEPT_ID": 4187790,
               "CONCEPT_NAME": "Thrombosis of retinal vein",
@@ -261,7 +261,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "111293003",
               "CONCEPT_ID": 444247,
               "CONCEPT_NAME": "Venous thrombosis",

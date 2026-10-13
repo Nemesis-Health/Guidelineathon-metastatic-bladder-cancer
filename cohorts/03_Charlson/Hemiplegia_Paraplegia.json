@@ -7,7 +7,7 @@
         "items": [
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "192970008",
               "CONCEPT_ID": 4102342,
               "CONCEPT_NAME": "Cauda equina syndrome",
@@ -22,10 +22,10 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "12454008",
               "CONCEPT_ID": 193186,
-              "CONCEPT_NAME": "Cauda equina syndrome with neurogenic bladder",
+              "CONCEPT_NAME": "Cauda equina syndrome with neurogenic urinary bladder",
               "DOMAIN_ID": "Condition",
               "INVALID_REASON": "V",
               "INVALID_REASON_CAPTION": "Valid",
@@ -37,7 +37,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "8663007",
               "CONCEPT_ID": 134331,
               "CONCEPT_NAME": "Cauda equina syndrome without neurogenic bladder",
@@ -52,7 +52,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "128188000",
               "CONCEPT_ID": 4134120,
               "CONCEPT_NAME": "Cerebral palsy",
@@ -67,7 +67,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "29188005",
               "CONCEPT_ID": 4104204,
               "CONCEPT_NAME": "Complete bilateral paralysis",
@@ -82,7 +82,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "290401000119108",
               "CONCEPT_ID": 43530718,
               "CONCEPT_NAME": "Complete paraplegia",
@@ -97,7 +97,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "441705005",
               "CONCEPT_ID": 40480416,
               "CONCEPT_NAME": "Complete tetraplegia due to lesion at C1-C4 level",
@@ -112,7 +112,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "441980007",
               "CONCEPT_ID": 40481376,
               "CONCEPT_NAME": "Complete tetraplegia due to lesion at C5-C7 level",
@@ -127,7 +127,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "275468009",
               "CONCEPT_ID": 4173811,
               "CONCEPT_NAME": "Congenital quadriplegia",
@@ -142,7 +142,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "54099005",
               "CONCEPT_ID": 372880,
               "CONCEPT_NAME": "Diplegia of upper limbs",
@@ -157,7 +157,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "58193001",
               "CONCEPT_ID": 132617,
               "CONCEPT_NAME": "Diplegic cerebral palsy",
@@ -172,7 +172,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "80935004",
               "CONCEPT_ID": 372613,
               "CONCEPT_NAME": "Flaccid hemiplegia",
@@ -187,7 +187,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "442020005",
               "CONCEPT_ID": 40481757,
               "CONCEPT_NAME": "Flaccid hemiplegia of dominant side",
@@ -202,7 +202,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "442077006",
               "CONCEPT_ID": 40481820,
               "CONCEPT_NAME": "Flaccid hemiplegia of nondominant side",
@@ -217,7 +217,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "192966000",
               "CONCEPT_ID": 4101738,
               "CONCEPT_NAME": "Flaccid paraplegia",
@@ -232,7 +232,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "192964002",
               "CONCEPT_ID": 4104848,
               "CONCEPT_NAME": "Flaccid tetraplegia",
@@ -247,7 +247,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "50582007",
               "CONCEPT_ID": 374022,
               "CONCEPT_NAME": "Hemiplegia",
@@ -262,7 +262,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "442155009",
               "CONCEPT_ID": 40482237,
               "CONCEPT_NAME": "Hemiplegia of dominant side",
@@ -277,7 +277,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "441717007",
               "CONCEPT_ID": 40480429,
               "CONCEPT_NAME": "Hemiplegia of nondominant side",
@@ -292,7 +292,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "43486001",
               "CONCEPT_ID": 134031,
               "CONCEPT_NAME": "Hemiplegic cerebral palsy",
@@ -307,7 +307,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "39912006",
               "CONCEPT_ID": 192901,
               "CONCEPT_NAME": "Hereditary spastic paraplegia",
@@ -322,7 +322,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "714279000",
               "CONCEPT_ID": 37019108,
               "CONCEPT_NAME": "Human T-cell lymphotropic virus 1-associated myelopathy",
@@ -337,7 +337,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "290411000119106",
               "CONCEPT_ID": 43530719,
               "CONCEPT_NAME": "Incomplete paraplegia",
@@ -352,7 +352,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "441794001",
               "CONCEPT_ID": 40480514,
               "CONCEPT_NAME": "Incomplete tetraplegia due to lesion at C5-C7 level",
@@ -367,7 +367,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "441688003",
               "CONCEPT_ID": 40480066,
               "CONCEPT_NAME": "Incomplete tetraplegia due to spinal cord lesion at C1-C4 level",
@@ -382,7 +382,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "1593000",
               "CONCEPT_ID": 374336,
               "CONCEPT_NAME": "Infantile hemiplegia",
@@ -397,7 +397,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "86022000",
               "CONCEPT_ID": 381548,
               "CONCEPT_NAME": "Monoplegia",
@@ -412,7 +412,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "80420005",
               "CONCEPT_ID": 195240,
               "CONCEPT_NAME": "Monoplegia of lower limb",
@@ -427,7 +427,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "426167003",
               "CONCEPT_ID": 4144328,
               "CONCEPT_NAME": "Monoplegia of lower limb affecting dominant side",
@@ -442,7 +442,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "426934001",
               "CONCEPT_ID": 4141654,
               "CONCEPT_NAME": "Monoplegia of lower limb affecting non-dominant side",
@@ -457,7 +457,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "41764006",
               "CONCEPT_ID": 379012,
               "CONCEPT_NAME": "Monoplegia of upper limb",
@@ -472,7 +472,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "426536006",
               "CONCEPT_ID": 380393,
               "CONCEPT_NAME": "Monoplegia of upper limb affecting non-dominant side",
@@ -487,7 +487,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "426536006",
               "CONCEPT_ID": 380393,
               "CONCEPT_NAME": "Monoplegia of upper limb affecting non-dominant side",
@@ -502,7 +502,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "441951003",
               "CONCEPT_ID": 40481345,
               "CONCEPT_NAME": "Monoplegia of upper limb of dominant side",
@@ -517,7 +517,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "56409008",
               "CONCEPT_ID": 442543,
               "CONCEPT_NAME": "Monoplegic cerebral palsy",
@@ -547,7 +547,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "29426003",
               "CONCEPT_ID": 374377,
               "CONCEPT_NAME": "Paralytic syndrome",
@@ -562,7 +562,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "609557004",
               "CONCEPT_ID": 43531639,
               "CONCEPT_NAME": "Paralytic syndrome on one side of the body",
@@ -577,7 +577,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "60389000",
               "CONCEPT_ID": 192606,
               "CONCEPT_NAME": "Paraplegia",
@@ -592,7 +592,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "22881000119100",
               "CONCEPT_ID": 44782711,
               "CONCEPT_NAME": "Quadriplegia with quadriparesis",
@@ -607,7 +607,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "79633009",
               "CONCEPT_ID": 375528,
               "CONCEPT_NAME": "Spastic hemiplegia",
@@ -622,7 +622,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "441892008",
               "CONCEPT_ID": 40480944,
               "CONCEPT_NAME": "Spastic hemiplegia of dominant side",
@@ -637,7 +637,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "441722007",
               "CONCEPT_ID": 40480435,
               "CONCEPT_NAME": "Spastic hemiplegia of nondominant side",
@@ -652,7 +652,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "813921000000104",
               "CONCEPT_ID": 44806793,
               "CONCEPT_NAME": "Spastic hemiplegic cerebral palsy",
@@ -667,7 +667,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "192967009",
               "CONCEPT_ID": 4101739,
               "CONCEPT_NAME": "Spastic paraplegia",
@@ -682,7 +682,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "192965001",
               "CONCEPT_ID": 4102341,
               "CONCEPT_NAME": "Spastic tetraplegia",
@@ -697,7 +697,7 @@
           },
           {
             "concept": {
-              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "11538006",
               "CONCEPT_ID": 374914,
               "CONCEPT_NAME": "Tetraplegia",
