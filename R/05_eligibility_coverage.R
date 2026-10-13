@@ -18,8 +18,8 @@ message("\n== eligibility input counts + T1 (mBC) coverage ==")
 inputLabels <- c(
   "1"="aPTT<=1.5xULN","2"="ALT<=2.5xULN","3"="ALT<=5xULN","4"="ANC>=1500",
   "5"="AST<=2.5xULN","6"="AST<=5xULN","7"="CrCl>=30","8"="Cr<=1.5xULN",
-  "9"="DBil<=ULN","10"="GFR<30","11"="GFR30-60","12"="GFR<60","13"="GFR>60",
-  "14"="GFR>=30","15"="Hb>=9","16"="HbA1c7-8%","17"="HbA1c<6%","18"="INR<=1.5xULN",
+  "9"="DBil<=ULN","10"="GFR<30","11"="GFR30-60excl","12"="GFR<60","13"="GFR>60",
+  "14"="GFR>=30","15"="Hb>=9","16"="HbA1c7-<8%","17"="HbA1c<6%","18"="INR<=1.5xULN",
   "19"="PLT>=100k","20"="PT<=1.5xULN","21"="TBil<=3xULN","22"="TBil<=1.5xULN",
   "23"="TBil>1.5xULN","44"="ANC<1500","45"="PLT<100k","46"="HbA1c>=8%",
   "47"="Hb<9","48"="GFR30-60excl",
