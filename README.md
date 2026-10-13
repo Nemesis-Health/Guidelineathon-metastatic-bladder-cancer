@@ -424,10 +424,7 @@ At the end of a run, results are packaged into two archives:
   `Liver_Disease` (mild tier) and `Liver_Disease_Severe` (moderate/severe
   tier — `Liver_Disease.json`'s concept set was corrected against the same
   source; it previously used an ad hoc 3-concept list that didn't match the
-  standard Charlson mild-liver-disease definition). `Metastatic_Solid_Tumor`
-  also exists (feeds `covariate_overlap.csv`) but is **not** used for CCI's
-  `metastatic_solid_tumor` — see Known gaps for why step (k) derives that
-  one from `Target_1A.json`'s own metastasis marker instead.
+  standard Charlson mild-liver-disease definition).
 
 `extras/` `regimen_reference.csv`, `trial_reference.yaml` (unused — see Known
 gaps, generalizability).
@@ -629,7 +626,7 @@ silently missing combination).
 | `cohort_definition_id`, `cohort_name` | As elsewhere. |
 | `stratum_type` | `overall`, `age_group`, `sex`, or `age_sex`. |
 | `stratum_value` | `overall`; `<=65`/`>65`; `Male`/`Female`/`Other-Unknown`; or the `age_sex` combination. |
-| `code` | Short code: PS strata (`PS1`, `PS2`, `PS2+`, `PS 0-2`, `PS 0-1`) or comorbidity — see `08_covariates.R`'s `comorbMap` for the full list (`T2DM`, `HTN`, `CVD`, `Stroke`, `VTE`, `LiverDx`, `RenalDx`, `Dementia`, `HemeDx`, plus the Charlson-only additions `MI`, `CHF`, `PVD`, `COPD`, `RheumDx`, `PUD`, `DMComplic`, `Hemiplegia`, `AIDS`, `LiverDxSevere`, `MetSolidTumor`). |
+| `code` | Short code: PS strata (`PS1`, `PS2`, `PS2+`, `PS 0-2`, `PS 0-1`) or comorbidity — see `08_covariates.R`'s `comorbMap` (`T2DM`, `HTN`, `CVD`, `Stroke`, `VTE`, `LiverDx`, `RenalDx`, `Dementia`): the protocol's covariate list. The other `comorbMap` cohorts (Charlson-only components, Heme Disorders for the lab-coverage cross) are generated with `show = FALSE` and not reported here. |
 | `label` | Human-readable description. |
 | `n_cohort` | This cohort's denominator, restricted to this row's stratum. |
 | `n_overlap` | Members (in this cohort × stratum) meeting the covariate (censored). % is not emitted — it is `n_overlap / n_cohort`. |

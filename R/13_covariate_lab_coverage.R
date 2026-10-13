@@ -66,9 +66,8 @@ out <- dplyr::transmute(cov,
 small <- out$n_with_test > 0 & out$n_with_test < settings$minCellCount
 out$n_with_test <- ifelse(small, -settings$minCellCount, out$n_with_test)
 
-# subgroup_count is the same comorbidity/T1 population covariate_overlap.csv
-# reports as n_overlap (same unbounded on/before-index lookback) -- censor it
-# the same way, or an uncensored value here discloses what's suppressed there.
+# subgroup_count is a comorbidity/T1 count (same unbounded on/before-index
+# lookback as covariate_overlap.csv's n_overlap) -- censor it the same way.
 smallSubgroup <- out$subgroup_count > 0 & out$subgroup_count < settings$minCellCount
 out$subgroup_count <- ifelse(smallSubgroup, -settings$minCellCount, out$subgroup_count)
 
