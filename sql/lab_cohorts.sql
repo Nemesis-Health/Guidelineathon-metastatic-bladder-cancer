@@ -841,7 +841,8 @@ DROP TABLE IF EXISTS @work_database_schema.@criteria_table;
 --          36 polydipsia, 37/38 NYHA, 39/40 hearing, 41 comorbidity grade,
 --          42 PD-L1 CPS, 43 PD-L1 TIC.
 --   44-48  Diagnostic-strata thresholds added 2026-07-09 (this file, below).
---   ->     Allocate NEW tests at 49+ to avoid collisions.
+--   49     HbA1c < 7% (EV lower band, eligibility_2a.sql).
+--   ->     Allocate NEW tests at 50+ to avoid collisions.
 CREATE TABLE @work_database_schema.@criteria_table (test_id int, cat varchar(40), basis char(3),
    min_op varchar(2), min_val float, max_op varchar(2), max_val float, note varchar(120));
 INSERT INTO @work_database_schema.@criteria_table (test_id, cat, basis, min_op, min_val, max_op, max_val, note) VALUES
@@ -876,7 +877,8 @@ INSERT INTO @work_database_schema.@criteria_table (test_id, cat, basis, min_op, 
  (45, 'Platelets',       'ABS', NULL, NULL, '<',  100,  'PLT < 100k/uL'),
  (46, 'HbA1c',           'ABS', '>=', 8.0,  NULL, NULL, 'HbA1c >= 8%'),
  (47, 'Hb',              'ABS', NULL, NULL, '<',  9.0,  'Hb < 9.0 g/dL'),
- (48, 'GFR',             'ABS', '>',  30,   '<',  60,   'GFR 30-60 (exclusive)');
+ (48, 'GFR',             'ABS', '>',  30,   '<',  60,   'GFR 30-60 (exclusive)'),
+ (49, 'HbA1c',           'ABS', NULL, NULL, '<',  7.0,  'HbA1c < 7%');
 
 /* ---------------------------------------------------------------------------
    1.  AGGREGATE measurements per (measurement_concept_id, unit_concept_id,

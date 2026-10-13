@@ -22,7 +22,7 @@
 -- conditionFlagWindowBeforeDays, index + conditionFlagWindowAfterDays] window
 -- (settings$conditionFlagWindowBeforeDays/AfterDays, default 30/30).
 --
--- test_id reference (lab_cohorts.sql #criteria, ids 1-23):
+-- test_id reference (lab_cohorts.sql #criteria, ids 1-23 and 49):
 --   1  aPTT <= 1.5 ULN          14 GFR >= 30 mL/min
 --   2  ALT <= 2.5 ULN            15 Hb >= 9.0 g/dL
 --   3  ALT <= 5 ULN              16 HbA1c >= 7% and < 8%
@@ -33,6 +33,7 @@
 --   8  Creatinine <= 1.5 ULN     21 TBil <= 3 ULN (Gilbert's; needs test 29)
 --   9  DBil <= ULN               22 TBil <= 1.5 ULN
 --                              23 TBil > 1.5 ULN
+--                              49 HbA1c < 7% (EV lower band)
 --
 -- Planned test_ids (not yet in lab_cohorts.sql):
 --   24 ECOG 0   25 ECOG 1   26 ECOG 2   28 Liver metastasis
@@ -119,18 +120,36 @@ flags AS (
     MAX(CASE WHEN test_id = 31                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_anticoag,
     MAX(CASE WHEN test_id = 20                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_pt,
     MAX(CASE WHEN test_id = 1                       AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_aptt,
-    MAX(CASE WHEN test_id = 17                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_hba1c_lt6,
+    MAX(CASE WHEN test_id = 49                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_hba1c_lt7,
     MAX(CASE WHEN test_id = 16                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_hba1c_7_8,
-    MAX(CASE WHEN test_id = 35                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_polyuria,
-    MAX(CASE WHEN test_id = 36                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_polydipsia,
     MAX(CASE WHEN test_id = 33                      AND lab_date <= win_hi_cond AND lab_end_date >= win_lo_cond THEN 1 ELSE 0 END) AS f_neuropathy,
     MAX(CASE WHEN test_id = 34                      AND lab_date <= win_hi_cond AND lab_end_date >= win_lo_cond THEN 1 ELSE 0 END) AS f_skin
   FROM labs
   GROUP BY subject_id, cohort_start_date, cohort_end_date
+),
+-- HbA1c 7-8% [16] in the index window with no polyuria [35] or polydipsia [36]
+-- cohort era overlapping [HbA1c - 7d, HbA1c + 7d] of that HbA1c's own date.
+-- Each symptom record stays live 7 days, so this catches records from 14 days
+-- before to 7 days after the HbA1c. 1 if ANY such
+-- HbA1c is symptom-free (an HbA1c with a nearby symptom joins to >= 1 row with
+-- sym.subject_id set; one with none joins to a single NULL row).
+a1c AS (
+  SELECT l.subject_id,
+         MAX(CASE WHEN sym.subject_id IS NULL THEN 1 ELSE 0 END) AS f_hba1c_7_8_nosym
+    FROM labs l
+    LEFT JOIN @target_database_schema.@lab_cohort_table sym
+      ON sym.subject_id = l.subject_id
+     AND sym.cohort_definition_id IN (35, 36)
+     AND sym.cohort_start_date <= DATEADD(day,  7, l.lab_date)
+     AND sym.cohort_end_date   >= DATEADD(day, -7, l.lab_date)
+   WHERE l.test_id = 16
+     AND l.lab_date <= l.win_hi AND l.lab_end_date >= l.win_lo
+   GROUP BY l.subject_id
 )
-SELECT subject_id, cohort_start_date, cohort_end_date
+SELECT f.subject_id, f.cohort_start_date, f.cohort_end_date
   INTO #elig2a_tmp
-  FROM flags
+  FROM flags f
+  LEFT JOIN a1c ON a1c.subject_id = f.subject_id
  WHERE
 
    /* ----- Combination-therapy eligible ----- */
@@ -165,22 +184,15 @@ SELECT subject_id, cohort_start_date, cohort_end_date
 
    /* ----- Enfortumab-eligible ----- */
 
-   -- HbA1c: [17] < 6%  OR  ([16] 7% <= HbA1c < 8% AND (NO polyuria [35] OR NO polydipsia [36]))
-   --
-   -- NOTE — polyuria/polydipsia limb follows the LITERAL Cohort logics.pdf spec,
-   -- which is a fixed study requirement (implemented verbatim, not by discretion):
-   --   "(NO Polyuria OR NO Polydipsia)"  =>  (NOT EXISTS 35) OR (NOT EXISTS 36).
-   -- This excludes a 7-8% patient ONLY if they have BOTH polyuria AND polydipsia;
-   -- a single symptom still passes, so the limb almost never fires.
-   -- Known concern (recorded, NOT acted on here): clinically you would expect to
-   -- exclude on EITHER symptom (AND), since both are cardinal signs of
-   -- uncontrolled hyperglycaemia and EV carries a hyperglycaemia risk — and the
-   -- PDF itself highlights this clause as "Need to discuss". DO NOT change the OR
-   -- below to AND on clinical grounds alone: it encodes a stated requirement and
-   -- may only change via a requirements/protocol update. See COHORT_AUDIT.md F4.
+   -- HbA1c: [49] < 7%  OR  [16] 7% <= HbA1c < 8% with no polyuria [35] or
+   -- polydipsia [36] live within 7 days of that HbA1c (see a1c CTE).
+   -- Draft pending study-lead sign-off, following EV-302's exclusion
+   -- ("HbA1c >= 8%, or 7 to < 8% with polyuria or polydipsia"); the Cohort
+   -- logics spec has "< 6%" and "NO Polyuria OR NO Polydipsia". See
+   -- docs/ELIGIBILITY_LOGIC.md, 2a.
    AND (
-         f_hba1c_lt6 = 1
-         OR (f_hba1c_7_8 = 1 AND (f_polyuria = 0 OR f_polydipsia = 0))
+         f_hba1c_lt7 = 1
+         OR a1c.f_hba1c_7_8_nosym = 1
        )
 
    -- Enfortumab: no significant peripheral neuropathy (test 33); pre-existing
