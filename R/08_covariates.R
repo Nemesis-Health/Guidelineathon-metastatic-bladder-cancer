@@ -32,6 +32,9 @@
 # with a filename whose "_"->" " form matches a `cohortName` in comorbMap below
 # (e.g. Renal_Disease.json -> "Renal Disease"). Missing entries are skipped with
 # a message, so the file is all that is needed once its row is listed here.
+# Every listed cohort is generated (covSet, reused by R/11 for Charlson and
+# R/13 for the lab-coverage cross); only rows with `show = TRUE` are written to
+# covariate_overlap.csv.
 # ===========================================================================
 
 message("\n== covariate overlap with the main cohort tree (comorbidities + performance status) ==")
@@ -42,31 +45,35 @@ message("\n== covariate overlap with the main cohort tree (comorbidities + perfo
 # (R/11_baseline_characterization.R, R/charlsonScore.R) — sourced from
 # Fortin/Reps/Ryan 2022 (BMC Med Inform Decis Mak 22:225, 2023 correction
 # 23:110), the standard OHDSI-authored SNOMED translation of the Quan 2005
-# Charlson coding algorithm — but they double as their own comorbidity rows
-# here for free. MI is the exception: Myocardial_Infarction.json is OHDSI
+# Charlson coding algorithm. MI is the exception: Myocardial_Infarction.json is OHDSI
 # PhenotypeLibrary cohort 510 (acute MI only) -- see README "Known gaps".
+#
+# show = TRUE only for the protocol's covariate list (T2DM, hypertension,
+# cardiovascular disease, stroke, VTE, liver disease, renal disease,
+# dementia; CCI itself is reported by R/11). Everything else is generated for
+# another analysis and not reported as a comorbidity: the Charlson-only
+# components (R/11) and Heme Disorders (lab-coverage cross, R/13).
 comorbMap <- tibble::tribble(
-  ~code,          ~cohortName,                   ~label,
-  "T2DM",         "Type 2 Diabetes",             "Type 2 diabetes mellitus",
-  "HTN",          "Hypertension",                "Hypertension",
-  "CVD",          "Cardiovascular Disease",       "Cardiovascular disease",
-  "Stroke",       "Stroke",                       "Stroke",
-  "VTE",          "Venous Thrombotic Events",     "Venous thromboembolic events",
-  "LiverDx",      "Liver Disease",                "Liver disease (mild)",
-  "RenalDx",      "Renal Disease",                "Renal disease",
-  "Dementia",     "Dementia",                     "Dementia",
-  "HemeDx",       "Heme Disorders",               "Hematologic disorder",
-  "MI",           "Myocardial Infarction",        "Acute myocardial infarction",
-  "CHF",          "Congestive Heart Failure",     "Congestive heart failure",
-  "PVD",          "Peripheral Vascular Disease",  "Peripheral vascular disease",
-  "COPD",         "Chronic Pulmonary Disease",    "Chronic pulmonary disease",
-  "RheumDx",      "Rheumatic Disease",            "Rheumatic disease",
-  "PUD",          "Peptic Ulcer Disease",         "Peptic ulcer disease",
-  "DMComplic",    "Diabetes With Complications",  "Diabetes with chronic complications",
-  "Hemiplegia",   "Hemiplegia Paraplegia",        "Hemiplegia or paraplegia",
-  "AIDS",         "AIDS HIV",                     "AIDS/HIV",
-  "LiverDxSevere","Liver Disease Severe",         "Liver disease (moderate/severe)",
-  "MetSolidTumor","Metastatic Solid Tumor",        "Metastatic solid tumor"
+  ~code,          ~cohortName,                   ~label,                                 ~show,
+  "T2DM",         "Type 2 Diabetes",             "Type 2 diabetes mellitus",             TRUE,
+  "HTN",          "Hypertension",                "Hypertension",                         TRUE,
+  "CVD",          "Cardiovascular Disease",       "Cardiovascular disease",              TRUE,
+  "Stroke",       "Stroke",                       "Stroke",                              TRUE,
+  "VTE",          "Venous Thrombotic Events",     "Venous thromboembolic events (pulmonary embolism and deep vein thrombosis)", TRUE,
+  "LiverDx",      "Liver Disease",                "Liver disease",                       TRUE,
+  "RenalDx",      "Renal Disease",                "Renal disease",                       TRUE,
+  "Dementia",     "Dementia",                     "Dementia",                            TRUE,
+  "HemeDx",       "Heme Disorders",               "Hematologic disorder",                FALSE,
+  "MI",           "Myocardial Infarction",        "Acute myocardial infarction",         FALSE,
+  "CHF",          "Congestive Heart Failure",     "Congestive heart failure",            FALSE,
+  "PVD",          "Peripheral Vascular Disease",  "Peripheral vascular disease",         FALSE,
+  "COPD",         "Chronic Pulmonary Disease",    "Chronic pulmonary disease",           FALSE,
+  "RheumDx",      "Rheumatic Disease",            "Rheumatic disease",                   FALSE,
+  "PUD",          "Peptic Ulcer Disease",         "Peptic ulcer disease",                FALSE,
+  "DMComplic",    "Diabetes With Complications",  "Diabetes with chronic complications", FALSE,
+  "Hemiplegia",   "Hemiplegia Paraplegia",        "Hemiplegia or paraplegia",            FALSE,
+  "AIDS",         "AIDS HIV",                     "AIDS/HIV",                            FALSE,
+  "LiverDxSevere","Liver Disease Severe",         "Liver disease (moderate/severe)",     FALSE
 )
 # performance-status strata (derived from the reserved ECOG slots 24-27)
 psLabels <- c("PS1" = "Performance status = 0", "PS2" = "Performance status = 1",
@@ -144,7 +151,7 @@ if (nrow(present)) {
 
   skeleton <- dplyr::cross_join(
     dplyr::select(denomTbl, "stratum_type", "stratum_value", "cohort_definition_id", "n_cohort"),
-    dplyr::select(present, "code", "label", "cohortName")) |>
+    dplyr::select(present[present$show, ], "code", "label", "cohortName")) |>
     dplyr::left_join(idName, by = "cohortName")
 
   comorbRows <- skeleton |>

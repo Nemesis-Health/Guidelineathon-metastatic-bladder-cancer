@@ -38,9 +38,7 @@
 #     definition — it's the entry criterion, not a comorbidity that varies
 #     between subjects — so counting it drives every subject into the ">=5"
 #     category regardless of anything else, a degenerate distribution that
-#     tells you nothing. `covariate_overlap.csv`'s own "MetSolidTumor" row
-#     (a different, generic concept-set source) is unaffected — that's a
-#     separate output. Only `leukemia` and `lymphoma` remain unwired for a
+#     tells you nothing. Only `leukemia` and `lymphoma` remain unwired for a
 #     different reason: the same source's coding algorithm merges them (and
 #     other non-hematologic tumors) into one 716-concept "malignancy except
 #     skin neoplasms" bucket with no leukemia-only/lymphoma-only split
@@ -198,10 +196,7 @@ if (is.null(covSet) || nrow(covSet) == 0L) {
     # the ">=5" category regardless of anything else — degenerate, not
     # informative. any_malignancy (weight 2) stays unwired too (no source
     # cohort maps to it), so this score reflects the OTHER 15 wired
-    # components only. `covariate_overlap.csv`'s own "MetSolidTumor" row
-    # (from the generic Metastatic_Solid_Tumor.json concept set, a
-    # different source than the derivation this block used to do) is
-    # unaffected by this — it's a separate output.
+    # components only.
 
     # computeCharlsonScore() ignores unknown columns and preserves row order,
     # so cohort_definition_id and the strata columns (not themselves
