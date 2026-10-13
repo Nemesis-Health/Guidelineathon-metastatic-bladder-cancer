@@ -1264,7 +1264,7 @@
       }
     ],
     "ObservationWindow": {
-      "PriorDays": 0,
+      "PriorDays": 30,
       "PostDays": 0
     },
     "PrimaryCriteriaLimit": {
@@ -1295,7 +1295,7 @@
       }
     },
     {
-      "name": "Has first metastasis (90d prior to 30d after)",
+      "name": "Has first metastasis on or after 2015-01-01 (90d prior to 30d after)",
       "expression": {
         "Type": "ANY",
         "CriteriaList": [
@@ -1303,7 +1303,11 @@
             "Criteria": {
               "Measurement": {
                 "CodesetId": 0,
-                "First": true
+                "First": true,
+                "OccurrenceStartDate": {
+                  "Value": "2015-01-01",
+                  "Op": "gte"
+                }
               }
             },
             "StartWindow": {
@@ -1360,7 +1364,7 @@
       }
     },
     {
-      "name": "No other cancer exc PC (365 prior to 30d after)",
+      "name": "No other cancer exc PC (180d prior to 30d after)",
       "expression": {
         "Type": "ALL",
         "CriteriaList": [
@@ -1372,7 +1376,7 @@
             },
             "StartWindow": {
               "Start": {
-                "Days": 365,
+                "Days": 180,
                 "Coeff": -1
               },
               "End": {
@@ -1429,6 +1433,9 @@
       "ConditionOccurrence": {
         "CodesetId": 6
       }
+    },
+    {
+      "Death": {}
     }
   ],
   "CollapseSettings": {
