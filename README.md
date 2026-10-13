@@ -1294,6 +1294,10 @@ callable interactively, not run automatically for every combination.
 - **The treatment-initiated cohort's regimen-start window is
   `[index − 30, index + 90]`**, an author-chosen window rather than a
   literal transcription of the protocol text.
+- **"No other cancer" looks back 365 days, not "at any time prior".** The
+  Target 1A cohorts exclude other primaries recorded from 365 days before to
+  30 days after index, an intentional choice rather than the protocol's
+  unbounded look-back.
 - **Lab/ECOG "pass" flags reflect any qualifying record within the window,
   not the single closest one.** `bc_lab_cohort` (`lab_cohorts.sql`) stores
   one row per qualifying measurement across a subject's whole history, and

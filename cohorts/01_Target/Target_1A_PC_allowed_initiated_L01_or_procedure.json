@@ -1622,7 +1622,7 @@
   },
   "InclusionRules": [
     {
-      "name": "age>18",
+      "name": "age >= 18",
       "expression": {
         "Type": "ALL",
         "CriteriaList": [],
@@ -1638,7 +1638,7 @@
       }
     },
     {
-      "name": "Has metastasis within previous 90d",
+      "name": "Has first metastasis (90d prior to 30d after)",
       "expression": {
         "Type": "ANY",
         "CriteriaList": [
@@ -1703,7 +1703,7 @@
       }
     },
     {
-      "name": "No other cancer exc PC (ever prior to 30d after)",
+      "name": "No other cancer exc PC (365 prior to 30d after)",
       "expression": {
         "Type": "ALL",
         "CriteriaList": [
