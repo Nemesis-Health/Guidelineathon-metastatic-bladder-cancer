@@ -86,6 +86,8 @@ cov <- querySqlFile(connection, "eligibility_input_coverage.sql",
   cohort_definition_ids = paste(targetIds, collapse = ", "),
   lab_window_before_days = settings$labWindowBeforeDays,
   lab_window_after_days  = settings$labWindowAfterDays,
+  condition_flag_window_before_days = settings$conditionFlagWindowBeforeDays,
+  condition_flag_window_after_days  = settings$conditionFlagWindowAfterDays,
   subject_strata_sql     = strataFragment)
 names(cov) <- tolower(names(cov))
 # settings$strataColumns (run.R CONFIG, via activeStrataTypes()) controls
