@@ -84,6 +84,10 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
   } else {
 
     episodesAnchored <- anchorEpisodes(episodes, t1Members)
+    # fold maintenance into the line it maintains before lines are numbered
+    # (mergeMaintenance(), R/eventBuilders.R; docs/MAINTENANCE_LINES.md)
+    if (isTRUE(settings$maintenanceMerge))
+      episodesAnchored <- mergeMaintenance(episodesAnchored, regimenClass, settings$maintenanceMaxGapDays)
 
     treatedPatients <- episodesAnchored |>
       dplyr::arrange(.data$person_id, .data$episode_start_date,
@@ -131,7 +135,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
       out
     }
 
-    untreatedList <- regimenList <- catList <- pathwaysList <- list()
+    untreatedList <- regimenList <- catList <- pathwaysList <- maintenanceList <- list()
     strataSpecs <- activeStrataSpecs()
     for (stratumType in names(strataSpecs)) {
       col  <- strataSpecs[[stratumType]]
@@ -182,6 +186,23 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
         pathwaysList[[length(pathwaysList) + 1L]] <- dplyr::count(
             wide, .data$lot1, .data$lot2, .data$lot3, name = "n_patients") |>
           dplyr::mutate(stratum_type = stratumType, stratum_value = val, .before = 1)
+
+        # --- maintenance by line (mergeMaintenance() columns) ---------------
+        if ("maintenance_regimen" %in% names(tp)) {
+          maintenanceList[[length(maintenanceList) + 1L]] <- tp |>
+            dplyr::mutate(
+              maintenance_regimen = dplyr::coalesce(.data$maintenance_regimen, "none"),
+              maintenance_rule    = dplyr::coalesce(.data$maintenance_rule, "none"),
+              gap_days   = as.numeric(.data$maintenance_start_date - .data$induction_end_date),
+              maint_days = as.numeric(.data$episode_end_date - .data$maintenance_start_date)) |>
+            dplyr::summarise(
+              n_patients              = dplyr::n_distinct(.data$person_id),
+              median_gap_days         = suppressWarnings(stats::median(.data$gap_days, na.rm = TRUE)),
+              median_maintenance_days = suppressWarnings(stats::median(.data$maint_days, na.rm = TRUE)),
+              .by = c("lot_number", "episode_source_value", "maintenance_regimen", "maintenance_rule")) |>
+            dplyr::rename(regName = "episode_source_value") |>
+            dplyr::mutate(stratum_type = stratumType, stratum_value = val, .before = 1)
+        }
       }
     }
 
@@ -209,6 +230,17 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     small <- pathways$n_patients > 0 & pathways$n_patients < settings$minCellCount
     pathways$n_patients <- ifelse(small, -settings$minCellCount, pathways$n_patients)
     writeResultCsv(pathways, "treatment_pathways", "treatment_patterns")
+
+    if (length(maintenanceList)) {
+      maintenance <- dplyr::bind_rows(maintenanceList) |>
+        dplyr::arrange(.data$stratum_type, .data$stratum_value, .data$lot_number,
+                       .data$regName, .data$maintenance_regimen)
+      small <- maintenance$n_patients > 0 & maintenance$n_patients < settings$minCellCount
+      maintenance$n_patients <- ifelse(small, -settings$minCellCount, maintenance$n_patients)
+      for (col in c("median_gap_days", "median_maintenance_days"))
+        maintenance[[col]] <- ifelse(small | is.nan(maintenance[[col]]), NA_real_, maintenance[[col]])
+      writeResultCsv(maintenance, "treatment_pattern_maintenance", "treatment_patterns")
+    }
 
     # --- treatment share by cohort x line x calendar year -------------------
     idsByCodes <- function(codes)

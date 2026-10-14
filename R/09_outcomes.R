@@ -49,6 +49,7 @@ message("\n== (i) outcomes (DTI / OS / TTNT / TTD / TFI) ==")
 mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
 cohortNames  <- loadState("cohortNames", "R/03_main_cohorts.R")
 episodes     <- loadState("episodes", "R/01_artemis.R")
+regimenClass <- loadState("regimenClass", "R/01_artemis.R")
 
 if (is.null(episodes) || nrow(episodes) == 0L) {
 
@@ -133,6 +134,12 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
       dplyr::filter(targetData, .data$cohort_definition_id == t1Id))
     episodesForTreatment <- anchorEpisodes(episodes,
       dplyr::filter(targetData, .data$cohort_definition_id %in% treatedTargetCohortIds))
+    # fold maintenance into the line it maintains before lines are numbered
+    # (mergeMaintenance(), R/eventBuilders.R; docs/MAINTENANCE_LINES.md)
+    if (isTRUE(settings$maintenanceMerge)) {
+      episodesForDti       <- mergeMaintenance(episodesForDti, regimenClass, settings$maintenanceMaxGapDays)
+      episodesForTreatment <- mergeMaintenance(episodesForTreatment, regimenClass, settings$maintenanceMaxGapDays)
+    }
 
     # --- shared person-level / episode-level events ---------------------------
     deathEvents <- fetchDeathEvents(connection, allTargetCohortIds)
