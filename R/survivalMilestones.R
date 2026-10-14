@@ -33,11 +33,9 @@ extractSurvivalMilestones <- function(kmData,
   if (!"strata" %in% names(kmData)) {
     present <- intersect(names(kmData), c("age_group", "sex", "age_sex", "age_band",
                                           "index_period", "index_period_2021", "index_year"))
-    if (length(present) == 1L) {
-      kmData$strata <- as.character(kmData[[present[1]]])
-    } else if (length(present) > 1L) {
-      kmData$strata <- apply(kmData[, present, drop = FALSE], 1L,
-                             function(x) paste(x, collapse = ", "))
+    if (length(present) >= 1L) {
+      kmData$strata <- do.call(paste, c(lapply(present, function(col)
+        paste0(col, "=", as.character(kmData[[col]]))), sep = ", "))
     } else {
       n <- nrow(kmData)
       kmData$strata <- if (n == 0L) character(0) else rep("All", n)

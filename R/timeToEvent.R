@@ -279,6 +279,14 @@ computeTimeDiffStats <- function(data,
 
 # --- internal helpers --------------------------------------------------------
 
+# survfit's own strata label for each row of `df` over columns `cols`:
+# "col=value", joined with ", " for several columns. The fallbacks below use it
+# so a single-level stratum is labelled the same way as a multi-level one.
+.strataLabel <- function(df, cols) {
+  parts <- lapply(cols, function(col) paste0(col, "=", as.character(df[[col]])))
+  do.call(paste, c(parts, sep = ", "))
+}
+
 # Ensure tidy KM output always carries a `strata` column: broom::tidy(survfit)
 # omits it when the formula stratum has only one level (common in per-cohort
 # bladder runs), but extractSurvivalMilestones() needs it.
@@ -289,18 +297,13 @@ computeTimeDiffStats <- function(data,
   if (!is.null(strata) && length(strata) > 0) {
     present <- intersect(strata, names(kmData))
     if (length(present) > 0) {
-      kmData$strata <- if (length(present) == 1L) {
-        as.character(kmData[[present[1]]])
-      } else {
-        apply(kmData[, present, drop = FALSE], 1L, function(x) paste(x, collapse = ", "))
-      }
+      kmData$strata <- .strataLabel(kmData, present)
       return(kmData)
     }
     if (is.data.frame(ds) && all(strata %in% names(ds))) {
       levels <- unique(ds[, strata, drop = FALSE])
       if (nrow(levels) == 1L) {
-        label <- if (length(strata) == 1L) as.character(levels[[1]]) else
-          paste(apply(levels, 1L, paste, collapse = ", "), collapse = ", ")
+        label <- .strataLabel(levels, strata)
         n <- nrow(kmData)
         kmData$strata <- if (n == 0L) character(0) else rep(label, n)
         return(kmData)
@@ -319,8 +322,7 @@ computeTimeDiffStats <- function(data,
   if (!all(strata %in% names(ds))) return("All")
   levels <- unique(ds[, strata, drop = FALSE])
   if (nrow(levels) != 1L) return("All")
-  if (length(strata) == 1L) return(as.character(levels[[1]]))
-  paste(apply(levels, 1L, paste, collapse = ", "), collapse = ", ")
+  .strataLabel(levels, strata)
 }
 
 # Median survival from a survfit object (supports multi-strata fits).
