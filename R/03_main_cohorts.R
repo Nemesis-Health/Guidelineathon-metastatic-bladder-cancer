@@ -36,10 +36,15 @@ addCustom <- function(name, sql) {
 }
 
 # --- study cohort naming: "<code> <descriptor>" ----------------------------
-# Codes: T1 = mBC; T2x = eligibility leaves; T3x = eligible & initiated (EAU);
+# Codes: T1 = mBC; T1pt/T1npt/T1ce = attrition steps under T1 (previously
+# treated / not previously treated / combination-therapy eligible);
+# T2x = eligibility leaves; T3x = eligible & initiated (EAU);
 # T4x/T5x/T6x = initiated splits under the EAU / HemOnc-mBC / any-regimen lens.
 cohortNames <- c(
   T1  = "T1 Metastatic bladder cancer",
+  T1pt  = "T1-PT Previously treated mBC",
+  T1npt = "T1-NPT Not previously treated mBC",
+  T1ce  = "T1-CE Combination-therapy eligible mBC",
   T2a = "T2a EV eligible mBC",
   T2b = "T2b Cis-eligible mBC",
   T2c = "T2c Carbo-eligible mBC",
@@ -157,8 +162,8 @@ for (lens in names(classCols)) for (lab in classLabels) {
 
 # --- eligibility 2a-2d (read unified @labCohortTable) -----------------------
 renderElig <- function(leaf, ...) {
-  sql <- paste(readLines(file.path(sqlDir, paste0("eligibility_2", leaf, ".sql")),
-                         warn = FALSE), collapse = "\n")
+  file <- if (grepl("\\.sql$", leaf)) leaf else paste0("eligibility_2", leaf, ".sql")
+  sql <- paste(readLines(file.path(sqlDir, file), warn = FALSE), collapse = "\n")
   args <- list(...)
   used <- vapply(names(args), function(p) grepl(paste0("@", p), sql, fixed = TRUE), logical(1))
   do.call(SqlRender::render, c(list(sql = sql), args[used]))
@@ -182,6 +187,14 @@ elig2$d <- addCustom(cohortNames[["T2d"]], do.call(renderElig, c(list("d"), labR
 # --- T2e = Cohort 1 minus T2a-T2d ------------------------------------------
 cohort2eId <- addCustom(cohortNames[["T2e"]], renderElig("e", cohort1_id = cohort1Id,
   cohort2a_id = elig2$a, cohort2b_id = elig2$b, cohort2c_id = elig2$c, cohort2d_id = elig2$d))
+
+# --- attrition steps under T1 (Cohort logics items 2 and 3) ----------------
+# Each is built from Cohort 1 directly (no dependence on generation order);
+# their nesting with T2a-T2e is checked after generation below.
+attritionIds <- c(
+  T1pt  = addCustom(cohortNames[["T1pt"]],  do.call(renderElig, c(list("eligibility_previously_treated.sql"), labReg))),
+  T1npt = addCustom(cohortNames[["T1npt"]], do.call(renderElig, c(list("eligibility_not_previously_treated.sql"), labReg))),
+  T1ce  = addCustom(cohortNames[["T1ce"]],  do.call(renderElig, c(list("eligibility_combination.sql"), labReg))))
 
 # --- 3a-3d = 2x INTERSECT 4x ; 3e = 2e INTERSECT 4f ------------------------
 intersectTemplate <- "
@@ -215,6 +228,33 @@ message("Full manifest: ", nrow(fullSet), " cohorts (",
 cohortCounts <- generateCohorts(connection, fullSet, dropTables = TRUE)
 mainManifest <<- fullSet
 saveState("mainManifest", mainManifest)
+
+# Attrition steps must nest with the eligibility leaves: PT and NPT split T1
+# exactly, CE sits inside NPT, T2a-T2c inside CE, and T2d outside it.
+nest <- DatabaseConnector::renderTranslateQuerySql(connection, "
+  SELECT
+    (SELECT COUNT(DISTINCT subject_id) FROM @work_schema.@cohort_tbl WHERE cohort_definition_id = @t1_id) AS n_t1,
+    (SELECT COUNT(DISTINCT subject_id) FROM @work_schema.@cohort_tbl WHERE cohort_definition_id IN (@pt_id, @npt_id)) AS n_pt_npt,
+    (SELECT COUNT(*) FROM (SELECT subject_id FROM @work_schema.@cohort_tbl WHERE cohort_definition_id IN (@pt_id, @npt_id)
+                           GROUP BY subject_id HAVING COUNT(DISTINCT cohort_definition_id) > 1) x) AS n_pt_and_npt,
+    (SELECT COUNT(DISTINCT c.subject_id) FROM @work_schema.@cohort_tbl c WHERE c.cohort_definition_id = @ce_id
+       AND c.subject_id NOT IN (SELECT subject_id FROM @work_schema.@cohort_tbl WHERE cohort_definition_id = @npt_id)) AS n_ce_not_npt,
+    (SELECT COUNT(DISTINCT c.subject_id) FROM @work_schema.@cohort_tbl c WHERE c.cohort_definition_id IN (@c2a_id, @c2b_id, @c2c_id)
+       AND c.subject_id NOT IN (SELECT subject_id FROM @work_schema.@cohort_tbl WHERE cohort_definition_id = @ce_id)) AS n_2abc_not_ce,
+    (SELECT COUNT(DISTINCT c.subject_id) FROM @work_schema.@cohort_tbl c WHERE c.cohort_definition_id = @c2d_id
+       AND c.subject_id IN (SELECT subject_id FROM @work_schema.@cohort_tbl WHERE cohort_definition_id = @ce_id)) AS n_2d_in_ce;",
+  work_schema = settings$workDatabaseSchema, cohort_tbl = settings$cohortTable, t1_id = cohort1Id,
+  pt_id = attritionIds[["T1pt"]], npt_id = attritionIds[["T1npt"]], ce_id = attritionIds[["T1ce"]],
+  c2a_id = elig2$a, c2b_id = elig2$b, c2c_id = elig2$c, c2d_id = elig2$d)
+names(nest) <- tolower(names(nest))
+nestOk <- nest$n_pt_npt == nest$n_t1 && nest$n_pt_and_npt == 0 && nest$n_ce_not_npt == 0 &&
+          nest$n_2abc_not_ce == 0 && nest$n_2d_in_ce == 0
+if (nestOk) {
+  message("  attrition cohorts nest correctly with T1 and T2a-T2d.")
+} else {
+  warning("Attrition cohorts don't nest as expected: ",
+          paste(names(nest), unlist(nest), sep = "=", collapse = ", "), call. = FALSE)
+}
 
 # Stratified counts: subject_strata.sql is the single source of truth for
 # age_group/sex/age_sex bucketing (shared with demographics.sql,
