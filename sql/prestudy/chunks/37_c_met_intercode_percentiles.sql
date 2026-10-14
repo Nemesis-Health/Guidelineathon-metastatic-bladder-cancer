@@ -15,7 +15,7 @@
 --
 --     Population (metastasis subset): cohort patients carrying an anchor Metastasis,
 --     i.e. #met_summary (built in 00_setup.sql as #met_events joined to #cohort). This
---     is the DX-cohort-gated metastasis subset (n = 629 at HUS), NOT the ungated
+--     is the DX-cohort-gated metastasis subset, NOT the ungated
 --     all-metastasis population. Restricting #met_events to #met_summary persons keeps
 --     the denominator on the 629 subset. Only patients with >= 2 distinct MET days
 --     contribute a gap.

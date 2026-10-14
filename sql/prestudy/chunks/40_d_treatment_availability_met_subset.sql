@@ -3,7 +3,7 @@
 --     ungated companion to chunk 29 (which reports only the on-or-after-MET window and
 --     over the ungated all-metastasis population). Here BOTH windows are emitted, and
 --     the denominator is standardized on the DX-cohort-gated metastasis subset
---     (n = 629 at HUS), NOT the ungated all-metastasis population (n = 694).
+--     NOT the ungated all-metastasis population.
 --
 --     Population (metastasis subset): #met_summary (built in 00_setup.sql as
 --     #met_events joined to #cohort), i.e. cohort patients carrying an anchor

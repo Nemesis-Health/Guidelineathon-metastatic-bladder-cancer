@@ -30,8 +30,8 @@
 --     a general code (single value; positive means the first general code typically
 --     follows the first specific Diagnosis). Framework ordered-set median convention
 --     (lower-middle value for even n, as in chunks 16-17, 23, 27 and 00_setup.sql).
---     Validation reference: the approved V3 mock reports a first-general-to-first-
---     Diagnosis median of +11 days at HUS with a long pre-diagnostic (before) tail.
+--     Validation reference: the approved V3 mock reports a positive first-general-
+--     to-first-Diagnosis median with a long pre-diagnostic (before) tail.
 --
 --     NOTE (direction). Before and after use their own outward-cumulative counts and
 --     are never combined into a symmetric window; day 0 is its own mass, not folded
@@ -39,7 +39,7 @@
 --
 --     Denominator (n_with_general_code, repeated on the single row):
 --       anchor-cohort patients with >= 1 general cancer diagnosis code (the union of
---       the three trajectory categories in chunk 33; validated HUS total = 618).
+--       the three trajectory categories in chunk 33).
 --
 --     Population note. Uses #gen_cancer_summary.first_gen_cancer_date, the earliest
 --     general-code date per cohort patient (built in 00_setup.sql over

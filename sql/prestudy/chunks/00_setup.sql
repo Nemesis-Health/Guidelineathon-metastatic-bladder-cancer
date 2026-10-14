@@ -176,7 +176,9 @@ CREATE TABLE #met_ancestor_concepts (
     ancestor_concept_id BIGINT
 );
 
--- Default: concept set "Secondary malignancy" from cohort_definitions/Target_Cohort_2B.json
+-- [GDE] metastasis (measurement) in cohorts/01_Target/Target_1A.json: these
+-- three with descendants, plus the single concepts and minus the exclusions
+-- in #met_concepts below. Keep in step with Target 1A.
 INSERT INTO #met_ancestor_concepts (ancestor_concept_id)
 VALUES
     (1633308),  -- AJCC/UICC Stage 4
@@ -189,11 +191,26 @@ CREATE TABLE #met_concepts (
     concept_id BIGINT
 );
 
+-- Target 1A's set also uses metastasis conditions (e.g. Malignant ascites);
+-- these diagnostics only look at measurements, so condition concepts in the
+-- set are unused here.
 INSERT INTO #met_concepts (concept_id)
-SELECT DISTINCT ca.descendant_concept_id
-FROM @cdm_database_schema.concept_ancestor ca
-JOIN #met_ancestor_concepts a
-  ON ca.ancestor_concept_id = a.ancestor_concept_id
+SELECT DISTINCT i.concept_id
+FROM (
+  SELECT ca.descendant_concept_id AS concept_id
+  FROM @cdm_database_schema.concept_ancestor ca
+  JOIN @cdm_database_schema.concept c
+    ON c.concept_id = ca.descendant_concept_id
+   AND c.invalid_reason IS NULL
+  JOIN #met_ancestor_concepts a
+    ON ca.ancestor_concept_id = a.ancestor_concept_id
+  UNION
+  SELECT concept_id
+  FROM @cdm_database_schema.concept
+  WHERE concept_id IN (192735, 1340420, 1346178, 1346230, 37019862)
+) i
+WHERE i.concept_id NOT IN (35225577, 35225579, 35225625, 35226025, 35226028,
+                           35226041, 35226264, 35226304)
 ;
 
 

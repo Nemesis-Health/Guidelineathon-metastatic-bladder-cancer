@@ -27,7 +27,7 @@
 --     builds an adjustable capture window from these directional counts.
 --
 --     JUDGMENT CALL / FLAG (directional vs the mock's modelled split). The approved
---     V3 mock supplied REAL HUS patient counts per concept (n_patients / ever, and
+--     V3 mock supplied real patient counts per concept (n_patients / ever, and
 --     ever-before / ever-after) but MODELLED the by-window before/after split from
 --     symmetric +/-30/90/180/365 counts because a directional windowed output did
 --     not yet exist. This chunk produces that directional output directly: the

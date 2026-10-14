@@ -11,10 +11,10 @@
 --     the distribution is one-sided and starts at the origin (first Diagnosis).
 --
 --     Strata (cohort_stratum):
---       FULL        = the full diagnosis cohort (#cohort, n = 8,134 at HUS)
+--       FULL        = the full diagnosis cohort (#cohort)
 --       MET_SUBSET  = the metastasis subset: cohort patients carrying an anchor
 --                     Metastasis (#met_summary, the DX-cohort-gated subset,
---                     n = 629 at HUS; NOT the ungated all-metastasis population)
+--                     NOT the ungated all-metastasis population)
 --     A patient contributes a gap to a stratum only if they have >= 2 distinct
 --     Diagnosis days AND belong to that stratum. MET_SUBSET is a subset of FULL, so a
 --     metastasis-subset patient contributes to both strata (this is intentional: the
