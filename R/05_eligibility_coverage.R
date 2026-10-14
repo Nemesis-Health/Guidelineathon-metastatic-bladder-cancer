@@ -99,6 +99,7 @@ cov <- dplyr::left_join(cov, denomTbl, by = c("cohort_definition_id", "stratum_t
 cov <- dplyr::left_join(cov,
   dplyr::select(mainManifest, cohort_definition_id = "cohortId", cohort_name = "cohortName"),
   by = "cohort_definition_id")
+cov$n_cohort <- censor(cov$n_cohort)
 cov$n_tested <- censor(cov$n_tested)
 cov$n_passed <- censor(cov$n_passed)
 cov <- cov[c("cohort_definition_id","cohort_name","stratum_type","stratum_value",
