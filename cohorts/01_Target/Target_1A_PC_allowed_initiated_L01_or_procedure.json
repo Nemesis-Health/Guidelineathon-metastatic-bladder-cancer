@@ -100,7 +100,8 @@
               "STANDARD_CONCEPT": "N",
               "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
-            }
+            },
+            "isExcluded": true
           },
           {
             "concept": {
@@ -545,6 +546,422 @@
               "STANDARD_CONCEPT": "S",
               "STANDARD_CONCEPT_CAPTION": "Standard",
               "VOCABULARY_ID": "ICDO3"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "188366002",
+              "CONCEPT_ID": 197506,
+              "CONCEPT_NAME": "Malignant neoplasm of abdomen",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "109870007",
+              "CONCEPT_ID": 73720,
+              "CONCEPT_NAME": "Overlapping malignant neoplasm of urinary system",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "94125001",
+              "CONCEPT_ID": 76349,
+              "CONCEPT_NAME": "Primary malignant neoplasm of urinary system",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1208451008",
+              "CONCEPT_ID": 37163176,
+              "CONCEPT_NAME": "Transitional cell carcinoma of upper urinary tract",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "255066001",
+              "CONCEPT_ID": 4111019,
+              "CONCEPT_NAME": "Carcinoma of genitourinary organ",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1269273000",
+              "CONCEPT_ID": 37167985,
+              "CONCEPT_NAME": "Malignancy diagnosed during pregnancy",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "271468000",
+              "CONCEPT_ID": 4154630,
+              "CONCEPT_NAME": "Malignant neoplasm of genitourinary organ",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "188256008",
+              "CONCEPT_ID": 4091486,
+              "CONCEPT_NAME": "Malignant neoplasm of overlapping sites of urinary organs",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "723879002",
+              "CONCEPT_ID": 37109929,
+              "CONCEPT_NAME": "Primary adenocarcinoma of overlapping sites of urinary organ",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1259396001",
+              "CONCEPT_ID": 37166263,
+              "CONCEPT_NAME": "Primary carcinoma of genitourinary organ",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "724467001",
+              "CONCEPT_ID": 37110269,
+              "CONCEPT_NAME": "Primary squamous cell carcinoma of overlapping sites of urinary organs",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1259711008",
+              "CONCEPT_ID": 37166561,
+              "CONCEPT_NAME": "Primary transitional cell carcinoma of upper urinary tract",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "419052002",
+              "CONCEPT_ID": 4169598,
+              "CONCEPT_NAME": "Malignant neoplasm of urinary system",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "148911000119107",
+              "CONCEPT_ID": 36684472,
+              "CONCEPT_NAME": "Primary malignant neoplasm of abdomen",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "ICDO Condition",
+              "CONCEPT_CODE": "8120/3-C68.9",
+              "CONCEPT_ID": 44501785,
+              "CONCEPT_NAME": "Transitional cell carcinoma, NOS, of urinary system, NOS",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "ICDO3"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "722688002",
+              "CONCEPT_ID": 36716620,
+              "CONCEPT_NAME": "Malignant epithelial neoplasm",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "708054009",
+              "CONCEPT_ID": 45769408,
+              "CONCEPT_NAME": "Malignant neoplasm after immunosuppressive therapy",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "550991000124107",
+              "CONCEPT_ID": 37172812,
+              "CONCEPT_NAME": "Malignant neoplasm in full remission",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "551001000124108",
+              "CONCEPT_ID": 37172814,
+              "CONCEPT_NAME": "Malignant neoplasm in partial remission",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "422282000",
+              "CONCEPT_ID": 4226357,
+              "CONCEPT_NAME": "Malignant neoplasm with AIDS (acquired immunodeficiency syndrome)",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "713572001",
+              "CONCEPT_ID": 37017320,
+              "CONCEPT_NAME": "Malignant neoplastic disease co-occurrent with human immunodeficiency virus infection",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "10745291000119103",
+              "CONCEPT_ID": 45757101,
+              "CONCEPT_NAME": "Malignant neoplastic disease in mother complicating childbirth",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "10749871000119100",
+              "CONCEPT_ID": 45757107,
+              "CONCEPT_NAME": "Malignant neoplastic disease in pregnancy",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "369594008",
+              "CONCEPT_ID": 4183631,
+              "CONCEPT_NAME": "Malignant tumor involving an organ by direct extension from bladder",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "369489005",
+              "CONCEPT_ID": 4289099,
+              "CONCEPT_NAME": "Malignant tumor involving seminal vesicle by direct extension from bladder",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "369463005",
+              "CONCEPT_ID": 4289251,
+              "CONCEPT_NAME": "Malignant tumor involving ureter by direct extension from bladder",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "369465003",
+              "CONCEPT_ID": 4289373,
+              "CONCEPT_NAME": "Malignant tumor involving urethra by direct extension from bladder",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "369493004",
+              "CONCEPT_ID": 4289101,
+              "CONCEPT_NAME": "Malignant tumor involving uterine corpus by direct extension from bladder",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "369504000",
+              "CONCEPT_ID": 4289675,
+              "CONCEPT_NAME": "Malignant tumor involving vagina by direct extension from bladder",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "93839008",
+              "CONCEPT_ID": 197804,
+              "CONCEPT_NAME": "Primary malignant neoplasm of intra-abdominal organs",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "93953009",
+              "CONCEPT_ID": 198988,
+              "CONCEPT_NAME": "Primary malignant neoplasm of pelvis",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "11010461000119101",
+              "CONCEPT_ID": 36712771,
+              "CONCEPT_NAME": "Small cell neuroendocrine carcinoma",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
             },
             "isExcluded": true
           }
@@ -855,7 +1272,8 @@
               "STANDARD_CONCEPT": "N",
               "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
-            }
+            },
+            "isExcluded": true
           },
           {
             "concept": {
@@ -1300,6 +1718,422 @@
               "STANDARD_CONCEPT": "S",
               "STANDARD_CONCEPT_CAPTION": "Standard",
               "VOCABULARY_ID": "ICDO3"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "188366002",
+              "CONCEPT_ID": 197506,
+              "CONCEPT_NAME": "Malignant neoplasm of abdomen",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "109870007",
+              "CONCEPT_ID": 73720,
+              "CONCEPT_NAME": "Overlapping malignant neoplasm of urinary system",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "94125001",
+              "CONCEPT_ID": 76349,
+              "CONCEPT_NAME": "Primary malignant neoplasm of urinary system",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1208451008",
+              "CONCEPT_ID": 37163176,
+              "CONCEPT_NAME": "Transitional cell carcinoma of upper urinary tract",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "255066001",
+              "CONCEPT_ID": 4111019,
+              "CONCEPT_NAME": "Carcinoma of genitourinary organ",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1269273000",
+              "CONCEPT_ID": 37167985,
+              "CONCEPT_NAME": "Malignancy diagnosed during pregnancy",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "271468000",
+              "CONCEPT_ID": 4154630,
+              "CONCEPT_NAME": "Malignant neoplasm of genitourinary organ",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "188256008",
+              "CONCEPT_ID": 4091486,
+              "CONCEPT_NAME": "Malignant neoplasm of overlapping sites of urinary organs",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "723879002",
+              "CONCEPT_ID": 37109929,
+              "CONCEPT_NAME": "Primary adenocarcinoma of overlapping sites of urinary organ",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1259396001",
+              "CONCEPT_ID": 37166263,
+              "CONCEPT_NAME": "Primary carcinoma of genitourinary organ",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "724467001",
+              "CONCEPT_ID": 37110269,
+              "CONCEPT_NAME": "Primary squamous cell carcinoma of overlapping sites of urinary organs",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1259711008",
+              "CONCEPT_ID": 37166561,
+              "CONCEPT_NAME": "Primary transitional cell carcinoma of upper urinary tract",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "419052002",
+              "CONCEPT_ID": 4169598,
+              "CONCEPT_NAME": "Malignant neoplasm of urinary system",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "148911000119107",
+              "CONCEPT_ID": 36684472,
+              "CONCEPT_NAME": "Primary malignant neoplasm of abdomen",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "ICDO Condition",
+              "CONCEPT_CODE": "8120/3-C68.9",
+              "CONCEPT_ID": 44501785,
+              "CONCEPT_NAME": "Transitional cell carcinoma, NOS, of urinary system, NOS",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "ICDO3"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "722688002",
+              "CONCEPT_ID": 36716620,
+              "CONCEPT_NAME": "Malignant epithelial neoplasm",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "708054009",
+              "CONCEPT_ID": 45769408,
+              "CONCEPT_NAME": "Malignant neoplasm after immunosuppressive therapy",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "550991000124107",
+              "CONCEPT_ID": 37172812,
+              "CONCEPT_NAME": "Malignant neoplasm in full remission",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "551001000124108",
+              "CONCEPT_ID": 37172814,
+              "CONCEPT_NAME": "Malignant neoplasm in partial remission",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "422282000",
+              "CONCEPT_ID": 4226357,
+              "CONCEPT_NAME": "Malignant neoplasm with AIDS (acquired immunodeficiency syndrome)",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "713572001",
+              "CONCEPT_ID": 37017320,
+              "CONCEPT_NAME": "Malignant neoplastic disease co-occurrent with human immunodeficiency virus infection",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "10745291000119103",
+              "CONCEPT_ID": 45757101,
+              "CONCEPT_NAME": "Malignant neoplastic disease in mother complicating childbirth",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "10749871000119100",
+              "CONCEPT_ID": 45757107,
+              "CONCEPT_NAME": "Malignant neoplastic disease in pregnancy",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "369594008",
+              "CONCEPT_ID": 4183631,
+              "CONCEPT_NAME": "Malignant tumor involving an organ by direct extension from bladder",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "369489005",
+              "CONCEPT_ID": 4289099,
+              "CONCEPT_NAME": "Malignant tumor involving seminal vesicle by direct extension from bladder",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "369463005",
+              "CONCEPT_ID": 4289251,
+              "CONCEPT_NAME": "Malignant tumor involving ureter by direct extension from bladder",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "369465003",
+              "CONCEPT_ID": 4289373,
+              "CONCEPT_NAME": "Malignant tumor involving urethra by direct extension from bladder",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "369493004",
+              "CONCEPT_ID": 4289101,
+              "CONCEPT_NAME": "Malignant tumor involving uterine corpus by direct extension from bladder",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "369504000",
+              "CONCEPT_ID": 4289675,
+              "CONCEPT_NAME": "Malignant tumor involving vagina by direct extension from bladder",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "93839008",
+              "CONCEPT_ID": 197804,
+              "CONCEPT_NAME": "Primary malignant neoplasm of intra-abdominal organs",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "93953009",
+              "CONCEPT_ID": 198988,
+              "CONCEPT_NAME": "Primary malignant neoplasm of pelvis",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "11010461000119101",
+              "CONCEPT_ID": 36712771,
+              "CONCEPT_NAME": "Small cell neuroendocrine carcinoma",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
             },
             "isExcluded": true
           },
