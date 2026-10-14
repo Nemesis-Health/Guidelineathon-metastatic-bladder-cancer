@@ -109,6 +109,98 @@ fetchDeathEvents <- function(connection, targetCohortIds) {
 }
 
 
+# --- mergeMaintenance() -----------------------------------------------------
+# Folds maintenance episodes into the line they maintain, so they aren't
+# counted as a new line of therapy (docs/MAINTENANCE_LINES.md). An episode is
+# maintenance when it matches a rule below against the episode immediately
+# before it (same person) and starts no more than `maxGapDays` after that
+# episode ends (overlap allowed). A merged line keeps the earlier episode's
+# regimen and start date, ends at the last maintenance episode's end, and
+# records the maintenance in maintenance_regimen / maintenance_rule /
+# maintenance_start_date (NA when the line had none); induction_end_date is
+# the earlier episode's own end. Apply after
+# anchorEpisodes() and before lines are numbered.
+#
+# Active rules follow the PI's request ("avelumab or pembro after 1st line"):
+# avelumab or pembrolizumab after a platinum-containing regimen, and
+# pembrolizumab after EV + pembrolizumab. The two commented-out continuation
+# rules (EV after EV + pembrolizumab; nivolumab after
+# cisplatin-gemcitabine-nivolumab, the CheckMate 901 maintenance phase) are
+# to confirm with the PI before enabling. `follows_class` matches
+# regimenClass's class_any; `follows_regimen` an exact regimen name.
+maintenanceRules <- tibble::tribble(
+  ~maintenance_regimen,             ~follows_regimen,                               ~follows_class,               ~rule,
+  "Avelumab monotherapy",           NA,                                             "cisplatin|carboplatin",      "switch: avelumab after platinum",
+  "Pembrolizumab monotherapy",      NA,                                             "cisplatin|carboplatin",      "switch: pembrolizumab after platinum",
+  "Pembrolizumab monotherapy",      "Enfortumab vedotin and Pembrolizumab",         NA,                           "continuation: pembrolizumab after EV + pembrolizumab")
+  # To confirm with the PI before enabling (add back inside the tribble):
+  # "Enfortumab vedotin monotherapy", "Enfortumab vedotin and Pembrolizumab",         NA,                           "continuation: EV after EV + pembrolizumab",
+  # "Nivolumab monotherapy",          "Cisplatin and Gemcitabine (GC) and Nivolumab", NA,                           "continuation: nivolumab after GC + nivolumab",
+
+mergeMaintenance <- function(episodes, regimenClass, maxGapDays = 180L,
+                             rules = maintenanceRules) {
+  required <- c("person_id", "episode_start_date", "episode_end_date",
+                "episode_source_value")
+  miss <- setdiff(required, names(episodes))
+  if (length(miss) > 0)
+    stop("`episodes` is missing columns: ", paste(miss, collapse = ", "), call. = FALSE)
+  if (nrow(episodes) == 0L) {
+    episodes$maintenance_regimen    <- character(0)
+    episodes$maintenance_rule       <- character(0)
+    episodes$maintenance_start_date <- as.Date(character(0))
+    episodes$induction_end_date     <- as.Date(character(0))
+    return(episodes)
+  }
+
+  classOf <- stats::setNames(regimenClass$class_any, regimenClass$regName)
+  ordered <- episodes |>
+    dplyr::arrange(.data$person_id, .data$episode_start_date,
+                   .data$episode_end_date, .data$episode_source_value) |>
+    dplyr::mutate(.prev_regimen = dplyr::lag(.data$episode_source_value),
+                  .prev_end     = dplyr::lag(.data$episode_end_date),
+                  .by = "person_id")
+  prevClass <- unname(classOf[ordered$.prev_regimen])
+  gapOk <- !is.na(ordered$.prev_end) &
+    as.numeric(ordered$episode_start_date - ordered$.prev_end) <= maxGapDays
+
+  # first matching rule per episode
+  ordered$.rule <- NA_character_
+  for (i in seq_len(nrow(rules))) {
+    r <- rules[i, ]
+    follows <- if (!is.na(r$follows_regimen)) {
+      !is.na(ordered$.prev_regimen) & ordered$.prev_regimen == r$follows_regimen
+    } else {
+      !is.na(prevClass) & grepl(paste0("^(", r$follows_class, ")$"), prevClass)
+    }
+    hit <- is.na(ordered$.rule) & gapOk & follows &
+      ordered$episode_source_value == r$maintenance_regimen
+    ordered$.rule[hit] <- r$rule
+  }
+
+  # per-row maintenance fields first: inside summarise() the regimen and start
+  # columns are already collapsed to the line's first value
+  helper <- c(".prev_regimen", ".prev_end", ".rule", ".m_regimen", ".m_start")
+  ordered |>
+    dplyr::mutate(.line     = cumsum(is.na(.data$.rule)),
+                  .m_regimen = ifelse(is.na(.data$.rule), NA_character_, .data$episode_source_value),
+                  .m_start   = dplyr::if_else(is.na(.data$.rule), as.Date(NA), .data$episode_start_date),
+                  .by = "person_id") |>
+    dplyr::summarise(
+      maintenance_regimen    = dplyr::first(stats::na.omit(.data$.m_regimen)),
+      maintenance_rule       = dplyr::first(stats::na.omit(.data$.rule)),
+      maintenance_start_date = suppressWarnings(min(.data$.m_start, na.rm = TRUE)),
+      line_end_date          = max(.data$episode_end_date),
+      induction_end_date     = dplyr::first(.data$episode_end_date),
+      dplyr::across(-dplyr::any_of(c("episode_end_date", helper)), ~ dplyr::first(.x)),
+      .by = c("person_id", ".line")) |>
+    dplyr::mutate(maintenance_start_date = dplyr::if_else(is.infinite(as.numeric(.data$maintenance_start_date)),
+                                                          as.Date(NA), .data$maintenance_start_date)) |>
+    dplyr::rename(episode_end_date = "line_end_date") |>
+    dplyr::select(-".line") |>
+    dplyr::relocate(dplyr::starts_with("maintenance_"), "induction_end_date", .after = dplyr::last_col())
+}
+
+
 # --- buildLineOfTherapyEvents() ---------------------------------------------
 # Converts an ARTEMIS episode tibble into the event-tibble shape
 # computeTimeToEvent() expects. Lines of therapy are numbered chronologically

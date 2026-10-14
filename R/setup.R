@@ -33,6 +33,10 @@ if (is.null(settings$strataColumns))
   settings$strataColumns <- c("age_group", "sex", "age_sex", "age_band",
                               "index_period", "index_period_2021")
 
+# default maintenance merging ON for configs predating the option
+if (is.null(settings$maintenanceMerge))      settings$maintenanceMerge      <- TRUE
+if (is.null(settings$maintenanceMaxGapDays)) settings$maintenanceMaxGapDays <- 180L
+
 projectRoot <- normalizePath(".", mustWork = FALSE)
 sqlDir      <- file.path(projectRoot, "sql")
 cohortsDir  <- file.path(projectRoot, "cohorts")

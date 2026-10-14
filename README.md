@@ -71,6 +71,7 @@ less-obvious run settings lives here instead.
 |---|---|---|
 | `labWindowBeforeDays`, `labWindowAfterDays` | `30`, `30` | Days before/after index a record may fall for near-index eligibility inputs: labs, ECOG/PS in Target 2a-2d, the covariate PS overlap (step (h)), eligibility-input coverage (step (e)), lab value distributions (step (d)). |
 | `conditionFlagWindowBeforeDays`, `conditionFlagWindowAfterDays` | `30`, `30` | Window for the CONDITION flags in Target 2a-2d and eligibility-input coverage (step (e)): liver metastasis, Gilbert's syndrome, neuropathy, skin disorders, hearing loss. A flag counts when its cohort era overlaps the window, and these cohorts stay live to the end of observation, so any earlier record counts; how long a condition lasts is set by its cohort's end strategy, not here. |
+| `maintenanceMerge`, `maintenanceMaxGapDays` | `TRUE`, `180` | Fold maintenance therapy into the line of therapy it maintains before lines are numbered (outcomes and treatment patterns), e.g. avelumab after platinum-based chemotherapy is part of line 1, not line 2. A maintenance episode must start within `maintenanceMaxGapDays` of the earlier regimen's end. The rules are `maintenanceRules` in `R/eventBuilders.R`; see `docs/MAINTENANCE_LINES.md`. `FALSE` numbers every ARTEMIS episode as its own line. |
 | `bodyMeasurementsWindowDays` | `90` | Index window for baseline weight/height/BMI (step (k)) — wider than the lab window, matching onco-study-modules' own convention for body measurements. |
 | `stripEndocrineTherapy` | `TRUE` | Excludes endocrine-therapy regimens (tamoxifen, abiraterone, GnRH agonists, ...) from the ARTEMIS reference, via `is_endocrine` in `cohorts/extras/regimen_reference.csv`. `FALSE` counts endocrine therapy as anticancer treatment. |
 | `validDrugsRegimenComponents` | `TRUE` | Controls which drugs ARTEMIS encodes into each patient's alignment string — non-regimen/supportive drugs are gap noise that lowers alignment scores and shrinks eras (DEVELOPMENT.md §10.4). `TRUE` keeps only drugs that appear in a kept regimen (keeps `validDrugs` and the regimen file consistent — every kept regimen's components stay encodable); `FALSE` keeps all. Composes with `validDrugsAtcClasses` below (both apply when both active); regimens whose components get filtered out can no longer align and are dropped from the reference (logged). |
@@ -291,7 +292,7 @@ ARTEMIS.
 | — outcomes: DTI / OS / TTNT / TTD / TTD-LoT2 / TFI | `R/09_outcomes.R` | `outcomes/outcome_*_summary.csv`, `_histogram.csv`, `_km.csv`, `_median_survival.csv`, `_milestones.csv` |
 | — guideline relevance + adherence roll-up | `R/10_adherence.R` | `guideline/guideline_relevance.csv`, `guideline_adherence.csv` |
 | — baseline body measurements + Charlson CCI | `R/11_baseline_characterization.R` | `characterization/baseline_body_measurements.csv`, `charlson_cci.csv` |
-| — treatment patterns by line of therapy | `R/12_treatment_patterns.R` | `treatment_patterns/treatment_pattern_untreated.csv`, `_regimen.csv`, `_category.csv`, `treatment_pathways.csv`, `treatment_pattern_by_year.csv` |
+| — treatment patterns by line of therapy | `R/12_treatment_patterns.R` | `treatment_patterns/treatment_pattern_untreated.csv`, `_regimen.csv`, `_category.csv`, `treatment_pathways.csv`, `treatment_pattern_by_year.csv`, `treatment_pattern_maintenance.csv` |
 | — lab coverage by comorbidity subgroup | `R/13_covariate_lab_coverage.R` | `labs/covariate_lab_coverage.csv` |
 | — record provenance of bladder cancer / other-malignancy codes | `R/14_provenance.R` | `characterization/bladder_cancer_provenance.csv`, `other_malignancy_provenance.csv` |
 | — condition and drug roll-ups (concept-based baseline comorbidities) | `R/15_rollups.R` | `characterization/condition_rollup.csv`, `drug_rollup.csv` |
@@ -363,7 +364,7 @@ At the end of a run, results are packaged into two archives:
 | `09_outcomes.R` | Outcomes: DTI (Target 1A), OS (every cohort), TTNT/TTD/TTD-LoT2/TFI (treatment-initiated cohorts) — KM + 1/2/3-yr milestones, stratified by age group / sex / index year. |
 | `10_adherence.R` | Guideline relevance (per-cohort % of Cohort 1) + adherence roll-up (per eligibility leaf: adherent / alt-guideline / indicated-other / non-indicated / no-treatment). |
 | `11_baseline_characterization.R` | Weight/height/BMI + Charlson Comorbidity Index, per cohort in the main tree. |
-| `12_treatment_patterns.R` | Regimen + classification-category distribution by line of therapy, % untreated, Sankey-ready LoT1→LoT2→LoT3 pathway counts. |
+| `12_treatment_patterns.R` | Regimen + classification-category distribution by line of therapy, % untreated, Sankey-ready LoT1→LoT2→LoT3 pathway counts, maintenance use (lines numbered after folding maintenance into its line). |
 | `13_covariate_lab_coverage.R` | (m) lab test coverage by comorbidity subgroup (Heme Disorders / Liver Disease / Renal Disease, with/without), Target 1A only. |
 | `14_provenance.R` | (n) record provenance (`condition_type_concept_id`) of bladder cancer and other-malignancy condition records, in a metastatic bladder cancer population the queries build themselves. |
 | `15_rollups.R` | (o) condition and drug roll-ups: conditions in disease categories and drugs in ATC 1st-level groups, on/before each cohort's index, every cohort in the main tree. |
@@ -1223,7 +1224,10 @@ eligible count.
 ## `treatment_patterns/`
 Regimen + classification-category distribution by line of therapy, %
 untreated, Sankey-ready LoT pathway counts, and regimen-category share by
-calendar year. All five files are stratified one dimension at a time
+calendar year, and maintenance use. Lines of therapy are numbered after
+maintenance is folded into the line it maintains (`maintenanceMerge`, see the
+settings table), so e.g. avelumab after platinum-based chemotherapy is part of
+line 1. All six files are stratified one dimension at a time
 (overall / age_group / sex), plus the age × sex crossed view, via
 `sql/subject_strata.sql` anchored to each subject's Cohort 1 index — same
 marginal convention as the outcome files. Which stratum views are populated
@@ -1237,6 +1241,7 @@ above) — a partner can disable stratification for these
 | `treatment_pattern_regimen.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | stratum × line of therapy × regimen name |
 | `treatment_pattern_category.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | stratum × classification lens × line of therapy × category (a-f) |
 | `treatment_pathways.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | stratum × LoT1 × LoT2 × LoT3 category combination (`class_eau`, capped at 3 lines) |
+| `treatment_pattern_maintenance.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | stratum × line of therapy × line regimen × maintenance regimen |
 | `treatment_pattern_by_year.csv` | `12_treatment_patterns.R` | Per treated cohort ("mBC initiated base", T3a-e, T4-6a-f) | cohort × lot × index year × lens category × stratum (overall/age_group/sex/age_sex) |
 
 ### `treatment_pattern_untreated.csv`
@@ -1283,6 +1288,21 @@ data only, not itself a rendered plot.
 | `stratum_type`, `stratum_value` | As `treatment_pattern_untreated.csv`. |
 | `lot1`, `lot2`, `lot3` | `class_eau` category at that line (`NA` if the subject didn't reach it). |
 | `n_patients` | Subjects following that exact pathway, within that stratum (censored). |
+
+### `treatment_pattern_maintenance.csv`
+How often each line's regimen was followed by maintenance that was folded into
+it, and which maintenance. Written only when `maintenanceMerge` is on.
+
+| Column | Meaning |
+|---|---|
+| `stratum_type`, `stratum_value` | As `treatment_pattern_untreated.csv`. |
+| `lot_number` | Line of therapy (after merging maintenance). |
+| `regName` | The line's regimen (the induction regimen). |
+| `maintenance_regimen` | The maintenance regimen folded into the line, or `none`. |
+| `maintenance_rule` | The rule that matched (e.g. `switch: avelumab after platinum`), or `none`. |
+| `n_patients` | Subjects with that line, regimen and maintenance, within that stratum (censored). |
+| `median_gap_days` | Median days from the induction regimen's end to the maintenance start (negative if they overlap); blank for `none` or when `n_patients` is censored. |
+| `median_maintenance_days` | Median days from the maintenance start to the line's end; blank for `none` or when censored. |
 
 ### `treatment_pattern_by_year.csv`
 Regimen-category share by calendar year, **per treated cohort** (not pooled

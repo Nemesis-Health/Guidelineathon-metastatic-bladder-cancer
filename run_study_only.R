@@ -73,6 +73,8 @@ settings <- list(
   validDrugsRegimenComponents = TRUE,   # keep only drugs that appear in a kept regimen
   validDrugsAtcClasses = c("L01", "L02", "L03", "L04"),   # ATC classes kept in the alignment string
   assessmentAtcClasses = NULL,   # ATC classes kept in exposure assessment (step f); NULL mirrors the regimen filter above
+  maintenanceMerge      = TRUE,  # fold maintenance (e.g. avelumab after platinum) into the line it maintains
+  maintenanceMaxGapDays = 180L,  # max days from the earlier regimen's end to the maintenance start
   strataColumns = c("age_group", "sex", "age_sex",   # breakdowns reported on every stratified output
                     "age_band", "index_period", "index_period_2021"),
   outputFolder        = file.path("results")
