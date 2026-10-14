@@ -2,7 +2,7 @@
 --     period continues PAST the recorded death date, for decedents still under
 --     observation after death. Companion to chunk 17, whose
 --     MEDIAN_DAYS_PERIOD_ENDS_PAST_DEATH metric already reports the median of this
---     same quantity (305d full cohort / 373d metastasis subset at HUS). This chunk
+--     same quantity for the full cohort and the metastasis subset. This chunk
 --     adds the distribution the median summarizes, so the report can show IQR and a
 --     spread, not a lone median.
 --
@@ -17,7 +17,7 @@
 --       INDEX     = full DX cohort decedents with death on/after the index date
 --       FIRST_MET = metastasis-subset decedents with death on/after the first MET
 --                   date. The metastasis subset is #cohort joined to #met_summary
---                   (the DX-cohort-gated subset, n = 629 at HUS; NOT the ungated
+--                   (the DX-cohort-gated subset; NOT the ungated
 --                   all-metastasis population).
 --     Only decedents whose period ends after death (days_past_death IS NOT NULL) are
 --     ranked, matching chunk 17's decedent_days_ranked (ranking the full decedent set

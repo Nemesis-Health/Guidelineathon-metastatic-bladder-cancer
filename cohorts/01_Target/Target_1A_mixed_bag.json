@@ -49,6 +49,170 @@
               "VOCABULARY_ID": "Cancer Modifier"
             },
             "includeDescendants": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Metastasis",
+              "CONCEPT_CODE": "OMOP5031489",
+              "CONCEPT_ID": 35226025,
+              "CONCEPT_NAME": "Metastasis to anterior wall of urinary bladder",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "Cancer Modifier"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Metastasis",
+              "CONCEPT_CODE": "OMOP5031492",
+              "CONCEPT_ID": 35226028,
+              "CONCEPT_NAME": "Metastasis to apex of urinary bladder",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "Cancer Modifier"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Metastasis",
+              "CONCEPT_CODE": "OMOP5031505",
+              "CONCEPT_ID": 35226041,
+              "CONCEPT_NAME": "Metastasis to bladder",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "Cancer Modifier"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Metastasis",
+              "CONCEPT_CODE": "OMOP5031689",
+              "CONCEPT_ID": 35225625,
+              "CONCEPT_NAME": "Metastasis to lateral wall of urinary bladder",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "Cancer Modifier"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Metastasis",
+              "CONCEPT_CODE": "OMOP5031816",
+              "CONCEPT_ID": 35226264,
+              "CONCEPT_NAME": "Metastasis to posterior wall of urinary bladder",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "Cancer Modifier"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Metastasis",
+              "CONCEPT_CODE": "OMOP5031971",
+              "CONCEPT_ID": 35226304,
+              "CONCEPT_NAME": "Metastasis to trigone of urinary bladder",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "Cancer Modifier"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Metastasis",
+              "CONCEPT_CODE": "OMOP5031986",
+              "CONCEPT_ID": 35225577,
+              "CONCEPT_NAME": "Metastasis to ureteric orifice of urinary bladder",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "Cancer Modifier"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Metastasis",
+              "CONCEPT_CODE": "OMOP5031988",
+              "CONCEPT_ID": 35225579,
+              "CONCEPT_NAME": "Metastasis to urinary bladder neck",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "Cancer Modifier"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "236005001",
+              "CONCEPT_ID": 192735,
+              "CONCEPT_NAME": "Malignant ascites",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            }
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Clinical Finding",
+              "CONCEPT_CODE": "OMOP5166075",
+              "CONCEPT_ID": 1340420,
+              "CONCEPT_NAME": "Exacerbation of pain from metastases",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "OMOP Extension"
+            }
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Lab Test",
+              "CONCEPT_CODE": "92832-5",
+              "CONCEPT_ID": 37019862,
+              "CONCEPT_NAME": "Sentinel lymph nodes with metastasis [#] in Cancer specimen",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "LOINC"
+            }
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Nodes",
+              "CONCEPT_CODE": "OMOP5584862",
+              "CONCEPT_ID": 1346178,
+              "CONCEPT_NAME": "Paracaval lymph nodes",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "Cancer Modifier"
+            }
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Nodes",
+              "CONCEPT_CODE": "OMOP5584914",
+              "CONCEPT_ID": 1346230,
+              "CONCEPT_NAME": "Superior mesenteric lymph nodes",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "Cancer Modifier"
+            }
           }
         ]
       }
@@ -1162,6 +1326,12 @@
     "CriteriaList": [
       {
         "Measurement": {
+          "CodesetId": 0,
+          "First": true
+        }
+      },
+      {
+        "ConditionOccurrence": {
           "CodesetId": 0,
           "First": true
         }

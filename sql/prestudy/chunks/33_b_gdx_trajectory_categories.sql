@@ -27,8 +27,7 @@
 --     JUDGMENT CALL / FLAG (day-0 convention in the four categories). The four
 --     categories use the same before(days < 0) / at-or-after(days >= 0) split as the
 --     approved V3 mock and chunk 06's ever_before / ever_after convention, so the
---     category counts reconcile exactly to the validated HUS numbers (of 618
---     patients with a general code: before-only 74 / both 186 / after-only 358). A
+--     category counts reconcile exactly to the mock's validated numbers. A
 --     general code falling exactly on the first-Diagnosis date (day 0) is therefore
 --     counted on the at-or-after side. To honour the framework's day-0-explicit
 --     principle WITHOUT changing those validated totals, the extra column
@@ -71,7 +70,7 @@ WITH gdx_flags AS (
 ),
 classified AS (
     -- Every cohort patient placed in exactly one category. at_or_after folds the
-    -- day-0 mass onto the after side to reconcile with the validated HUS counts;
+    -- day-0 mass onto the after side to reconcile with the mock's validated counts;
     -- has_day0 is retained separately for the explicit day-0 column.
     SELECT
         c.person_id,

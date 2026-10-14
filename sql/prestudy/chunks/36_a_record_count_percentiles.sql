@@ -15,7 +15,7 @@
 --             cohort patient; every cohort patient has >= 1 DX record). Full cohort.
 --       MET = the metastasis subset: cohort patients carrying an anchor Metastasis
 --             (#met_summary, one row per cohort patient with a MET). This is the
---             DX-cohort-gated metastasis subset (n = 629 at HUS), NOT the ungated
+--             DX-cohort-gated metastasis subset, NOT the ungated
 --             all-metastasis population.
 --
 --     Percentile method: the framework's portable ordered-set percentile (ROW_NUMBER

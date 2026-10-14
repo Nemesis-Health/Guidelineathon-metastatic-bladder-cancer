@@ -189,6 +189,30 @@
               "STANDARD_CONCEPT": "S",
               "VOCABULARY_ID": "LOINC"
             }
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Nodes",
+              "CONCEPT_CODE": "OMOP5584862",
+              "CONCEPT_ID": 1346178,
+              "CONCEPT_NAME": "Paracaval lymph nodes",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "Cancer Modifier"
+            }
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Nodes",
+              "CONCEPT_CODE": "OMOP5584914",
+              "CONCEPT_ID": 1346230,
+              "CONCEPT_NAME": "Superior mesenteric lymph nodes",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "Cancer Modifier"
+            }
           }
         ]
       }

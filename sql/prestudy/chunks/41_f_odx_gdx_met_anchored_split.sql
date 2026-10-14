@@ -27,7 +27,7 @@
 --         n_ever_after   days > 0 (no upper follow-up bound)
 --
 --     Population (metastasis subset): #met_summary (cohort patients with a MET, the
---     DX-cohort-gated subset, n = 629 at HUS; NOT the ungated all-metastasis
+--     DX-cohort-gated subset; NOT the ungated all-metastasis
 --     population). GDX/ODX events come from #gen_cancer_events / #other_dx_events
 --     (restricted to anchor-cohort persons in 00_setup.sql) joined to #met_summary, so
 --     only subset patients' codes are counted and the anchor is their first MET.

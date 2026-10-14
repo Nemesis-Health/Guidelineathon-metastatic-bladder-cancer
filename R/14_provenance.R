@@ -13,8 +13,8 @@
 #                                        the set T1A's "no other cancer" rule
 #                                        excludes on
 #   The population is built in the SQL itself, not read from bc_cohort: each
-#   patient's first metastasis measurement ([GDE] metastasis (measurement),
-#   codeset 0), limited to patients with a bladder cancer code from 180 days
+#   patient's first metastasis record, measurement or condition ([GDE]
+#   metastasis (measurement), codeset 0), limited to patients with a bladder cancer code from 180 days
 #   before to 30 days after it. T1A's age and other-cancer rules are not
 #   applied, so it is broader than Target 1A.
 #
