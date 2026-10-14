@@ -75,8 +75,7 @@ denomFor <- function(stratumType, col = NULL) {
   }
 }
 denomTbl <- dplyr::bind_rows(
-  denomFor("overall"), denomFor("age_group", "age_group"),
-  denomFor("sex", "sex"), denomFor("age_sex", "age_sex"))
+  denomFor("overall"), lapply(strataColumnNames, function(col) denomFor(col, col)))
 
 cov <- querySqlFile(connection, "eligibility_input_coverage.sql",
   work_database_schema  = settings$workDatabaseSchema,

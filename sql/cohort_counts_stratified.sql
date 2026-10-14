@@ -28,6 +28,15 @@ tagged AS (
   UNION ALL
   SELECT 'age_sex' AS stratum_type, age_sex AS stratum_value, cohort_definition_id, subject_id
     FROM strata
+  UNION ALL
+  SELECT 'age_band' AS stratum_type, age_band AS stratum_value, cohort_definition_id, subject_id
+    FROM strata
+  UNION ALL
+  SELECT 'index_period' AS stratum_type, index_period AS stratum_value, cohort_definition_id, subject_id
+    FROM strata
+  UNION ALL
+  SELECT 'index_period_2021' AS stratum_type, index_period_2021 AS stratum_value, cohort_definition_id, subject_id
+    FROM strata
 )
 SELECT stratum_type,
        stratum_value,

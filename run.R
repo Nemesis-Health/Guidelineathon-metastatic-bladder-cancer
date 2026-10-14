@@ -76,7 +76,8 @@ settings <- list(
   validDrugsRegimenComponents = TRUE,   # keep only drugs that appear in a kept regimen
   validDrugsAtcClasses = c("L01", "L02", "L03", "L04"),   # ATC classes kept in the alignment string
   assessmentAtcClasses = NULL,   # ATC classes kept in exposure assessment (step f); NULL mirrors the regimen filter above
-  strataColumns = c("age_group", "sex", "age_sex"),   # age/sex breakdowns reported on every stratified output
+  strataColumns = c("age_group", "sex", "age_sex",   # breakdowns reported on every stratified output
+                    "age_band", "index_period", "index_period_2021"),
   outputFolder        = file.path("results")
 )
 

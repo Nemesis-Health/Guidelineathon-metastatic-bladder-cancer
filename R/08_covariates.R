@@ -112,8 +112,7 @@ denomFor <- function(stratumType, col = NULL) {
   }
 }
 denomTbl <- dplyr::bind_rows(
-  denomFor("overall"), denomFor("age_group", "age_group"),
-  denomFor("sex", "sex"), denomFor("age_sex", "age_sex"))
+  denomFor("overall"), lapply(strataColumnNames, function(col) denomFor(col, col)))
 denomTbl <- denomTbl[denomTbl$stratum_type %in% activeStrataTypes(), ]
 
 # --- comorbidities: generate the present JSONs into a SEPARATE table ---------

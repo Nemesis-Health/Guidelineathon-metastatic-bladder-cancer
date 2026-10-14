@@ -139,7 +139,7 @@ strata AS (
 ),
 tagged AS (
   SELECT u.cohort_definition_id, u.subject_id, u.variable, u.measurement_value,
-         s.age_group, s.sex, s.age_sex
+         s.age_group, s.sex, s.age_sex, s.age_band, s.index_period, s.index_period_2021
     FROM unpivoted u
     JOIN strata s
       ON s.cohort_definition_id = u.cohort_definition_id
@@ -180,6 +180,33 @@ ranked AS (
            ORDER BY measurement_value)                                       AS rn,
          COUNT(*) OVER (
            PARTITION BY cohort_definition_id, variable, age_sex)       AS n
+    FROM tagged
+  UNION ALL
+  SELECT 'age_band' AS stratum_type, age_band AS stratum_value,
+         cohort_definition_id, variable, measurement_value,
+         ROW_NUMBER() OVER (
+           PARTITION BY cohort_definition_id, variable, age_band
+           ORDER BY measurement_value)                                       AS rn,
+         COUNT(*) OVER (
+           PARTITION BY cohort_definition_id, variable, age_band)       AS n
+    FROM tagged
+  UNION ALL
+  SELECT 'index_period' AS stratum_type, index_period AS stratum_value,
+         cohort_definition_id, variable, measurement_value,
+         ROW_NUMBER() OVER (
+           PARTITION BY cohort_definition_id, variable, index_period
+           ORDER BY measurement_value)                                       AS rn,
+         COUNT(*) OVER (
+           PARTITION BY cohort_definition_id, variable, index_period)       AS n
+    FROM tagged
+  UNION ALL
+  SELECT 'index_period_2021' AS stratum_type, index_period_2021 AS stratum_value,
+         cohort_definition_id, variable, measurement_value,
+         ROW_NUMBER() OVER (
+           PARTITION BY cohort_definition_id, variable, index_period_2021
+           ORDER BY measurement_value)                                       AS rn,
+         COUNT(*) OVER (
+           PARTITION BY cohort_definition_id, variable, index_period_2021)       AS n
     FROM tagged
 )
 SELECT stratum_type,

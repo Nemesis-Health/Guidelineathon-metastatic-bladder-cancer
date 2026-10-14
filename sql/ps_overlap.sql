@@ -51,6 +51,21 @@ tc_strat AS (
          tc.cohort_definition_id, tc.subject_id, tc.cohort_start_date
     FROM target_cohorts tc
     JOIN strata s ON s.cohort_definition_id = tc.cohort_definition_id AND s.subject_id = tc.subject_id
+  UNION ALL
+  SELECT 'age_band' AS stratum_type, s.age_band AS stratum_value,
+         tc.cohort_definition_id, tc.subject_id, tc.cohort_start_date
+    FROM target_cohorts tc
+    JOIN strata s ON s.cohort_definition_id = tc.cohort_definition_id AND s.subject_id = tc.subject_id
+  UNION ALL
+  SELECT 'index_period' AS stratum_type, s.index_period AS stratum_value,
+         tc.cohort_definition_id, tc.subject_id, tc.cohort_start_date
+    FROM target_cohorts tc
+    JOIN strata s ON s.cohort_definition_id = tc.cohort_definition_id AND s.subject_id = tc.subject_id
+  UNION ALL
+  SELECT 'index_period_2021' AS stratum_type, s.index_period_2021 AS stratum_value,
+         tc.cohort_definition_id, tc.subject_id, tc.cohort_start_date
+    FROM target_cohorts tc
+    JOIN strata s ON s.cohort_definition_id = tc.cohort_definition_id AND s.subject_id = tc.subject_id
 ),
 ps_codes AS (
   SELECT 'PS1' AS code, 24 AS test_id UNION ALL
