@@ -661,7 +661,7 @@ silently missing combination).
 | `stratum_value` | `overall`, or the stratum's value. |
 | `code` | Short code: PS strata (`PS1`, `PS2`, `PS2+`, `PS 0-2`, `PS 0-1`) or comorbidity — see `08_covariates.R`'s `comorbMap` (`T2DM`, `HTN`, `CVD`, `Stroke`, `VTE`, `LiverDx`, `RenalDx`, `Dementia`): the protocol's covariate list. The other `comorbMap` cohorts (Charlson-only components, Heme Disorders for the lab-coverage cross) are generated with `show = FALSE` and not reported here. |
 | `label` | Human-readable description. |
-| `n_cohort` | This cohort's denominator, restricted to this row's stratum. |
+| `n_cohort` | This cohort's denominator, restricted to this row's stratum (censored). |
 | `n_overlap` | Members (in this cohort × stratum) meeting the covariate (censored). % is not emitted — it is `n_overlap / n_cohort`. |
 
 ### `baseline_body_measurements.csv`
@@ -790,7 +790,7 @@ column overlaps.
 | `stratum_value` | `overall`, or the stratum's value. |
 | `test_id` | Eligibility test-id. |
 | `label` | Human label for the test-id. |
-| `n_cohort` | This cohort's denominator, restricted to this row's stratum. |
+| `n_cohort` | This cohort's denominator, restricted to this row's stratum (censored). |
 | `n_tested` | Members (in this cohort × stratum) who had the measurement at all (labs only; censored). |
 | `n_passed` | Members (in this cohort × stratum) who met the criterion / have the cohort (censored). |
 

@@ -196,6 +196,8 @@ out <- dplyr::left_join(out,
 
 small <- !is.na(out$n_overlap) & out$n_overlap > 0 & out$n_overlap < settings$minCellCount
 out$n_overlap <- ifelse(small, -settings$minCellCount, out$n_overlap)
+smallDenom <- !is.na(out$n_cohort) & out$n_cohort > 0 & out$n_cohort < settings$minCellCount
+out$n_cohort <- ifelse(smallDenom, -settings$minCellCount, out$n_cohort)
 
 out <- out[c("cohort_definition_id", "cohort_name", "stratum_type", "stratum_value",
              "code", "label", "n_cohort", "n_overlap")]
