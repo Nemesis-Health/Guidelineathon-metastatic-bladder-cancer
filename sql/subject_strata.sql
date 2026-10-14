@@ -1,5 +1,6 @@
 -- ===========================================================================
--- subject_strata.sql — per-subject strata (age group / sex / age x sex / index year)
+-- subject_strata.sql — per-subject strata (age group / sex / age x sex / age band /
+--                       index period / index year)
 -- ===========================================================================
 -- One row per (cohort_definition_id, subject_id) in @cohort_table, carrying
 -- the protocol stratification columns:
@@ -9,6 +10,13 @@
 --   age_sex     age_group and sex combined ('<=65|Male', '>65|Female', ...)
 --               -- a ready-made crossed grouping column, so a caller wanting
 --               the age x sex view doesn't need its own CASE/concat logic.
+--   age_band    <=65 / 66-80 / >80 (same age as age_group; the protocol's
+--               <=65/>65 split stays in age_group, this adds the >80 band)
+--   index_period       2015-2020 / 2021-2023 / 2024+ (year of index;
+--                      <2015 only for cohorts that can index earlier)
+--   index_period_2021  2015-2020 / 2021+ -- a separate column because 2021+
+--                      overlaps 2021-2023 and 2024+, and each column holds
+--                      one value per subject
 --   index_year  year of cohort_start_date
 --
 -- SINGLE SOURCE OF TRUTH for this bucketing logic -- every other consumer
@@ -43,6 +51,16 @@ SELECT c.cohort_definition_id                                  AS cohort_definit
          CASE p.gender_concept_id WHEN 8507 THEN 'Male'
                                   WHEN 8532 THEN 'Female'
                                   ELSE 'Other-Unknown' END)     AS age_sex,
+       CASE WHEN YEAR(c.cohort_start_date) - p.year_of_birth > 80 THEN '>80'
+            WHEN YEAR(c.cohort_start_date) - p.year_of_birth > 65 THEN '66-80'
+            ELSE '<=65' END                                     AS age_band,
+       CASE WHEN YEAR(c.cohort_start_date) >= 2024 THEN '2024+'
+            WHEN YEAR(c.cohort_start_date) >= 2021 THEN '2021-2023'
+            WHEN YEAR(c.cohort_start_date) >= 2015 THEN '2015-2020'
+            ELSE '<2015' END                                    AS index_period,
+       CASE WHEN YEAR(c.cohort_start_date) >= 2021 THEN '2021+'
+            WHEN YEAR(c.cohort_start_date) >= 2015 THEN '2015-2020'
+            ELSE '<2015' END                                    AS index_period_2021,
        YEAR(c.cohort_start_date)                                AS index_year
   FROM @work_database_schema.@cohort_table c
   JOIN @cdm_database_schema.person p

@@ -128,7 +128,7 @@ strata AS (
 ),
 tagged AS (
   SELECT ops.direction, ops.cohort_definition_id, ops.subject_id, ops.cat,
-         ops.day_diff, s.age_group, s.sex, s.age_sex
+         ops.day_diff, s.age_group, s.sex, s.age_sex, s.age_band, s.index_period, s.index_period_2021
     FROM one_per_subject ops
     JOIN strata s
       ON s.cohort_definition_id = ops.cohort_definition_id
@@ -169,6 +169,33 @@ ranked AS (
            ORDER BY day_diff)                                              AS rn,
          COUNT(*) OVER (
            PARTITION BY direction, cohort_definition_id, cat, age_sex)      AS n
+    FROM tagged
+  UNION ALL
+  SELECT 'age_band' AS stratum_type, age_band AS stratum_value,
+         direction, cohort_definition_id, cat, day_diff,
+         ROW_NUMBER() OVER (
+           PARTITION BY direction, cohort_definition_id, cat, age_band
+           ORDER BY day_diff)                                              AS rn,
+         COUNT(*) OVER (
+           PARTITION BY direction, cohort_definition_id, cat, age_band)      AS n
+    FROM tagged
+  UNION ALL
+  SELECT 'index_period' AS stratum_type, index_period AS stratum_value,
+         direction, cohort_definition_id, cat, day_diff,
+         ROW_NUMBER() OVER (
+           PARTITION BY direction, cohort_definition_id, cat, index_period
+           ORDER BY day_diff)                                              AS rn,
+         COUNT(*) OVER (
+           PARTITION BY direction, cohort_definition_id, cat, index_period)      AS n
+    FROM tagged
+  UNION ALL
+  SELECT 'index_period_2021' AS stratum_type, index_period_2021 AS stratum_value,
+         direction, cohort_definition_id, cat, day_diff,
+         ROW_NUMBER() OVER (
+           PARTITION BY direction, cohort_definition_id, cat, index_period_2021
+           ORDER BY day_diff)                                              AS rn,
+         COUNT(*) OVER (
+           PARTITION BY direction, cohort_definition_id, cat, index_period_2021)      AS n
     FROM tagged
 ),
 lab_stats AS (

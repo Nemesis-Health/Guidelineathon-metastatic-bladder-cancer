@@ -34,7 +34,7 @@ strata AS (
 ),
 tagged AS (
   SELECT coh.cohort_definition_id, coh.subject_id, coh.age_at_index,
-         s.age_group, s.sex, s.age_sex
+         s.age_group, s.sex, s.age_sex, s.age_band, s.index_period, s.index_period_2021
     FROM coh
     JOIN strata s
       ON s.cohort_definition_id = coh.cohort_definition_id
@@ -63,6 +63,24 @@ ranked AS (
          cohort_definition_id, age_at_index,
          ROW_NUMBER() OVER (PARTITION BY cohort_definition_id, age_sex ORDER BY age_at_index) AS rn,
          COUNT(*)     OVER (PARTITION BY cohort_definition_id, age_sex)                       AS n
+    FROM tagged
+  UNION ALL
+  SELECT 'age_band' AS stratum_type, age_band AS stratum_value,
+         cohort_definition_id, age_at_index,
+         ROW_NUMBER() OVER (PARTITION BY cohort_definition_id, age_band ORDER BY age_at_index) AS rn,
+         COUNT(*)     OVER (PARTITION BY cohort_definition_id, age_band)                       AS n
+    FROM tagged
+  UNION ALL
+  SELECT 'index_period' AS stratum_type, index_period AS stratum_value,
+         cohort_definition_id, age_at_index,
+         ROW_NUMBER() OVER (PARTITION BY cohort_definition_id, index_period ORDER BY age_at_index) AS rn,
+         COUNT(*)     OVER (PARTITION BY cohort_definition_id, index_period)                       AS n
+    FROM tagged
+  UNION ALL
+  SELECT 'index_period_2021' AS stratum_type, index_period_2021 AS stratum_value,
+         cohort_definition_id, age_at_index,
+         ROW_NUMBER() OVER (PARTITION BY cohort_definition_id, index_period_2021 ORDER BY age_at_index) AS rn,
+         COUNT(*)     OVER (PARTITION BY cohort_definition_id, index_period_2021)                       AS n
     FROM tagged
 )
 SELECT stratum_type,

@@ -31,7 +31,8 @@ extractSurvivalMilestones <- function(kmData,
   # survfit/broom sometimes omit `strata` (unstratified fit, or a single
   # stratum level in a per-cohort run). Repair rather than fail.
   if (!"strata" %in% names(kmData)) {
-    present <- intersect(names(kmData), c("age_group", "sex", "index_year"))
+    present <- intersect(names(kmData), c("age_group", "sex", "age_sex", "age_band",
+                                          "index_period", "index_period_2021", "index_year"))
     if (length(present) == 1L) {
       kmData$strata <- as.character(kmData[[present[1]]])
     } else if (length(present) > 1L) {

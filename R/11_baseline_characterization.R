@@ -205,9 +205,7 @@ if (is.null(covSet) || nrow(covSet) == 0L) {
     # separate subject_strata.sql fetch/join needed here.
     cci <- computeCharlsonScore(components)
     cci$cohort_definition_id <- components$cohort_definition_id
-    cci$age_group <- components$age_group
-    cci$sex       <- components$sex
-    cci$age_sex   <- components$age_sex
+    cci[strataColumnNames] <- components[strataColumnNames]
 
     cciStrataViews <- activeStrataSpecs()
     cciOut <- dplyr::bind_rows(lapply(names(cciStrataViews), function(st) {

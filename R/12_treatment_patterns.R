@@ -116,7 +116,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     # SQL-side VARCHAR cast.
     strataTbl$subject_id           <- format(strataTbl$subject_id, scientific = FALSE, trim = TRUE)
     t1Strata <- strataTbl[strataTbl$cohort_definition_id == t1Id,
-                          c("subject_id", "age_group", "sex", "age_sex")]
+                          c("subject_id", strataColumnNames)]
 
     t1Members  <- dplyr::left_join(t1Members, t1Strata, by = "subject_id")
     tpT1Strata <- dplyr::left_join(treatedPatients,

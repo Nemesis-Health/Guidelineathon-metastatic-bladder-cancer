@@ -42,7 +42,7 @@ WITH strata AS (
 -- fragment rely on it staying numeric.)
 SELECT tc.cohort_definition_id,
        CAST(tc.subject_id AS VARCHAR) AS subject_id,
-       s.age_group, s.sex, s.age_sex,
+       s.age_group, s.sex, s.age_sex, s.age_band, s.index_period, s.index_period_2021,
        @component_flags_sql
   FROM @work_database_schema.@cohort_table tc
   LEFT JOIN @work_database_schema.@covariate_cohort_table cov
@@ -51,5 +51,5 @@ SELECT tc.cohort_definition_id,
   LEFT JOIN strata s
     ON s.cohort_definition_id = tc.cohort_definition_id AND s.subject_id = tc.subject_id
  WHERE tc.cohort_definition_id IN (@cohort_definition_ids)
- GROUP BY tc.cohort_definition_id, tc.subject_id, s.age_group, s.sex, s.age_sex
+ GROUP BY tc.cohort_definition_id, tc.subject_id, s.age_group, s.sex, s.age_sex, s.age_band, s.index_period, s.index_period_2021
 ;

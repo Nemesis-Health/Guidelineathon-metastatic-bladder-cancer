@@ -186,7 +186,7 @@ renderSqlFile <- function(file, ...) {
   SqlRender::render(sql, ..., warnOnMissingParameters = FALSE)
 }
 
-# --- which subject_strata.sql (age/sex) breakdowns are active ---------------
+# --- which subject_strata.sql breakdowns are active --------------------------
 # Single control point for settings$strataColumns (run.R CONFIG), so every
 # stratified output reads the same setting instead of hardcoding its own
 # on/off list. Two shapes, for the two ways stratified outputs consume
@@ -205,12 +205,17 @@ renderSqlFile <- function(file, ...) {
 #     R/12_treatment_patterns.R) iterate this instead of their own literal
 #     list -- disabled strata are never computed there at all, not just
 #     hidden after the fact.
+#   strataColumnNames -- every per-subject strata column subject_strata.sql
+#     emits that can be reported (index_year is separate: outcomes add it
+#     themselves). Each stratum_type is named after its column.
+strataColumnNames <- c("age_group", "sex", "age_sex", "age_band",
+                       "index_period", "index_period_2021")
+
 activeStrataTypes <- function()
-  c("overall", intersect(c("age_group", "sex", "age_sex"), settings$strataColumns))
+  c("overall", intersect(strataColumnNames, settings$strataColumns))
 
 activeStrataSpecs <- function() {
-  specs <- list(overall = NULL, age_group = "age_group",
-                sex = "sex", age_sex = "age_sex")
+  specs <- c(list(overall = NULL), stats::setNames(as.list(strataColumnNames), strataColumnNames))
   specs[activeStrataTypes()]
 }
 
