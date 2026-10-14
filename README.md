@@ -354,7 +354,7 @@ At the end of a run, results are packaged into two archives:
 |---|---|
 | `01_artemis.R` | (a) generate the ARTEMIS scan cohort, run regimen alignment, write episodes, load `regimen_reference.csv`. |
 | `02_eligibility_inputs.R` | (b) run `lab_cohorts.sql`; generate ECOG + condition cohorts; insert them into `bc_lab_cohort` under test-id slots. |
-| `03_main_cohorts.R` | (c) build the full manifest (Target 1A, covariates, ARTEMIS + SQL templates: initiated base, 4/5/6, 2a–2e, 3a–3e) and generate it. |
+| `03_main_cohorts.R` | (c) build the full manifest (Target 1A, covariates, ARTEMIS + SQL templates: initiated base, 4/5/6, 2a–2e, the attrition cohorts T1-PT/T1-NPT/T1-CE, 3a–3e) and generate it; checks the attrition cohorts nest with 2a–2d. |
 | `04_lab_ranges.R` | (d) lab-value distribution + per-unit QC summary on the main cohorts. |
 | `05_eligibility_coverage.R` | eligibility-table counts and each input crossed with Target 1A (tested / passed). |
 | `06_artemis_assessment.R` | ARTEMIS assessment: alignment stats, patient/exposure coverage, per-drug and per-regimen frequencies, uncaptured exposures — all from the in-memory `artemisResult`. |
@@ -384,6 +384,7 @@ At the end of a run, results are packaged into two archives:
 | `lab_cohorts.sql` | Scores OMOP measurements → `bc_raw_lab_results` (all normalised rows) + `bc_lab_cohort` (pass rows, `cohort_definition_id = test_id`, 1–23/44–48). |
 | `insert_eligibility_cohorts.sql` | Copies a generated cohort's members into `bc_lab_cohort` under a test-id slot (ECOG/conditions). |
 | `eligibility_2{a,b,c,d,e}.sql` | The eligibility leaves — read `bc_lab_cohort` uniformly (labs + ECOG + conditions). |
+| `eligibility_previously_treated.sql`, `eligibility_not_previously_treated.sql`, `eligibility_combination.sql` | The attrition cohorts T1-PT / T1-NPT / T1-CE: Cohort 1 failing / passing the washout, and passing the washout plus the combination panel (2a's logic without the enfortumab criteria). |
 | `Target_1A_initiated_template.sql` | Treatment-initiation base cohort (earliest classifiable regimen). |
 | `lab_value_distribution_portable.sql` | Per cohort × lab (cat) × stratum summary of `std_value` (mean/SD/median/IQR), censored. Used by step (d); `lab_value_distribution.sql` is the PERCENTILE_CONT original, kept for comparison. |
 | `lab_timing_to_index_portable.sql` | Per Target 1A (+ PC allowed) × lab (cat) × direction (before/after/any) × stratum, distance in days from index to the closest measurement in a subject's entire history. Used by step (d). |
