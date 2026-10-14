@@ -20,8 +20,9 @@
 #     no date bound at all). Flags + strata are computed entirely in SQL via
 #     conditional aggregation, not pulled per-subject and joined/pivoted in R.
 #     15 of 19 canonical components are wired (R/charlsonScore.R for the
-#     full list), sourced from Fortin/Reps/Ryan 2022 (BMC Med Inform Decis
-#     Mak 22:225; 2023 correction 23:110) — the standard OHDSI-authored
+#     full list; docs/CHARLSON.md for each component's source), 10 of them
+#     sourced from Fortin/Reps/Ryan 2022 (BMC Med Inform Decis
+#     Mak 22:261; 2023 correction 23:109) — the standard OHDSI-authored
 #     SNOMED translation of the Quan 2005 Charlson coding algorithm — via
 #     comorbidity cohorts wired into R/08_covariates.R's `comorbMap`
 #     (Myocardial_Infarction.json -- the exception: OHDSI PhenotypeLibrary
@@ -108,8 +109,8 @@ if (nrow(bodyMeasurementsOut) == 0L) {
 # listed here — they stay as their own standalone rows in covariate_overlap.csv.
 # `metastatic_solid_tumor` and `any_malignancy` are deliberately absent from
 # this map (see the comment further below, where components is scored, for
-# why). `diabetes_with_complication`/`mild_liver_disease` supersede
-# `diabetes_without_complication`/`moderate_severe_liver_disease`
+# why). `diabetes_with_complication` supersedes `diabetes_without_complication`
+# and `moderate_severe_liver_disease` supersedes `mild_liver_disease`
 # automatically per computeCharlsonScore()'s hierarchy rules when a subject
 # has both.
 charlsonMap <- tibble::tribble(

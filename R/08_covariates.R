@@ -43,10 +43,10 @@ message("\n== covariate overlap with the main cohort tree (comorbidities + perfo
 
 # code -> covariate cohort name (filename with "_"->" ") -> human label
 #
-# The last 11 rows (MI onward) exist for Charlson CCI scoring
+# The last 10 rows (MI onward) exist for Charlson CCI scoring
 # (R/11_baseline_characterization.R, R/charlsonScore.R) — sourced from
-# Fortin/Reps/Ryan 2022 (BMC Med Inform Decis Mak 22:225, 2023 correction
-# 23:110), the standard OHDSI-authored SNOMED translation of the Quan 2005
+# Fortin/Reps/Ryan 2022 (BMC Med Inform Decis Mak 22:261, 2023 correction
+# 23:109), the standard OHDSI-authored SNOMED translation of the Quan 2005
 # Charlson coding algorithm. MI is the exception: Myocardial_Infarction.json is OHDSI
 # PhenotypeLibrary cohort 510 (acute MI only) -- see README "Known gaps".
 #

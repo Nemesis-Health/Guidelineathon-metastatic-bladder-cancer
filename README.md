@@ -415,7 +415,8 @@ At the end of a run, results are packaged into two archives:
 of them also feed Charlson CCI scoring (step (k)); `Liver_Disease` and
 `Renal_Disease` are also lab-coverage subgroups (step (m)). ·
 `03_Charlson/` Charlson components that are not reported as comorbidities
-(`show = FALSE`), sourced from Fortin/Reps/Ryan 2022/2023 (see Known gaps):
+(`show = FALSE`), sourced from Fortin/Reps/Ryan 2022/2023 (see Known gaps;
+per-component sources in `docs/CHARLSON.md`):
 `Myocardial_Infarction` (the exception: OHDSI PhenotypeLibrary cohort 510,
 acute MI only — see Known gaps), `Congestive_Heart_Failure`,
 `Peripheral_Vascular_Disease`, `Chronic_Pulmonary_Disease`,
@@ -1336,13 +1337,14 @@ callable interactively, not run automatically for every combination.
 - **Generalizability vs. trial populations (SMD) is not implemented** —
   `cohorts/extras/trial_reference.yaml` has no reference data yet.
 - **Charlson CCI covers 15 of 19 components** (Fortin/Reps/Ryan SNOMED
-  coding algorithm, *BMC Med Inform Decis Mak* 22:225 (2022), correction
-  23:110 (2023)). `leukemia`/`lymphoma` aren't separable under this coding
+  coding algorithm, *BMC Med Inform Decis Mak* 22:261 (2022), correction
+  23:109 (2023)). `leukemia`/`lymphoma` aren't separable under this coding
   scheme, so CCI is slightly understated for hematologic malignancies.
   `metastatic_solid_tumor`/`any_malignancy` are deliberately excluded (not
   a data gap): every subject in every cohort here has metastatic bladder
   cancer by cohort definition, so counting it would put everyone in the
-  `>=5` category regardless of anything else.
+  `>=5` category regardless of anything else. Per-component sources, and the
+  five components not taken from Fortin/Reps/Ryan, are in `docs/CHARLSON.md`.
 - **Charlson MI component counts acute MI only.** `Myocardial_Infarction.json`
   is OHDSI PhenotypeLibrary cohort 510 ("[P][R] Acute myocardial
   infarction": 312327 and descendants), not the Fortin/Reps/Ryan concept set
