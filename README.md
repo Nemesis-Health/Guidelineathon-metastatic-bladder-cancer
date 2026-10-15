@@ -82,7 +82,7 @@ less-obvious run settings lives here instead.
 
 ### Requirements
 
-**R 4.5.1** (the version the lockfile pins) and the sixteen direct R packages below (the set `run.R` itself checks for on startup). Everything else in `renv.lock` is a transitive dependency of these.
+**R 4.5.1** (the version the lockfile pins) and the seventeen direct R packages below (`requiredPackages` in `R/packages.R`, which every run script loads at startup). Everything else in `renv.lock` is a transitive dependency of these.
 
 | Package | Version | Source |
 |---|---|---|
@@ -97,6 +97,7 @@ less-obvious run settings lives here instead.
 | `cli` | 3.6.5 | CRAN |
 | `rlang` | 1.1.6 | CRAN |
 | `stringr` | 1.6.0 | CRAN |
+| `DBI` | 1.2.3 | CRAN |
 | `jsonlite` | 2.0.0 | CRAN |
 | `ggplot2` | 4.0.1 | CRAN |
 | `scales` | 1.4.0 | CRAN |
@@ -187,23 +188,24 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(
 > note (and the pin) can be dropped.
 
 > [!TIP]
-> **Optional, one-time setup: turn on `DatabaseConnector`'s built-in bulk-load switch for faster writes on some backends.**
+> **Optional: bulk load for faster writes on some backends.**
 > This pipeline writes a couple of reference tables while it runs. On some
 > database backends, `DatabaseConnector` can write them considerably faster
-> using its own built-in bulk-load mechanism instead of its default path.
-> Neither `insertTable()` call in this codebase passes a `bulkLoad` argument,
-> so its own default (`Sys.getenv("DATABASE_CONNECTOR_BULK_UPLOAD")`) applies
-> automatically — set it once, before `source("run.R")`:
-> ```r
-> Sys.setenv(DATABASE_CONNECTOR_BULK_UPLOAD = TRUE)
-> ```
-> This is always safe to set: `DatabaseConnector` applies it only to the
-> backends its bulk-load path actually supports, and it's a no-op everywhere
-> else — nothing here needs to know or check which backend you're using.
-> Depending on your backend, its bulk-load path may need one of two kinds of
-> prerequisite:
-> - **a local database client tool** installed on this machine, or
-> - **object-storage credentials**, set the same way:
+> using its own built-in bulk-load mechanism instead of its default path. It
+> is off by default; to turn it on, change the CONFIG block line in `run.R`,
+> `run_study_only.R` and `run_cohort_diagnostics.R` to
+> `Sys.setenv(DATABASE_CONNECTOR_BULK_UPLOAD = TRUE)`. `insertTable()` reads
+> this variable, so CohortGenerator's and CohortDiagnostics' own writes
+> follow it too.
+>
+> `DatabaseConnector` applies it only to the backends its bulk-load path
+> supports (Redshift, PostgreSQL, PDW, Hive, Spark) and ignores it everywhere
+> else. On a supported backend, though, it needs its prerequisite in place, or
+> the first table write fails. Depending on your backend, that is one of:
+> - **a local database client tool** installed on this machine — on
+>   PostgreSQL, `psql`, with its folder set before running as
+>   `Sys.setenv(POSTGRES_PATH = "/path/to/folder/containing/psql")`, or
+> - **object-storage credentials**, set before running:
 >   ```r
 >   Sys.setenv(
 >     AWS_ACCESS_KEY_ID     = "...",
@@ -214,16 +216,17 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(
 >     AWS_SSE_TYPE          = "AES256"
 >   )
 >   ```
-> Neither available to you? Simply don't set `DATABASE_CONNECTOR_BULK_UPLOAD`
-> — the pipeline runs correctly either way, just slower on those couple of
-> writes.
+> Neither available to you? Leave it `FALSE` — the pipeline runs
+> correctly either way, just slower on those couple of writes.
 >
 > **On Redshift this matters most:** without bulk load each of those writes
-> can take several minutes, so `run.R`/`run_study_only.R` warn at startup when
-> it isn't set. Redshift's bulk load stages data through S3, so it needs the
+> can take several minutes, so the run scripts warn at startup when it is off.
+> Redshift's bulk load stages data through S3, so it needs the
 > object-storage credentials above (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
-> `AWS_DEFAULT_REGION`, `AWS_BUCKET_NAME`); if the switch is on but any of those
-> is missing, the run stops at startup rather than partway through.
+> `AWS_DEFAULT_REGION`, `AWS_BUCKET_NAME`). On PostgreSQL the default writes
+> are already fast, so there is no warning when it is off. On either
+> backend, if it is `TRUE` but its prerequisite is missing, the run stops
+> at startup rather than partway through.
 
 ### Installing the dependencies
 
@@ -243,8 +246,8 @@ renv::restore()            # install every pinned package from renv.lock into it
 `renv::activate()` is what makes the restore project-local; skip it and
 `renv::restore()` installs into your normal library instead. Every entry in
 `renv.lock` is required to run the study (the recursive dependency closure of the
-sixteen packages — no dev/report extras); renv does not resolve unrecorded
-dependencies, which is why it lists ~110 packages rather than sixteen.
+seventeen packages — no dev/report extras); renv does not resolve unrecorded
+dependencies, which is why it lists ~110 packages rather than seventeen.
 
 **Option 2 — just make sure they're installed.** You don't strictly need renv or
 the exact pinned versions — the study only needs each package at **≥ the version
@@ -269,8 +272,8 @@ for (p in c("DatabaseConnector", "CirceR", "CohortGenerator", "SqlRender",
       tryCatch(as.character(packageVersion(p)), error = function(e) "MISSING")))
 ```
 
-`run.R` checks all sixteen are present and stops with a clear message if any
-is missing. (ARTEMIS is the exception to "newer is fine": use the commit
+Every run script loads all seventeen before doing anything else and stops,
+listing each one, if any is missing or fails to load. (ARTEMIS is the exception to "newer is fine": use the commit
 above, which is the tested one — see the ARTEMIS note.)
 
 Either way, install a database driver (above) and set up Python ≥ 3.12 for

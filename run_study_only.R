@@ -25,16 +25,12 @@
 # study results now — no need to re-run diagnostics.
 #
 # Usage: edit the CONFIG block below, then  source("run_study_only.R")
-# Requires: DatabaseConnector, SqlRender, CohortGenerator, CirceR, ARTEMIS,
-#           dplyr, tibble, readr, survival, broom  (installed; NOT OncoStudyModules).
+# Requires: the packages in R/packages.R (checked and loaded at start; NOT
+#           OncoStudyModules).
 # ===========================================================================
 
-for (p in c("DatabaseConnector", "SqlRender", "CohortGenerator", "CirceR",
-            "ARTEMIS", "dplyr", "tibble", "readr", "cli", "rlang", "stringr",
-            "jsonlite", "ggplot2", "scales", "survival", "broom")) {
-  if (!requireNamespace(p, quietly = TRUE))
-    stop("Required package not installed: ", p, call. = FALSE)
-}
+source("R/packages.R")
+loadRequiredPackages()
 
 suppressMessages(library(ARTEMIS))
 
@@ -43,8 +39,12 @@ suppressMessages(library(ARTEMIS))
 # ===========================================================================
 
 # --- Database connection ----------------------------------------------------
-# Same as run.R — see that file's CONFIG block for JDBC / DBI examples.
+# Same as run.R — see README.md's Requirements section for examples.
 connectionDetails <- NULL   # <-- REPLACE with your connection
+
+# --- Bulk load ----------------------------------------------------------------
+# Faster table writes on Redshift; needs extra setup -- see README.md "Optional: bulk load".
+Sys.setenv(DATABASE_CONNECTOR_BULK_UPLOAD = FALSE)
 
 # --- Site + OMOP CDM schemas ------------------------------------------------
 settings <- list(
@@ -96,8 +96,7 @@ source("R/charlsonScore.R")  # computeCharlsonScore(), charlsonComponents()
 source("R/setup.R")          # config checks + derived paths + executionSettings
 
 connection <- DatabaseConnector::connect(connectionDetails)
-.checkDbiPostgresBug(connection)
-.checkRedshiftBulkLoad(connection)
+checkConnection(connection)
 
 source("R/01_artemis.R")            # (a)
 source("R/02_eligibility_inputs.R") # (b)

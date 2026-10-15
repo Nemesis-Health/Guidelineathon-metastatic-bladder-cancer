@@ -3,27 +3,25 @@
 # ===========================================================================
 # Runs just the diagnostics stage (R/00_prestudy_queries.R) against the OMOP
 # CDM and stops there — it does NOT touch ARTEMIS, CohortGenerator, or CirceR,
-# and does not run any of the numbered study steps (01-13).
+# and does not run any of the numbered study steps (01-15).
 #
 # Use this if you're stuck on the ARTEMIS/Python setup (see README.md) but
 # want the pre-study diagnostics results now; run the full `run.R` later once
 # ARTEMIS is sorted.
 #
 # Usage: edit the CONFIG block below, then  source("run_diagnostics_only.R")
-# Requires: DatabaseConnector, SqlRender, dplyr, readr  (installed).
+# Requires: the packages in R/packages.R (checked and loaded at start).
 # ===========================================================================
 
-for (p in c("DatabaseConnector", "SqlRender", "dplyr", "readr")) {
-  if (!requireNamespace(p, quietly = TRUE))
-    stop("Required package not installed: ", p, call. = FALSE)
-}
+source("R/packages.R")
+loadRequiredPackages()
 
 # ===========================================================================
 # CONFIG  [EDIT HERE]
 # ===========================================================================
 
 # --- Database connection ----------------------------------------------------
-# Same as run.R — see that file's CONFIG block for JDBC / DBI examples.
+# Same as run.R — see README.md's Requirements section for examples.
 connectionDetails <- NULL   # <-- REPLACE with your connection
 
 # --- Site + OMOP CDM schema --------------------------------------------------
@@ -55,7 +53,7 @@ source("R/00_prestudy_queries.R")   # runPreStudyDiagnostics()
 source("R/helpers.R")
 
 connection <- DatabaseConnector::connect(connectionDetails)
-.checkDbiPostgresBug(connection)
+checkConnection(connection, writesTables = FALSE)
 
 message("\n=== Diagnostics: pre-study characterization queries ===")
 runPreStudyDiagnostics(connection, settings)

@@ -25,16 +25,12 @@
 #   (o) condition + drug roll-ups            -> R/15_rollups.R
 #
 # Usage: edit the CONFIG block below, then  source("run.R")
-# Requires: DatabaseConnector, SqlRender, CohortGenerator, CirceR, ARTEMIS,
-#           dplyr, tibble, readr, survival, broom  (installed; NOT OncoStudyModules).
+# Requires: the packages in R/packages.R (checked and loaded at start; NOT
+#           OncoStudyModules).
 # ===========================================================================
 
-for (p in c("DatabaseConnector", "SqlRender", "CohortGenerator", "CirceR",
-            "ARTEMIS", "dplyr", "tibble", "readr", "cli", "rlang", "stringr",
-            "jsonlite", "ggplot2", "scales", "survival", "broom")) {
-  if (!requireNamespace(p, quietly = TRUE))
-    stop("Required package not installed: ", p, call. = FALSE)
-}
+source("R/packages.R")
+loadRequiredPackages()
 
 # ARTEMIS must be ATTACHED (not just loaded via `::`): loadRegimens() does
 # data("regimens", package = "ARTEMIS", envir = regimens_env) internally, but
@@ -49,6 +45,10 @@ suppressMessages(library(ARTEMIS))
 # --- Database connection ----------------------------------------------------
 # Define however your site connects -- see README.md's Requirements section for examples.
 connectionDetails <- NULL   # <-- REPLACE with your connection
+
+# --- Bulk load ----------------------------------------------------------------
+# Faster table writes on Redshift; needs extra setup -- see README.md "Optional: bulk load".
+Sys.setenv(DATABASE_CONNECTOR_BULK_UPLOAD = FALSE)
 
 # --- Site + OMOP CDM schemas ------------------------------------------------
 settings <- list(
@@ -101,8 +101,7 @@ source("R/charlsonScore.R")  # computeCharlsonScore(), charlsonComponents()
 source("R/setup.R")          # config checks + derived paths + executionSettings
 
 connection <- DatabaseConnector::connect(connectionDetails)
-.checkDbiPostgresBug(connection)
-.checkRedshiftBulkLoad(connection)
+checkConnection(connection)
 
 message("\n=== Diagnostics: pre-study characterization queries ===")
 runPreStudyDiagnostics(connection, settings)      # (0)
