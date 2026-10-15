@@ -66,6 +66,7 @@ settings <- list(
   minCellCount        = 5L,
   labWindowBeforeDays = 30L,   # near-index eligibility inputs (labs, ECOG/PS): days before index
   labWindowAfterDays  = 30L,   # same, days after index
+  labValueSelection   = "closest",   # eligibility labs/ECOG: "closest" result to index decides; "any" passing result in the window
   conditionFlagWindowBeforeDays = 30L,    # condition flags (liver mets, neuropathy, ...): days before index a live record may end
   conditionFlagWindowAfterDays  = 30L,    # same, days after index
   bodyMeasurementsWindowDays = 90L,   # baseline weight/height/BMI: days before/after index

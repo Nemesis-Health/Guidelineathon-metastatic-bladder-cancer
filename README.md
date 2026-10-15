@@ -70,6 +70,7 @@ less-obvious run settings lives here instead.
 | Setting | Default | What it does |
 |---|---|---|
 | `labWindowBeforeDays`, `labWindowAfterDays` | `30`, `30` | Days before/after index a record may fall for near-index eligibility inputs: labs, ECOG/PS in Target 2a-2d, the covariate PS overlap (step (h)), eligibility-input coverage (step (e)), lab value distributions (step (d)). |
+| `labValueSelection` | `"closest"` | How labs and ECOG decide eligibility in Target 2a-2d and T1-CE. `"closest"`: per lab, the one result closest to index within the lab window decides every test of that lab (ties: before index wins; on the same day the worst value counts). `"any"`: a test passes if any passing result falls in the window. See docs/ELIGIBILITY_LOGIC.md. |
 | `conditionFlagWindowBeforeDays`, `conditionFlagWindowAfterDays` | `30`, `30` | Window for the CONDITION flags in Target 2a-2d and eligibility-input coverage (step (e)): liver metastasis, Gilbert's syndrome, neuropathy, skin disorders, hearing loss. A flag counts when its cohort era overlaps the window, and these cohorts stay live to the end of observation, so any earlier record counts; how long a condition lasts is set by its cohort's end strategy, not here. |
 | `maintenanceMerge`, `maintenanceMaxGapDays` | `TRUE`, `180` | Fold maintenance therapy into the line of therapy it maintains before lines are numbered (outcomes and treatment patterns), e.g. avelumab after platinum-based chemotherapy is part of line 1, not line 2. A maintenance episode must start within `maintenanceMaxGapDays` of the earlier regimen's end. The rules are `maintenanceRules` in `R/eventBuilders.R`; see `docs/MAINTENANCE_LINES.md`. `FALSE` numbers every ARTEMIS episode as its own line. |
 | `bodyMeasurementsWindowDays` | `90` | Index window for baseline weight/height/BMI (step (k)) — wider than the lab window, matching onco-study-modules' own convention for body measurements. |
@@ -847,7 +848,8 @@ column overlaps.
 Row per **cohort × lab (cat) × stratum** — the distribution of the
 normalised lab value (`std_value`) among each main cohort's subjects, using
 the one measurement closest to index within the index window
-(`labWindowBeforeDays` before / `labWindowAfterDays` after). One row per lab
+(`labWindowBeforeDays` before / `labWindowAfterDays` after; at equal distance
+the one before index). One row per lab
 per stratum: `std_value` does not depend on the eligibility threshold, so
 the raw table's per-criterion (`test_id`) fan-out is collapsed to distinct
 measurements first. Every (cohort, cat) combination is reported once
@@ -1412,30 +1414,19 @@ callable interactively, not run automatically for every combination.
   entering on a later record. The L01-initiated cohorts apply the date to
   that same metastasis record, while their 30-day prior-observation
   requirement is measured from treatment start.
-- **Lab/ECOG "pass" flags reflect any qualifying record within the window,
-  not the single closest one.** `bc_lab_cohort` (`lab_cohorts.sql`) stores
-  one row per qualifying measurement across a subject's whole history, and
-  every window-scoped consumer — `eligibility_2{a,b,c,d,e}.sql`'s flags,
-  `eligibility_input_coverage.sql`'s `n_passed`, `ps_overlap.sql`'s PS-strata
-  counts — treats "any row in window" as a pass. A subject with two draws in
-  the same window can satisfy mutually exclusive bands at once (e.g. GFR >60
-  from one draw and GFR <30 from another; ECOG 0 from one visit and ECOG 2
-  from another). For eligibility this may be an intentional permissive
-  convention (one passing draw during screening is enough); for
-  characterization/overlap reporting it can inflate apparent membership in
-  more than one bucket at once. The inflation is substantial and scales with
-  how often a subject is drawn: mutually exclusive bands sum to 102% of
-  `n_tested` where subjects average one lab record, and up to 147% where they
-  average five to thirty. It is largest where the threshold sits inside the
-  bulk of the near-index distribution (Hb 9 g/dL, GFR 60 mL/min) and smallest
-  where the threshold is out in the tail (ANC 1.5, platelets 100, TBil
-  1.5× ULN). Neither side is changed yet: picking the single
-  closest-to-index record per (cohort, subject, lab/ECOG) before classifying
-  resolves the reporting side — `lab_value_distribution.sql`'s `lab_near_index`
-  CTE already selects that record — but changing the eligibility side is a
-  protocol-semantics decision, not a reporting fix, and needs sign-off
-  before it's made. Note that ever-in-window remains the correct semantics
-  for reading these flags as toxicity/safety rather than eligibility.
+- **Eligibility uses the lab/ECOG value closest to index; the coverage and
+  overlap outputs still count any record in the window.** With the default
+  `labValueSelection = "closest"`, Target 2a-2d and T1-CE score each lab
+  (and ECOG) on the single result closest to index, so their bands are
+  mutually exclusive per patient (see docs/ELIGIBILITY_LOGIC.md).
+  `eligibility_input_coverage.sql`'s `n_passed` and `ps_overlap.sql`'s
+  PS-strata counts still treat any row in the window as a pass, so a subject
+  with two draws can fall in mutually exclusive bands at once (e.g. GFR >60
+  and GFR <30; ECOG 0 and ECOG 2). The excess scales with how often a
+  subject is drawn: bands sum to 102% of `n_tested` where subjects average
+  one lab record, and up to 147% where they average five to thirty.
+  Ever-in-window remains the right reading for toxicity/safety.
+  The closest-value rule still needs PI sign-off.
 - **Lab unit resolution accepts a recorded unit that is within 5× of the
   best-scoring scale.** `lab_cohorts.sql` step 3 takes the recorded unit
   whenever it scores under 0.7 decades, without comparing it to the best

@@ -54,7 +54,7 @@ lab_near_index AS (
          ROW_NUMBER() OVER (
            PARTITION BY tc.cohort_definition_id, tc.subject_id, lab.cat
            ORDER BY ABS(DATEDIFF(day, lab.measurement_date, tc.cohort_start_date)),
-                    lab.measurement_date DESC,
+                    lab.measurement_date,       -- equal distance: before index wins
                     lab.std_value DESC          -- deterministic same-day tie-break
          ) AS rn
     FROM target_cohorts tc

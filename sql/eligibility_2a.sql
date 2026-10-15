@@ -7,10 +7,12 @@
 -- SqlRender parameters:
 --   @target_database_schema, @target_cohort_table, @target_cohort_id
 --   @lab_cohort_table   — eligibility measurement table (lab_cohorts.sql output)
+--   eligibility_lab_rows_sql — eligibility_lab_rows.sql, rendered: the rows
+--                         read below (closest lab value or any, per setting)
 --   @regimen_episode_table
 --   @cohort1_id
 --
--- Eligibility rows: cohort_definition_id = test_id in @lab_cohort_table.
+-- Eligibility rows: cohort_definition_id = test_id, from eligibility_lab_rows.sql.
 -- A row counts when its [cohort_start_date, cohort_end_date] interval overlaps
 -- the criterion's window, so how long a condition stays live is set by its
 -- cohort's end strategy (a lab row starts and ends on the measurement date, so
@@ -92,7 +94,7 @@ labs AS (
          lab.cohort_definition_id AS test_id, lab.cohort_start_date AS lab_date,
          lab.cohort_end_date AS lab_end_date
     FROM base b
-    LEFT JOIN @target_database_schema.@lab_cohort_table lab
+    LEFT JOIN (@eligibility_lab_rows_sql) lab
       ON lab.subject_id = b.subject_id
      -- every criterion below needs at most the wider of win_hi/win_hi_cond
      AND lab.cohort_start_date <= (CASE WHEN b.win_hi >= b.win_hi_cond THEN b.win_hi ELSE b.win_hi_cond END)
