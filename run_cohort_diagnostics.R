@@ -7,23 +7,24 @@
 # relationship.
 #
 # Usage: edit the CONFIG block below
-# Requires: DatabaseConnector, SqlRender, CohortGenerator, CirceR,
-#           CohortDiagnostics, dplyr, tibble, readr  (installed).
+# Requires: the packages in R/packages.R plus CohortDiagnostics (checked and
+#           loaded at start).
 # ===========================================================================
 
-for (p in c("DatabaseConnector", "SqlRender", "CohortGenerator", "CirceR",
-            "CohortDiagnostics", "dplyr", "tibble", "readr")) {
-  if (!requireNamespace(p, quietly = TRUE))
-    stop("Required package not installed: ", p, call. = FALSE)
-}
+source("R/packages.R")
+loadRequiredPackages(c(requiredPackages, "CohortDiagnostics"))
 
 # ===========================================================================
 # CONFIG  [EDIT HERE]
 # ===========================================================================
 
 # --- Database connection ----------------------------------------------------
-# Same as run.R — see that file's CONFIG block for JDBC / DBI examples.
+# Same as run.R — see README.md's Requirements section for examples.
 connectionDetails <- NULL   # <-- REPLACE with your connection
+
+# --- Bulk load ----------------------------------------------------------------
+# Faster table writes on Redshift; needs extra setup -- see README.md "Optional: bulk load".
+Sys.setenv(DATABASE_CONNECTOR_BULK_UPLOAD = FALSE)
 
 # --- Site + OMOP CDM schemas ------------------------------------------------
 settings <- list(
@@ -57,7 +58,7 @@ source("R/vendor_utils.R")   # .getDbms, %||%, upstream-bug patches
 source("R/helpers.R")        # readJsonCohorts(), buildCohortSet(), generateCohorts(), runCohortDiagnostics()
 
 connection <- DatabaseConnector::connect(connectionDetails)
-.checkDbiPostgresBug(connection)
+checkConnection(connection)
 
 message("\n=== Cohort diagnostics: generating 01_Target ===")
 

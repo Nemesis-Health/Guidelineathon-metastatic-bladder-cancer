@@ -54,10 +54,9 @@ if (!exists("%||%")) {
     warning(
       "Redshift without bulk load: DatabaseConnector::insertTable() will use ",
       "its slow CREATE TABLE AS fallback, which can take several minutes per ",
-      "table written. To enable bulk load, before running set ",
-      "Sys.setenv(DATABASE_CONNECTOR_BULK_UPLOAD = TRUE) plus the AWS_* ",
-      "S3 staging-bucket variables -- see \"turn on DatabaseConnector's ",
-      "built-in bulk-load switch\" in README.md.",
+      "table written. To enable bulk load, set DATABASE_CONNECTOR_BULK_UPLOAD = ",
+      "TRUE in the CONFIG block plus the AWS_* S3 staging-bucket variables -- see ",
+      "\"Optional: bulk load\" in README.md.",
       call. = FALSE, immediate. = TRUE)
     return(invisible(NULL))
   }
@@ -68,9 +67,44 @@ if (!exists("%||%")) {
     stop("DATABASE_CONNECTOR_BULK_UPLOAD = TRUE on Redshift, but ",
          paste(missing, collapse = ", "), " not set: DatabaseConnector's ",
          "bulk load stages data through S3 and needs all of ",
-         paste(required, collapse = ", "), ". Set them, or unset ",
-         "DATABASE_CONNECTOR_BULK_UPLOAD to use the slower default -- see ",
-         "README.md.", call. = FALSE)
+         paste(required, collapse = ", "), ". Set them, or set ",
+         "DATABASE_CONNECTOR_BULK_UPLOAD = FALSE to use the slower default -- ",
+         "see README.md.",
+         call. = FALSE)
+  invisible(NULL)
+}
+
+# On PostgreSQL, insertTable() bulk-loads through the psql client found in
+# POSTGRES_PATH when DATABASE_CONNECTOR_BULK_UPLOAD is "TRUE", and aborts at
+# the first insert if POSTGRES_PATH is unset. Without bulk load it uses
+# batched inserts, which are fast enough, so only the misconfigured case is
+# flagged.
+.checkPostgresBulkLoad <- function(connection) {
+  if (.getDbms(connection) != "postgresql") return(invisible(NULL))
+  if (!identical(Sys.getenv("DATABASE_CONNECTOR_BULK_UPLOAD"), "TRUE"))
+    return(invisible(NULL))
+  postgresPath <- Sys.getenv("POSTGRES_PATH")
+  if (!nzchar(postgresPath) ||
+      !any(file.exists(file.path(postgresPath, c("psql", "psql.exe")))))
+    stop("DATABASE_CONNECTOR_BULK_UPLOAD = TRUE on PostgreSQL, but ",
+         "POSTGRES_PATH does not point to a folder containing psql: ",
+         "DatabaseConnector's bulk load runs psql from there. Set ",
+         "POSTGRES_PATH to that folder (e.g. \"/usr/local/bin\"), or set ",
+         "DATABASE_CONNECTOR_BULK_UPLOAD = FALSE to use the default inserts -- ",
+         "see README.md.",
+         call. = FALSE)
+  invisible(NULL)
+}
+
+# Stop early on connection setups known to fail partway through a run, and
+# warn on ones that will be slow. `writesTables = FALSE` skips the bulk-load
+# checks for scripts that only read.
+checkConnection <- function(connection, writesTables = TRUE) {
+  .checkDbiPostgresBug(connection)
+  if (writesTables) {
+    .checkRedshiftBulkLoad(connection)
+    .checkPostgresBulkLoad(connection)
+  }
   invisible(NULL)
 }
 
