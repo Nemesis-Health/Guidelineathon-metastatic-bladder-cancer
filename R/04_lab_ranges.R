@@ -59,9 +59,8 @@ message("  lab_value_distribution: ", nrow(labDist), " rows")
 # tree -- the metastasis index is only meaningful for these two, since it's
 # their own qualifying event; the T4-6/L01-initiated cohorts index on
 # treatment start instead).
-mBcId       <- cohortIdByName(mainManifest, cohortNames[["T1"]])
-pcAllowedId <- cohortIdByName(mainManifest, paste0(cohortNames[["T1"]], " (PC allowed)"))
-metsCohortIds <- as.integer(stats::na.omit(c(mBcId, pcAllowedId)))
+metsCohortIds <- c(cohortIdByName(mainManifest, cohortNames[["T1"]]),
+                   cohortIdByName(mainManifest, cohortNames[["T1pc"]]))
 
 labTiming <- querySqlFile(connection, "lab_timing_to_index_portable.sql",
   target_database_schema = settings$workDatabaseSchema,

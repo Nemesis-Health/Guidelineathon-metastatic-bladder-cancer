@@ -179,7 +179,7 @@ if (!exists("artemisResult")) {
     v <- as.Date(df$index_date); names(v) <- df$person_id; v
   }
 
-  target1aId   <- cohortIdByName(mainManifest, "T1 Metastatic bladder cancer")
+  target1aId   <- cohortIdByName(mainManifest, cohortNames[["T1"]])
   t1a          <- queryCohortSubjects(target1aId)
   t1aSubjects  <- t1a$person_id
   t1aMetDate   <- indexDateMap(t1a)   # Target 1A indexes on first metastasis

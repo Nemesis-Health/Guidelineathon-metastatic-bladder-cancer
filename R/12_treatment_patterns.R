@@ -243,20 +243,14 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     }
 
     # --- treatment share by cohort x line x calendar year -------------------
-    idsByCodes <- function(codes)
-      as.integer(vapply(codes, function(cd) cohortIdByName(mainManifest, cohortNames[[cd]]),
-                        integer(1)))
     # "mBC initiated base" (the unsplit treatment-initiated population, before
     # any EAU/HemOnc/any-ingredient classification) is the most useful of
     # these for seeing the ACTUAL regimen mix shift over time — every T4/T5/T6
     # single-arm cohort is 100% one category by construction, so it can't show
     # a mix at all; T3a-e are further restricted to eligible-and-adherent.
-    # Resolved by literal name (03_main_cohorts.R's addCustom() call), not via
-    # cohortNames[[...]] — it isn't part of that lookup table.
-    baseCohortId <- cohortIdByName(mainManifest, "mBC initiated base")
-    treatedCohortIds <- as.integer(stats::na.omit(c(baseCohortId, idsByCodes(
-      c(paste0("T3", letters[1:5]),
-        paste0("T4", letters[1:6]), paste0("T5", letters[1:6]), paste0("T6", letters[1:6]))))))
+    treatedCohortIds <- idsByCodes(
+      c("Base", paste0("T3", letters[1:5]),
+        paste0("T4", letters[1:6]), paste0("T5", letters[1:6]), paste0("T6", letters[1:6])))
 
     treatedMembership <- querySqlFile(connection, "outcome_target_data.sql",
       work_database_schema = settings$workDatabaseSchema,

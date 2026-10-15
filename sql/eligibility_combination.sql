@@ -9,7 +9,7 @@
 --
 -- The washout, windows and panel are eligibility_2a.sql's, with the
 -- enfortumab criteria (HbA1c, neuropathy, skin) removed; keep the two in step.
--- See eligibility_2a.sql's header for the test-id reference and the notes on
+-- See eligibility_2a.sql's header for where test ids are declared and the notes on
 -- query shape.
 --
 -- SqlRender params: as eligibility_2a.sql.
@@ -50,27 +50,27 @@ labs AS (
 ),
 flags AS (
   SELECT subject_id, cohort_start_date, cohort_end_date,
-    MAX(CASE WHEN test_id IN (24, 25, 26)           AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_ecog_0_2,
-    MAX(CASE WHEN test_id = 14                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_gfr30,
-    MAX(CASE WHEN test_id = 4                       AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_anc,
-    MAX(CASE WHEN test_id = 19                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_plt,
-    MAX(CASE WHEN test_id = 15                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_hb,
-    MAX(CASE WHEN test_id = 8                       AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_cr,
-    MAX(CASE WHEN test_id = 7                       AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_crcl,
-    MAX(CASE WHEN test_id = 22                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_tbil_le15,
-    MAX(CASE WHEN test_id = 23                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_tbil_gt15,
-    MAX(CASE WHEN test_id = 9                       AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_dbil,
-    MAX(CASE WHEN test_id = 21                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_tbil_le3,
-    MAX(CASE WHEN test_id = 29                      AND lab_date <= win_hi_cond AND lab_end_date >= win_lo_cond THEN 1 ELSE 0 END) AS f_gilbert,
-    MAX(CASE WHEN test_id = 5                       AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_ast_le25,
-    MAX(CASE WHEN test_id = 6                       AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_ast_le5,
-    MAX(CASE WHEN test_id = 28                      AND lab_date <= win_hi_cond AND lab_end_date >= win_lo_cond THEN 1 ELSE 0 END) AS f_livermet,
-    MAX(CASE WHEN test_id = 2                       AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_alt_le25,
-    MAX(CASE WHEN test_id = 3                       AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_alt_le5,
-    MAX(CASE WHEN test_id = 18                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_inr,
-    MAX(CASE WHEN test_id = 31                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_anticoag,
-    MAX(CASE WHEN test_id = 20                      AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_pt,
-    MAX(CASE WHEN test_id = 1                       AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_aptt
+    MAX(CASE WHEN test_id IN (@t_ecog0, @t_ecog1, @t_ecog2) AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_ecog_0_2,
+    MAX(CASE WHEN test_id = @t_gfr_ge30                     AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_gfr30,
+    MAX(CASE WHEN test_id = @t_anc_ge1500                   AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_anc,
+    MAX(CASE WHEN test_id = @t_plt_ge100k                   AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_plt,
+    MAX(CASE WHEN test_id = @t_hb_ge9                       AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_hb,
+    MAX(CASE WHEN test_id = @t_cr_le1_5uln                  AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_cr,
+    MAX(CASE WHEN test_id = @t_crcl_ge30                    AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_crcl,
+    MAX(CASE WHEN test_id = @t_tbil_le1_5uln                AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_tbil_le15,
+    MAX(CASE WHEN test_id = @t_tbil_gt1_5uln                AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_tbil_gt15,
+    MAX(CASE WHEN test_id = @t_dbil_le_uln                  AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_dbil,
+    MAX(CASE WHEN test_id = @t_tbil_le3uln                  AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_tbil_le3,
+    MAX(CASE WHEN test_id = @t_gilbert                      AND lab_date <= win_hi_cond AND lab_end_date >= win_lo_cond THEN 1 ELSE 0 END) AS f_gilbert,
+    MAX(CASE WHEN test_id = @t_ast_le2_5uln                 AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_ast_le25,
+    MAX(CASE WHEN test_id = @t_ast_le5uln                   AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_ast_le5,
+    MAX(CASE WHEN test_id = @t_liver_met                    AND lab_date <= win_hi_cond AND lab_end_date >= win_lo_cond THEN 1 ELSE 0 END) AS f_livermet,
+    MAX(CASE WHEN test_id = @t_alt_le2_5uln                 AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_alt_le25,
+    MAX(CASE WHEN test_id = @t_alt_le5uln                   AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_alt_le5,
+    MAX(CASE WHEN test_id = @t_inr_le1_5uln                 AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_inr,
+    MAX(CASE WHEN test_id = @t_anticoagulant                AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_anticoag,
+    MAX(CASE WHEN test_id = @t_pt_le1_5uln                  AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_pt,
+    MAX(CASE WHEN test_id = @t_aptt_le1_5uln                AND lab_date <= win_hi AND lab_end_date >= win_lo THEN 1 ELSE 0 END) AS f_aptt
   FROM labs
   GROUP BY subject_id, cohort_start_date, cohort_end_date
 )

@@ -77,7 +77,7 @@ comorbMap <- tibble::tribble(
   "AIDS",         "AIDS HIV",                     "AIDS/HIV",                            FALSE,
   "LiverDxSevere","Liver Disease Severe",         "Liver disease (moderate/severe)",     FALSE
 )
-# performance-status strata (derived from the reserved ECOG slots 24-27)
+# performance-status strata (derived from the ECOG slots)
 psLabels <- c("PS1" = "Performance status = 0", "PS2" = "Performance status = 1",
               "PS2+" = "Performance status >= 2", "PS 0-2" = "Performance status 0-2",
               "PS 0-1" = "Performance status 0-1")
@@ -165,15 +165,15 @@ if (nrow(present)) {
                      n_overlap = dplyr::coalesce(as.integer(.data$n_overlap), 0L))
 }
 
-# --- performance status strata (from ECOG slots 24-27 in the lab table) ------
-ps <- querySqlFile(connection, "ps_overlap.sql",
+# --- performance status strata (from the ECOG slots in the lab table) --------
+ps <- do.call(querySqlFile, c(list(connection, "ps_overlap.sql",
   work_database_schema   = settings$workDatabaseSchema,
   cohort_table           = settings$cohortTable,
   lab_cohort_table       = settings$labCohortTable,
   cohort_definition_ids  = paste(targetIds, collapse = ", "),
   lab_window_before_days = settings$labWindowBeforeDays,
   lab_window_after_days  = settings$labWindowAfterDays,
-  subject_strata_sql     = strataFragment)
+  subject_strata_sql     = strataFragment), testIdParams()))
 names(ps) <- tolower(names(ps))
 ps <- ps[ps$stratum_type %in% activeStrataTypes(), ]
 ps$cohort_definition_id <- as.integer(ps$cohort_definition_id)

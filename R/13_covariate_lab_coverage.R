@@ -28,9 +28,6 @@ cohortNames  <- loadState("cohortNames", "R/03_main_cohorts.R")
 covSet       <- loadState("covSet", "R/08_covariates.R")
 
 targetCohortId <- cohortIdByName(mainManifest, cohortNames[["T1"]])
-if (is.na(targetCohortId))
-  stop("Target 1A (T1) cohort id not found in mainManifest -- has R/03_main_cohorts.R run?",
-       call. = FALSE)
 
 covariateIdFor <- function(name) {
   hit <- covSet$cohortId[covSet$cohortName == name]

@@ -20,10 +20,6 @@ message("\n== (j) guideline relevance + adherence ==")
 mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
 cohortNames  <- loadState("cohortNames", "R/03_main_cohorts.R")
 
-idsByCodes <- function(codes)
-  as.integer(vapply(codes, function(cd) cohortIdByName(mainManifest, cohortNames[[cd]]),
-                     integer(1)))
-
 leaves  <- c("a", "b", "c", "d", "e")
 # Leaf "e" (ineligible) pairs with each lens's "other" (f) catch-all, not
 # "e"/other_recommended — matches how 03_main_cohorts.R builds T3e from
@@ -42,7 +38,7 @@ t6Ids <- stats::setNames(idsByCodes(paste0("T6", armCode[leaves])), leaves)
 t456AllIds <- idsByCodes(c(paste0("T4", letters[1:6]), paste0("T5", letters[1:6]),
                            paste0("T6", letters[1:6])))
 
-relevantIds <- as.integer(stats::na.omit(c(t1Id, t2Ids, t3Ids, t456AllIds)))
+relevantIds <- as.integer(c(t1Id, t2Ids, t3Ids, t456AllIds))
 
 membership <- querySqlFile(connection, "outcome_target_data.sql",
   work_database_schema = settings$workDatabaseSchema,

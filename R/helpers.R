@@ -156,11 +156,61 @@ runCohortDiagnostics <- function(connection, ...) {
          "defines them (see run.R) before sourcing this step.", call. = FALSE)
 }
 
+# --- eligibility test ids ----------------------------------------------------
+# cohorts/extras/eligibility_test_ids.csv declares every test-id slot of the
+# unified eligibility table (@lab_cohort_table). SQL refers to a slot as
+# @t_<key> and to sets of slots by the list params of testIdParams().
+.testIdCache <- new.env()
+testIds <- function() {
+  if (is.null(.testIdCache$ids)) {
+    ids <- readr::read_csv(file.path(extrasDir, "eligibility_test_ids.csv"),
+                           col_types = "icccic", na = "")
+    stopifnot(!anyDuplicated(ids$test_id), !anyDuplicated(ids$key),
+              grepl("^[a-z0-9_]+$", ids$key),
+              ids$kind %in% c("lab", "ecog", "condition", "drug", "symptom"),
+              is.na(ids$source_cohort) == (ids$kind == "lab"),
+              !is.na(ids$ecog_grade) == (ids$kind == "ecog"))
+    # SqlRender fills @t_ab with t_a's value when only t_a is passed, so no
+    # key may be a prefix of another.
+    pre <- outer(ids$key, ids$key, function(a, b) a != b & startsWith(b, a))
+    if (any(pre))
+      stop("eligibility_test_ids.csv: key(s) ", paste(ids$key[rowSums(pre) > 0], collapse = ", "),
+           " are prefixes of other keys; rename them.", call. = FALSE)
+    .testIdCache$ids <- ids
+  }
+  .testIdCache$ids
+}
+
+# SqlRender params: t_<key> = id, plus id lists (comma strings) and the ECOG
+# id -> grade CASE branches.
+testIdParams <- function() {
+  ids  <- testIds()
+  of   <- function(kinds) paste(ids$test_id[ids$kind %in% kinds], collapse = ", ")
+  ecog <- ids[ids$kind == "ecog", ]
+  c(stats::setNames(as.list(ids$test_id), paste0("t_", ids$key)),
+    list(ecog_ids             = of("ecog"),
+         condition_window_ids = of("condition"),
+         passthrough_ids      = of(c("condition", "drug", "symptom")),
+         ecog_grade_cases     = paste("WHEN", ecog$test_id, "THEN", ecog$ecog_grade, collapse = " ")))
+}
+
+# Stop if rendered SQL still holds a test-id placeholder (param not passed).
+.checkTestIdsRendered <- function(sql, file) {
+  left <- regmatches(sql, gregexpr(
+    "@(t_[a-z0-9_]+|ecog_ids|condition_window_ids|passthrough_ids|ecog_grade_cases)\\b",
+    sql, perl = TRUE))[[1]]
+  if (length(left))
+    stop(file, ": unfilled test-id parameter(s) ", paste(unique(left), collapse = ", "),
+         " (pass testIdParams() when rendering).", call. = FALSE)
+  sql
+}
+
 # --- render + translate + execute a .sql file ------------------------------
 runSqlFile <- function(connection, file, ...) {
   .checkSqlRenderParams(file, list(...))
   sql <- paste(readLines(file.path(sqlDir, file), warn = FALSE), collapse = "\n")
   sql <- SqlRender::render(sql, ..., warnOnMissingParameters = FALSE)
+  .checkTestIdsRendered(sql, file)
   sql <- SqlRender::translate(sql, targetDialect = .getDbms(connection))
   DatabaseConnector::executeSql(connection, sql)
 }
@@ -170,6 +220,7 @@ querySqlFile <- function(connection, file, ...) {
   .checkSqlRenderParams(file, list(...))
   sql <- paste(readLines(file.path(sqlDir, file), warn = FALSE), collapse = "\n")
   sql <- SqlRender::render(sql, ..., warnOnMissingParameters = FALSE)
+  .checkTestIdsRendered(sql, file)
   sql <- SqlRender::translate(sql, targetDialect = .getDbms(connection))
   DatabaseConnector::querySql(connection, sql)
 }
@@ -183,7 +234,7 @@ querySqlFile <- function(connection, file, ...) {
 renderSqlFile <- function(file, ...) {
   .checkSqlRenderParams(file, list(...))
   sql <- paste(readLines(file.path(sqlDir, file), warn = FALSE), collapse = "\n")
-  SqlRender::render(sql, ..., warnOnMissingParameters = FALSE)
+  .checkTestIdsRendered(SqlRender::render(sql, ..., warnOnMissingParameters = FALSE), file)
 }
 
 # --- which subject_strata.sql breakdowns are active --------------------------
@@ -258,7 +309,15 @@ writeCategoryReadmes <- function() {
 }
 
 # --- id lookup for a generated cohort by manifest name ---------------------
+# Stops if the name isn't in the manifest (names come from cohortNames in
+# R/03_main_cohorts.R, so a miss is a typo or a stale manifest).
 cohortIdByName <- function(manifest, name) {
   hit <- manifest$cohortId[manifest$cohortName == name]
-  if (length(hit) == 0L) NA_integer_ else as.integer(hit[1])
+  if (length(hit) == 0L)
+    stop("Cohort not found in manifest: \"", name, "\"", call. = FALSE)
+  as.integer(hit[1])
 }
+
+# Ids for cohortNames codes, e.g. idsByCodes(c("T1", "T2a")); stops on any miss.
+idsByCodes <- function(codes, manifest = mainManifest, names = cohortNames)
+  as.integer(vapply(codes, function(cd) cohortIdByName(manifest, names[[cd]]), integer(1)))
