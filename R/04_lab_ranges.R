@@ -2,10 +2,10 @@
 # 04_lab_ranges.R  —  (d) lab test ranges on the main cohorts
 # ===========================================================================
 # lab_value_distribution_portable.sql : per cohort x lab (cat) x stratum
-#   (overall/age_group/sex/age_sex) summary of std_value, censored at
-#   minCellCount, over the Target-1A cohort tree from step (c). (One row
-#   per lab: the raw table's per-criterion/test_id fan-out is collapsed,
-#   since std_value does not depend on the threshold.)
+#   summary (mean/SD/median/IQR/min/max) of the closest result per subject --
+#   the one eligibility uses (labRowsSql()) -- censored at minCellCount, over
+#   the main cohort tree. lab_window: -30..30 around metastasis, -30..0
+#   before treatment start (defaults).
 # lab_results_summary_portable.sql    : per (cat, concept, unit) QC summary of
 #   the raw normalised table (unit-resolution sanity check).
 # lab_results_rollup_portable.sql     : per-category headline of the same table,
@@ -38,16 +38,16 @@ strataFragment <- renderSqlFile("subject_strata.sql",
   cohort_table         = settings$cohortTable,
   cdm_database_schema  = settings$cdmDatabaseSchema)
 
+# Always the closest result (whatever labValueSelection says): one value per
+# subject and lab, the one eligibility uses.
 labDist <- querySqlFile(connection, "lab_value_distribution_portable.sql",
-  target_database_schema = settings$workDatabaseSchema,
-  target_cohort_table    = settings$cohortTable,
-  raw_lab_results_table  = settings$rawLabResultsTable,
-  cohort_definition_ids  = paste(targetIds, collapse = ", "),
-  lab_window_before_days = settings$labWindowBeforeDays,
-  lab_window_after_days  = settings$labWindowAfterDays,
-  min_cell_count         = settings$minCellCount,
-  subject_strata_sql     = strataFragment)
+  min_cell_count     = settings$minCellCount,
+  lab_rows_sql       = labRowsSql(targetIds, passingOnly = FALSE,
+                                  treatedIds = treatedCohortIds(), closest = TRUE),
+  subject_strata_sql = strataFragment)
 names(labDist) <- tolower(names(labDist))
+labDist$lab_window <- labWindowLabel(as.integer(labDist$cohort_definition_id))
+labDist <- dplyr::relocate(labDist, lab_window, .after = cohort_definition_id)
 # settings$strataColumns (run.R CONFIG, via activeStrataTypes()) controls
 # which stratum views actually reach the CSV -- the SQL always computes all
 # four (cheap), a site that wants fewer/none just filters here.

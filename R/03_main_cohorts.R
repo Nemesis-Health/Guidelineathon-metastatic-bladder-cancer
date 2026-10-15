@@ -83,6 +83,21 @@ cohortNames <- c(
   T6e = "T6e Trt initiated other trt mBC",   # empty by construction (class_any has no "other_recommended")
   T6f = "T6f Trt initiated other mBC")       # class_any catch-all (ingredient-based "other")
 saveState("cohortNames", cohortNames)
+
+# The index event of every cohort above: its first metastasis, or treatment
+# start. Sets each cohort's lab window (labWindow* or treatedLabWindow*).
+cohortIndex <- c(
+  stats::setNames(rep("metastasis", 11), c("T1", "T1pc", "T1mb", "T1pt", "T1npt", "T1ce",
+                                           paste0("T2", letters[1:5]))),
+  stats::setNames(rep("treatment", 28), c("Base", "BaseL01", "BaseL01pc", "BaseL01proc",
+                                          "BaseL01procpc", paste0("T3", letters[1:5]),
+                                          paste0(rep(c("T4", "T5", "T6"), each = 6), letters[1:6]))))
+if (!setequal(names(cohortIndex), names(cohortNames)))
+  stop("cohortIndex must give the index event of every cohortNames code; check: ",
+       paste(setdiff(union(names(cohortIndex), names(cohortNames)),
+                     intersect(names(cohortIndex), names(cohortNames))), collapse = ", "),
+       call. = FALSE)
+saveState("cohortIndex", cohortIndex)
 lensCode <- c(eau = "4", hemonc_mbc = "5", any = "6")
 labCode  <- c(ev_pembro = "a", cisplatin = "b", carboplatin = "c",
               pdl1_mono = "d", other_recommended = "e", other = "f")
@@ -161,12 +176,7 @@ renderElig <- function(leaf, ...) {
 }
 # Generated in priority order (2a before 2b before 2c) so 2b/2c can anti-join the
 # real 2a/2b membership for their "NOT enfortumab" / "NOT cisplatin" exclusions.
-labRows <- do.call(renderSqlFile, c(list("eligibility_lab_rows.sql",
-  closest = settings$labValueSelection == "closest",
-  lab_cohort_table = settings$labCohortTable,
-  raw_lab_results_table = settings$rawLabResultsTable, cohort1_id = cohort1Id,
-  lab_window_before_days = settings$labWindowBeforeDays,
-  lab_window_after_days  = settings$labWindowAfterDays), testIdParams()))
+labRows <- labRowsSql(cohort1Id, passingOnly = TRUE)
 labReg <- c(list(lab_cohort_table = settings$labCohortTable, eligibility_lab_rows_sql = labRows,
                  regimen_episode_table = settings$episodeTable, cohort1_id = cohort1Id,
                  lab_window_before_days = settings$labWindowBeforeDays,

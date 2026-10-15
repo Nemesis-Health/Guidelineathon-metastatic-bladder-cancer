@@ -7,7 +7,10 @@
 #   eligibility_input_coverage.csv — each input crossed with every cohort in
 #                                   the main tree (same scope as
 #                                   lab_value_distribution.csv): n_cohort,
-#                                   n_tested (performed), n_passed.
+#                                   n_tested (performed), n_passed, from the
+#                                   same rows eligibility uses (labRowsSql()).
+#                                   lab_window: -30..30 around metastasis,
+#                                   -30..0 before treatment start (defaults).
 # Counts < minCellCount are censored to -minCellCount.
 # ===========================================================================
 
@@ -65,17 +68,14 @@ denomFor <- function(stratumType, col = NULL) {
 denomTbl <- dplyr::bind_rows(
   denomFor("overall"), lapply(strataColumnNames, function(col) denomFor(col, col)))
 
-cov <- do.call(querySqlFile, c(list(connection, "eligibility_input_coverage.sql",
+treatedIds <- treatedCohortIds()
+cov <- querySqlFile(connection, "eligibility_input_coverage.sql",
   work_database_schema  = settings$workDatabaseSchema,
   cohort_table          = settings$cohortTable,
-  lab_cohort_table      = settings$labCohortTable,
-  raw_lab_results_table = settings$rawLabResultsTable,
   cohort_definition_ids = paste(targetIds, collapse = ", "),
-  lab_window_before_days = settings$labWindowBeforeDays,
-  lab_window_after_days  = settings$labWindowAfterDays,
-  condition_flag_window_before_days = settings$conditionFlagWindowBeforeDays,
-  condition_flag_window_after_days  = settings$conditionFlagWindowAfterDays,
-  subject_strata_sql     = strataFragment), testIdParams()))
+  condition_window_ids  = testIdParams()$condition_window_ids,
+  lab_rows_sql          = labRowsSql(targetIds, passingOnly = FALSE, treatedIds = treatedIds),
+  subject_strata_sql    = strataFragment)
 names(cov) <- tolower(names(cov))
 # settings$strataColumns (run.R CONFIG, via activeStrataTypes()) controls
 # which stratum views actually reach the CSV -- the SQL always computes all
@@ -90,8 +90,9 @@ cov <- dplyr::left_join(cov,
 cov$n_cohort <- censor(cov$n_cohort)
 cov$n_tested <- censor(cov$n_tested)
 cov$n_passed <- censor(cov$n_passed)
+cov$lab_window <- labWindowLabel(cov$cohort_definition_id, treatedIds)
 cov <- cov[c("cohort_definition_id","cohort_name","stratum_type","stratum_value",
-             "test_id","label","n_cohort","n_tested","n_passed")]
+             "lab_window","test_id","label","n_cohort","n_tested","n_passed")]
 cov <- cov[order(cov$cohort_definition_id, cov$stratum_type, cov$stratum_value, cov$test_id), ]
 writeResultCsv(cov, "eligibility_input_coverage", "labs")
 message("  eligibility_input_coverage: ", nrow(cov), " rows across ",

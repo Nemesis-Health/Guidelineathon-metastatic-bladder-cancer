@@ -70,6 +70,7 @@ less-obvious run settings lives here instead.
 | Setting | Default | What it does |
 |---|---|---|
 | `labWindowBeforeDays`, `labWindowAfterDays` | `30`, `30` | Days before/after index a record may fall for near-index eligibility inputs: labs, ECOG/PS in Target 2a-2d, the covariate PS overlap (step (h)), eligibility-input coverage (step (e)), lab value distributions (step (d)). |
+| `treatedLabWindowBeforeDays`, `treatedLabWindowAfterDays` | `30`, `0` | The same window for cohorts indexed on treatment start (the initiated bases, T3-T6) in eligibility-input coverage and lab value distributions: 30 days before up to and including the start date, so results taken after treatment began don't count. Condition flags use it too for these cohorts. |
 | `labValueSelection` | `"closest"` | How labs and ECOG decide eligibility in Target 2a-2d and T1-CE. `"closest"`: per lab, the one result closest to index within the lab window decides every test of that lab (ties: before index wins; on the same day the worst value counts). `"any"`: a test passes if any passing result falls in the window. See docs/ELIGIBILITY_LOGIC.md. |
 | `conditionFlagWindowBeforeDays`, `conditionFlagWindowAfterDays` | `30`, `30` | Window for the CONDITION flags in Target 2a-2d and eligibility-input coverage (step (e)): liver metastasis, Gilbert's syndrome, neuropathy, skin disorders, hearing loss. A flag counts when its cohort era overlaps the window, and these cohorts stay live to the end of observation, so any earlier record counts; how long a condition lasts is set by its cohort's end strategy, not here. |
 | `maintenanceMerge`, `maintenanceMaxGapDays` | `TRUE`, `180` | Fold maintenance therapy into the line of therapy it maintains before lines are numbered (outcomes and treatment patterns), e.g. avelumab after platinum-based chemotherapy is part of line 1, not line 2. A maintenance episode must start within `maintenanceMaxGapDays` of the earlier regimen's end. The rules are `maintenanceRules` in `R/eventBuilders.R`; see `docs/MAINTENANCE_LINES.md`. `FALSE` numbers every ARTEMIS episode as its own line. |
@@ -394,12 +395,12 @@ At the end of a run, results are packaged into two archives:
 | `eligibility_2{a,b,c,d,e}.sql` | The eligibility leaves — read `bc_lab_cohort` uniformly (labs + ECOG + conditions). |
 | `eligibility_previously_treated.sql`, `eligibility_not_previously_treated.sql`, `eligibility_combination.sql` | The attrition cohorts T1-PT / T1-NPT / T1-CE: Cohort 1 failing / passing the washout, and passing the washout plus the combination panel (2a's logic without the enfortumab criteria). |
 | `Target_1A_initiated_template.sql` | Treatment-initiation base cohort (earliest classifiable regimen). |
-| `lab_value_distribution_portable.sql` | Per cohort × lab (cat) × stratum summary of `std_value` (mean/SD/median/IQR), censored. Used by step (d); `lab_value_distribution.sql` is the PERCENTILE_CONT original, kept for comparison. |
+| `lab_value_distribution_portable.sql` | Per cohort × lab (cat) × stratum summary of `std_value` (mean/SD/median/IQR/min/max), censored, on the result eligibility uses (`eligibility_lab_rows.sql`). Used by step (d); `lab_value_distribution.sql` is the PERCENTILE_CONT original, kept for comparison. |
 | `lab_timing_to_index_portable.sql` | Per Target 1A (+ PC allowed) × lab (cat) × direction (before/after/any) × stratum, distance in days from index to the closest measurement in a subject's entire history. Used by step (d). |
 | `lab_results_summary_portable.sql` | Per (cat, concept, unit) QC summary of `bc_raw_lab_results` (unit-resolution sanity check). Used by step (d); `lab_results_summary.sql` is the PERCENTILE_CONT original, kept for comparison. |
 | `lab_results_rollup_portable.sql` | Per-category headline of `bc_raw_lab_results`: one row per (cat, is_ambiguous) in the standard unit, with unit-resolution health as QC columns. Used by step (d); `lab_results_rollup.sql` is the PERCENTILE_CONT original, kept for comparison. |
 | `lab_cohort_counts.sql` | Whole-population counts of `bc_lab_cohort` per test-id. |
-| `eligibility_input_coverage.sql` | Each input × cohort × stratum (every cohort in the main tree): `n_tested` (measured) + `n_passed` (criterion met). |
+| `eligibility_input_coverage.sql` | Each input × cohort × stratum (every cohort in the main tree): `n_tested` (measured) + `n_passed` (criterion met), from the rows eligibility uses (`eligibility_lab_rows.sql`). |
 | `cohort_counts_stratified.sql` | Per cohort × stratum (see "Stratification") distinct-subject counts; the `overall` view comes from `CohortGenerator::getCohortCounts()` instead, reshaped in R. Used by step (c). |
 | `outcome_target_data.sql` | Cohort membership + index/end dates for a given cohort-id list. Used by steps 09/10/11/12 (generic — the `@target_cohort_ids` list is whatever the caller needs). |
 | `subject_strata.sql` | Per-subject age group / sex / age × sex / index year — single source of truth for this bucketing. See that file's own header for the full list of consumers. |
@@ -824,9 +825,17 @@ labs; 24–27 ECOG; 28–40 conditions (all declared in `cohorts/extras/eligibil
 Row per eligibility test-id **crossed with every cohort in the main tree**
 (same scope as `lab_value_distribution.csv` — not just Target 1A), once
 overall and once per `subject_strata.sql` stratum (see "Stratification") — how many members of that cohort had each input measured vs.
-passed it, within the index window (`labWindowBeforeDays` before /
-`labWindowAfterDays` after, default 30 / 30) of *that cohort's own* index
-date. ECOG/condition slots have no `n_tested` (blank — they are not lab
+passed it, within the window (`lab_window`) around *that cohort's own* index
+date: `labWindowBeforeDays` / `labWindowAfterDays` (default 30 / 30) for
+cohorts indexed on metastasis, `treatedLabWindowBeforeDays` /
+`treatedLabWindowAfterDays` (default 30 / 0) for those indexed on treatment
+start. Both counts read the rows eligibility uses (`eligibility_lab_rows.sql`),
+so under `labValueSelection = "closest"` a lab passes on the closest result,
+as in Target 2a-2d. Treatment-indexed cohorts are the ones `cohortIndex`
+(`R/03_main_cohorts.R`) marks `"treatment"`. That includes T3a-e: their rows
+show whether members still met each criterion before treatment start, so
+they can fail a criterion they passed at the metastasis index, which is what
+put them in T2 and so in T3. ECOG/condition slots have no `n_tested` (blank — they are not lab
 measurements). `n_cohort` is the denominator **for that cohort × stratum**
 (e.g. a `cohort_definition_id=T2a, age_group=">65"` row's `n_cohort` is >65
 T2a members only, not all of T2a or all of T1).
@@ -844,21 +853,19 @@ column overlaps.
 | `cohort_definition_id`, `cohort_name` | As elsewhere. |
 | `stratum_type` | `overall`, or a stratum (see "Stratification" above). |
 | `stratum_value` | `overall`, or the stratum's value. |
+| `lab_window` | Days around this cohort's index the inputs were read from, e.g. `-30..30` or `-30..0`. |
 | `test_id` | Eligibility test-id. |
 | `label` | Human label for the test-id. |
 | `n_cohort` | This cohort's denominator, restricted to this row's stratum (censored). |
-| `n_tested` | Members (in this cohort × stratum) who had the measurement at all (labs only; censored). |
+| `n_tested` | Members (in this cohort × stratum) with a scorable result in the window (labs only; censored). |
 | `n_passed` | Members (in this cohort × stratum) who met the criterion / have the cohort (censored). |
 
 ### `lab_value_distribution.csv`
 Row per **cohort × lab (cat) × stratum** — the distribution of the
 normalised lab value (`std_value`) among each main cohort's subjects, using
-the one measurement closest to index within the index window
-(`labWindowBeforeDays` before / `labWindowAfterDays` after; at equal distance
-the one before index). One row per lab
-per stratum: `std_value` does not depend on the eligibility threshold, so
-the raw table's per-criterion (`test_id`) fan-out is collapsed to distinct
-measurements first. Every (cohort, cat) combination is reported once
+the one result eligibility uses: the closest to index within the window
+(`lab_window`, as in `eligibility_input_coverage.csv`), with the same
+tie-breaks (`eligibility_lab_rows.sql`). One row per lab per stratum. Every (cohort, cat) combination is reported once
 overall and once per `subject_strata.sql` stratum (see "Stratification").
 
 | Column | Meaning |
@@ -866,10 +873,12 @@ overall and once per `subject_strata.sql` stratum (see "Stratification").
 | `stratum_type` | `overall`, or a stratum (see "Stratification" above). |
 | `stratum_value` | `overall`, or the stratum's value. |
 | `cohort_definition_id` | Cohort id (matches `cohort_counts.csv` `cohort_definition_id`). |
+| `lab_window` | Days around this cohort's index the value was read from, e.g. `-30..30` or `-30..0`. |
 | `cat` | Lab category / analyte code. |
 | `n_with_lab` | Subjects with a value near index (censored). |
 | `mean_value`, `sd_value` | Mean and standard deviation of `std_value` (blanked when censored). |
 | `median_value`, `lq_value`, `uq_value` | Median, lower (25th) and upper (75th) quartile (blanked when censored). |
+| `min_value`, `max_value` | Range (blanked when censored). |
 
 ### `lab_timing_to_index.csv`
 Row per **Target 1A / Target 1A PC allowed × lab (cat) × direction × stratum**

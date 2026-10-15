@@ -321,3 +321,35 @@ cohortIdByName <- function(manifest, name) {
 # Ids for cohortNames codes, e.g. idsByCodes(c("T1", "T2a")); stops on any miss.
 idsByCodes <- function(codes, manifest = mainManifest, names = cohortNames)
   as.integer(vapply(codes, function(cd) cohortIdByName(manifest, names[[cd]]), integer(1)))
+
+# Cohorts indexed on treatment start, per cohortIndex (R/03_main_cohorts.R).
+treatedCohortIds <- function(index = cohortIndex)
+  idsByCodes(names(index)[index == "treatment"])
+
+# Lab window of each cohort as days around its index, e.g. "-30..0".
+labWindowLabel <- function(cohortIds, treatedIds = treatedCohortIds()) {
+  treated <- cohortIds %in% treatedIds
+  paste0(-ifelse(treated, settings$treatedLabWindowBeforeDays, settings$labWindowBeforeDays), "..",
+         ifelse(treated, settings$treatedLabWindowAfterDays, settings$labWindowAfterDays))
+}
+
+# eligibility_lab_rows.sql rendered for these anchor cohorts: the one place
+# the closest-lab rule and its windows are applied. Treated cohorts use
+# settings$treatedLabWindowBefore/AfterDays for labs, ECOG and conditions.
+labRowsSql <- function(anchorIds, passingOnly, treatedIds = integer(0),
+                       closest = settings$labValueSelection == "closest") {
+  ids <- function(x) if (length(x)) paste(x, collapse = ", ") else "-1"
+  do.call(renderSqlFile, c(list("eligibility_lab_rows.sql",
+    target_database_schema = settings$workDatabaseSchema,
+    target_cohort_table    = settings$cohortTable,
+    lab_cohort_table       = settings$labCohortTable,
+    raw_lab_results_table  = settings$rawLabResultsTable,
+    anchor_cohort_ids = ids(anchorIds), treated_cohort_ids = ids(treatedIds),
+    closest = closest, passing_only = passingOnly,
+    lab_window_before_days = settings$labWindowBeforeDays,
+    lab_window_after_days  = settings$labWindowAfterDays,
+    condition_flag_window_before_days = settings$conditionFlagWindowBeforeDays,
+    condition_flag_window_after_days  = settings$conditionFlagWindowAfterDays,
+    treated_lab_window_before_days = settings$treatedLabWindowBeforeDays,
+    treated_lab_window_after_days  = settings$treatedLabWindowAfterDays), testIdParams()))
+}
