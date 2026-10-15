@@ -1,6 +1,7 @@
--- Whole-population counts of the unified eligibility table (labs 1-23/44-49 +
--- ECOG 24-27 + conditions 33-40), per test-id slot. NOT crossed with any target
--- cohort — this is the raw content of @lab_cohort_table.
+-- Whole-population counts of the unified eligibility table (labs + ECOG +
+-- conditions; slots in cohorts/extras/eligibility_test_ids.csv), per test-id
+-- slot. NOT crossed with any target cohort — this is the raw content of
+-- @lab_cohort_table.
 --
 -- SqlRender params: @work_database_schema, @lab_cohort_table
 SELECT cohort_definition_id       AS test_id,

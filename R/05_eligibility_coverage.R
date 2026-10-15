@@ -13,20 +13,8 @@
 
 message("\n== eligibility input counts + T1 (mBC) coverage ==")
 
-# test-id -> human label (labs from lab_cohorts.sql #criteria; ECOG/conditions
-# from step (b)).
-inputLabels <- c(
-  "1"="aPTT<=1.5xULN","2"="ALT<=2.5xULN","3"="ALT<=5xULN","4"="ANC>=1500",
-  "5"="AST<=2.5xULN","6"="AST<=5xULN","7"="CrCl>=30","8"="Cr<=1.5xULN",
-  "9"="DBil<=ULN","10"="GFR<30","11"="GFR30-60excl","12"="GFR<60","13"="GFR>60",
-  "14"="GFR>=30","15"="Hb>=9","16"="HbA1c7-<8%","17"="HbA1c<6%","18"="INR<=1.5xULN",
-  "19"="PLT>=100k","20"="PT<=1.5xULN","21"="TBil<=3xULN","22"="TBil<=1.5xULN",
-  "23"="TBil>1.5xULN","44"="ANC<1500","45"="PLT<100k","46"="HbA1c>=8%",
-  "47"="Hb<9","48"="GFR30-60excl","49"="HbA1c<7%",
-  "24"="ECOG 0","25"="ECOG 1","26"="ECOG 2","27"="ECOG >=3",
-  "28"="Liver metastasis","29"="Gilbert's syndrome","31"="Anticoagulant therapy",
-  "33"="Neuropathy (present)","34"="Skin disorders (present)",
-  "35"="Polyuria","36"="Polydipsia","40"="Hearing loss (present)")
+# test-id -> human label, from cohorts/extras/eligibility_test_ids.csv.
+inputLabels <- with(testIds(), stats::setNames(label, test_id))
 
 censor <- function(x) ifelse(!is.na(x) & x > 0 & x < settings$minCellCount,
                              -settings$minCellCount, x)
@@ -77,7 +65,7 @@ denomFor <- function(stratumType, col = NULL) {
 denomTbl <- dplyr::bind_rows(
   denomFor("overall"), lapply(strataColumnNames, function(col) denomFor(col, col)))
 
-cov <- querySqlFile(connection, "eligibility_input_coverage.sql",
+cov <- do.call(querySqlFile, c(list(connection, "eligibility_input_coverage.sql",
   work_database_schema  = settings$workDatabaseSchema,
   cohort_table          = settings$cohortTable,
   lab_cohort_table      = settings$labCohortTable,
@@ -87,7 +75,7 @@ cov <- querySqlFile(connection, "eligibility_input_coverage.sql",
   lab_window_after_days  = settings$labWindowAfterDays,
   condition_flag_window_before_days = settings$conditionFlagWindowBeforeDays,
   condition_flag_window_after_days  = settings$conditionFlagWindowAfterDays,
-  subject_strata_sql     = strataFragment)
+  subject_strata_sql     = strataFragment), testIdParams()))
 names(cov) <- tolower(names(cov))
 # settings$strataColumns (run.R CONFIG, via activeStrataTypes()) controls
 # which stratum views actually reach the CSV -- the SQL always computes all

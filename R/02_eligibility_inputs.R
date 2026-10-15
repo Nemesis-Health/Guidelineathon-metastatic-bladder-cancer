@@ -2,9 +2,10 @@
 # 02_eligibility_inputs.R  —  (b) eligibility labs AND cohorts -> one table
 # ===========================================================================
 # Approach A: every eligibility input lands in @labCohortTable.
-#   1. lab_cohorts.sql  -> labs (test_ids 1-23, 44-49) + raw normalised rows
+#   1. lab_cohorts.sql  -> labs + raw normalised rows
 #   2. generate ECOG + condition cohorts
-#   3. INSERT their membership into @labCohortTable under reserved test-id slots
+#   3. INSERT their membership into @labCohortTable under their test-id slots
+# Test-id slots: cohorts/extras/eligibility_test_ids.csv (see testIds()).
 # The eligibility_2*.sql templates (step 03) then read one table uniformly.
 # ===========================================================================
 
@@ -22,26 +23,24 @@ do.call(runSqlFile, c(list(connection = connection, file = "lab_cohorts.sql",
   cdm_database_schema = settings$cdmDatabaseSchema,
   work_database_schema = settings$workDatabaseSchema,
   raw_lab_results_table = settings$rawLabResultsTable,
-  lab_cohort_table = settings$labCohortTable), labScratch))
+  lab_cohort_table = settings$labCohortTable), labScratch, testIdParams()))
 message("  labs written to ", settings$labCohortTable, " + ", settings$rawLabResultsTable)
 
+# The criteria table must hold exactly the registry's lab slots.
+critIds <- DatabaseConnector::renderTranslateQuerySql(connection,
+  "SELECT test_id FROM @work_database_schema.@criteria_table;",
+  work_database_schema = settings$workDatabaseSchema,
+  criteria_table = labScratch$criteria_table)[[1]]
+labIds <- testIds()$test_id[testIds()$kind == "lab"]
+if (!setequal(critIds, labIds) || anyDuplicated(critIds))
+  stop("lab_cohorts.sql criteria test_ids (", paste(sort(critIds), collapse = ", "),
+       ") don't match the lab rows of eligibility_test_ids.csv (",
+       paste(labIds, collapse = ", "), ").", call. = FALSE)
+
 # --- 2. generate ECOG + condition cohorts -----------------------------------
-# cohort name -> reserved test-id slot in the unified table.
-eligMap <- tibble::tribble(
-  ~cohortName,                   ~test_id,
-  "ECOG 0",                      24L,
-  "ECOG 1",                      25L,
-  "ECOG 2",                      26L,
-  "ECOG 3plus",                  27L,
-  "Peripheral Neuropathy",       33L,
-  "Significant Skin Disorders",  34L,
-  "Audiometric Hearing Loss",    40L,
-  "Polyuria",                    35L,
-  "Polydipsia",                  36L,
-  "Anticoagulant Therapy",       31L,
-  "Liver Metastasis",            28L,
-  "Gilberts Syndrome",           29L
-)
+# cohort name -> test-id slot in the unified table (the non-lab registry rows).
+eligMap <- with(testIds()[testIds()$kind != "lab", ],
+                tibble::tibble(cohortName = source_cohort, test_id = test_id))
 
 covJson <- readJsonCohorts(file.path(cohortsDir, "04_Eligibility"))
 eligJson <- covJson[covJson$cohortName %in% eligMap$cohortName, ]

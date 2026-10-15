@@ -301,7 +301,10 @@ ARTEMIS.
 **Approach A** — every eligibility input lives in one table (`bc_lab_cohort`):
 first the labs (`sql/lab_cohorts.sql`), then the ECOG + condition cohorts, whose
 membership is *inserted* into the same table under reserved test-id slots. So
-`sql/eligibility_2*.sql` reads a single table uniformly.
+`sql/eligibility_2*.sql` reads a single table uniformly. Every slot is declared
+once, in `cohorts/extras/eligibility_test_ids.csv` (id, key, kind, source
+cohort, label); the SQL refers to a slot by its key as `@t_<key>`
+(e.g. `@t_gfr_ge30`), filled in by `testIdParams()` (`R/helpers.R`).
 
 ---
 
@@ -383,7 +386,7 @@ At the end of a run, results are packaged into two archives:
 ### `sql/` — SqlRender templates
 | File | Role |
 |---|---|
-| `lab_cohorts.sql` | Scores OMOP measurements → `bc_raw_lab_results` (all normalised rows) + `bc_lab_cohort` (pass rows, `cohort_definition_id = test_id`, 1–23/44–48). |
+| `lab_cohorts.sql` | Scores OMOP measurements → `bc_raw_lab_results` (all normalised rows) + `bc_lab_cohort` (pass rows, `cohort_definition_id = test_id`). |
 | `insert_eligibility_cohorts.sql` | Copies a generated cohort's members into `bc_lab_cohort` under a test-id slot (ECOG/conditions). |
 | `eligibility_2{a,b,c,d,e}.sql` | The eligibility leaves — read `bc_lab_cohort` uniformly (labs + ECOG + conditions). |
 | `eligibility_previously_treated.sql`, `eligibility_not_previously_treated.sql`, `eligibility_combination.sql` | The attrition cohorts T1-PT / T1-NPT / T1-CE: Cohort 1 failing / passing the washout, and passing the washout plus the combination panel (2a's logic without the enfortumab criteria). |
@@ -804,8 +807,8 @@ cohorts, plus unit-resolution QC on the raw normalised measurement table
 
 ### `lab_cohort_counts.csv`
 Row per eligibility **test-id slot** in the unified `bc_lab_cohort` table, over
-the **whole population** (not restricted to Target 1A). Ids 1–23 / 44–48 are
-labs; 24–27 ECOG; 28–40 conditions (test-id reference in the header of `sql/eligibility_2a.sql`).
+the **whole population** (not restricted to Target 1A). Ids 1–23 / 44–49 are
+labs; 24–27 ECOG; 28–40 conditions (all declared in `cohorts/extras/eligibility_test_ids.csv`).
 
 | Column | Meaning |
 |---|---|

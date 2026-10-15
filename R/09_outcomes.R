@@ -58,29 +58,21 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
 } else {
 
   # --- resolve the outcome-relevant cohort ids -------------------------------
-  idsByCodes <- function(codes)
-    as.integer(vapply(codes, function(cd) cohortIdByName(mainManifest, cohortNames[[cd]]),
-                       integer(1)))
-
   t1Id    <- cohortIdByName(mainManifest, cohortNames[["T1"]])
   t2Ids   <- idsByCodes(paste0("T2", letters[1:5]))
   t3Ids   <- idsByCodes(paste0("T3", letters[1:5]))
   t456Ids <- idsByCodes(c(paste0("T4", letters[1:6]), paste0("T5", letters[1:6]),
                            paste0("T6", letters[1:6])))
-  # L01-anchored initiated cohorts (R/03_main_cohorts.R): not part of the
-  # cohortNames T-code map, so resolved directly by their assigned name.
-  # OS-only (see file header) -- they have no lens-split, so they're left out
-  # of treatedTargetCohortIds/TTNT/TTD/TFI, which need the ARTEMIS-episode
-  # machinery those splits are built from.
-  l01Ids  <- as.integer(stats::na.omit(c(
-    cohortIdByName(mainManifest, "mBC initiated base (L01)"),
-    cohortIdByName(mainManifest, "mBC initiated base (L01, PC allowed)"))))
+  # L01-anchored initiated cohorts: OS-only (see file header) -- they have no
+  # lens-split, so they're left out of treatedTargetCohortIds/TTNT/TTD/TFI,
+  # which need the ARTEMIS-episode machinery those splits are built from.
+  l01Ids  <- idsByCodes(c("BaseL01", "BaseL01pc"))
 
-  allTargetCohortIds     <- as.integer(stats::na.omit(c(t1Id, t2Ids, t3Ids, t456Ids, l01Ids)))
-  treatedTargetCohortIds <- as.integer(stats::na.omit(c(t3Ids, t456Ids)))
+  allTargetCohortIds     <- as.integer(c(t1Id, t2Ids, t3Ids, t456Ids, l01Ids))
+  treatedTargetCohortIds <- as.integer(c(t3Ids, t456Ids))
 
   outcomeCohortIds <- list(
-    dti      = as.integer(stats::na.omit(t1Id)),
+    dti      = t1Id,
     os       = allTargetCohortIds,
     ttnt     = treatedTargetCohortIds,
     ttd      = treatedTargetCohortIds,

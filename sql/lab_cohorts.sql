@@ -832,53 +832,43 @@ INSERT INTO @work_database_schema.@normals_table (cat, std_unit_concept_id, rang
 DROP TABLE IF EXISTS @work_database_schema.@criteria_table;
 -- basis: 'ULN' => bound = mult * upper-normal ;  'ABS' => bound is a fixed value already in standard units
 --
--- TEST-ID ALLOCATION (keep this in sync when adding tests — see below):
---   1-23   original eligibility panel (unit-normalised thresholds).
---   24-43  RESERVED for clinical / biomarker tests not yet encoded:
---          24-27 ECOG 0/1/2/>=3, 28 liver metastasis, 29 Gilbert's,
---          30 Hb mmol/L (redundant — normalisation handles it, do not add),
---          31 anticoag exception, 32/33 neuropathy, 34 skin, 35 polyuria,
---          36 polydipsia, 37/38 NYHA, 39/40 hearing, 41 comorbidity grade,
---          42 PD-L1 CPS, 43 PD-L1 TIC.
---   44-48  Diagnostic-strata thresholds added 2026-07-09 (this file, below).
---   49     HbA1c < 7% (EV lower band, eligibility_2a.sql).
---   ->     Allocate NEW tests at 50+ to avoid collisions.
+-- test_id: the @t_<key> slots declared in cohorts/extras/eligibility_test_ids.csv
+-- (kind = lab); add a new test there first. R/02 checks this table's ids match.
 CREATE TABLE @work_database_schema.@criteria_table (test_id int, cat varchar(40), basis char(3),
    min_op varchar(2), min_val float, max_op varchar(2), max_val float, note varchar(120));
 INSERT INTO @work_database_schema.@criteria_table (test_id, cat, basis, min_op, min_val, max_op, max_val, note) VALUES
- (1,  'aPTT',            'ULN', NULL, NULL, '<=', 1.5,  'aPTT <= 1.5 ULN'),
- (2,  'ALT',             'ULN', NULL, NULL, '<=', 2.5,  'ALT <= 2.5 ULN'),
- (3,  'ALT',             'ULN', NULL, NULL, '<=', 5.0,  'ALT <= 5 ULN'),
- (4,  'ANC',             'ABS', '>=', 1.5,  NULL, NULL, '1500/uL = 1.5 thousand/uL'),
- (5,  'AST',             'ULN', NULL, NULL, '<=', 2.5,  'AST <= 2.5 ULN'),
- (6,  'AST',             'ULN', NULL, NULL, '<=', 5.0,  'AST <= 5 ULN'),
- (7,  'CrCl',            'ABS', '>=', 30,   NULL, NULL, 'CrCl >= 30 mL/min'),
- (8,  'Creatinine',      'ULN', NULL, NULL, '<=', 1.5,  'Cr <= 1.5 ULN'),
- (9,  'Direct bilirubin','ULN', NULL, NULL, '<=', 1.0,  'DBil <= ULN'),
- (10, 'GFR',             'ABS', NULL, NULL, '<',  30,   'GFR < 30'),
- (11, 'GFR',             'ABS', '>',  30,   '<',  60,   'GFR 30-60 (exclusive)'),
- (12, 'GFR',             'ABS', NULL, NULL, '<',  60,   'GFR < 60'),
- (13, 'GFR',             'ABS', '>',  60,   NULL, NULL, 'GFR > 60'),
- (14, 'GFR',             'ABS', '>=', 30,   NULL, NULL, 'GFR >= 30'),
- (15, 'Hb',              'ABS', '>=', 9.0,  NULL, NULL, 'Hb >= 9.0 g/dL'),
- (16, 'HbA1c',           'ABS', '>=', 7.0,  '<',  8.0,  'HbA1c >= 7% and < 8%'),
- (17, 'HbA1c',           'ABS', NULL, NULL, '<',  6.0,  'HbA1c < 6%'),
- (18, 'INR',             'ULN', NULL, NULL, '<=', 1.5,  'INR <= 1.5 ULN'),
- (19, 'Platelets',       'ABS', '>=', 100,  NULL, NULL, '100000/uL = 100 thousand/uL'),
- (20, 'PT',              'ULN', NULL, NULL, '<=', 1.5,  'PT <= 1.5 ULN'),
- (21, 'Total bilirubin', 'ULN', NULL, NULL, '<=', 3.0,  'TBil <= 3 ULN'),
- (22, 'Total bilirubin', 'ULN', NULL, NULL, '<=', 1.5,  'TBil <= 1.5 ULN'),
- (23, 'Total bilirubin', 'ULN', '>',  1.5,  NULL, NULL, 'TBil > 1.5 ULN'),
- -- Diagnostic-strata thresholds (ids 44+; ids 24-43 reserved for ECOG / liver
- -- mets / neuropathy / NYHA / hearing / PD-L1 etc.). Values in standard units.
+ (@t_aptt_le1_5uln, 'aPTT',            'ULN', NULL, NULL, '<=', 1.5,  'aPTT <= 1.5 ULN'),
+ (@t_alt_le2_5uln,  'ALT',             'ULN', NULL, NULL, '<=', 2.5,  'ALT <= 2.5 ULN'),
+ (@t_alt_le5uln,    'ALT',             'ULN', NULL, NULL, '<=', 5.0,  'ALT <= 5 ULN'),
+ (@t_anc_ge1500,    'ANC',             'ABS', '>=', 1.5,  NULL, NULL, '1500/uL = 1.5 thousand/uL'),
+ (@t_ast_le2_5uln,  'AST',             'ULN', NULL, NULL, '<=', 2.5,  'AST <= 2.5 ULN'),
+ (@t_ast_le5uln,    'AST',             'ULN', NULL, NULL, '<=', 5.0,  'AST <= 5 ULN'),
+ (@t_crcl_ge30,     'CrCl',            'ABS', '>=', 30,   NULL, NULL, 'CrCl >= 30 mL/min'),
+ (@t_cr_le1_5uln,   'Creatinine',      'ULN', NULL, NULL, '<=', 1.5,  'Cr <= 1.5 ULN'),
+ (@t_dbil_le_uln,   'Direct bilirubin','ULN', NULL, NULL, '<=', 1.0,  'DBil <= ULN'),
+ (@t_gfr_lt30,      'GFR',             'ABS', NULL, NULL, '<',  30,   'GFR < 30'),
+ (@t_gfr_30_60,     'GFR',             'ABS', '>',  30,   '<',  60,   'GFR 30-60 (exclusive)'),
+ (@t_gfr_lt60,      'GFR',             'ABS', NULL, NULL, '<',  60,   'GFR < 60'),
+ (@t_gfr_gt60,      'GFR',             'ABS', '>',  60,   NULL, NULL, 'GFR > 60'),
+ (@t_gfr_ge30,      'GFR',             'ABS', '>=', 30,   NULL, NULL, 'GFR >= 30'),
+ (@t_hb_ge9,        'Hb',              'ABS', '>=', 9.0,  NULL, NULL, 'Hb >= 9.0 g/dL'),
+ (@t_hba1c_7_8,     'HbA1c',           'ABS', '>=', 7.0,  '<',  8.0,  'HbA1c >= 7% and < 8%'),
+ (@t_hba1c_lt6,     'HbA1c',           'ABS', NULL, NULL, '<',  6.0,  'HbA1c < 6%'),
+ (@t_inr_le1_5uln,  'INR',             'ULN', NULL, NULL, '<=', 1.5,  'INR <= 1.5 ULN'),
+ (@t_plt_ge100k,    'Platelets',       'ABS', '>=', 100,  NULL, NULL, '100000/uL = 100 thousand/uL'),
+ (@t_pt_le1_5uln,   'PT',              'ULN', NULL, NULL, '<=', 1.5,  'PT <= 1.5 ULN'),
+ (@t_tbil_le3uln,   'Total bilirubin', 'ULN', NULL, NULL, '<=', 3.0,  'TBil <= 3 ULN'),
+ (@t_tbil_le1_5uln, 'Total bilirubin', 'ULN', NULL, NULL, '<=', 1.5,  'TBil <= 1.5 ULN'),
+ (@t_tbil_gt1_5uln, 'Total bilirubin', 'ULN', '>',  1.5,  NULL, NULL, 'TBil > 1.5 ULN'),
+ -- Diagnostic-strata thresholds. Values in standard units.
  -- The mmol/L Hb path needs no separate test: Hb is normalised to g/dL, so
- -- Hb >= 5.6 mmol/L == test 15 (>= 9 g/dL) post-conversion.
- (44, 'ANC',             'ABS', NULL, NULL, '<',  1.5,  'ANC < 1500/uL'),
- (45, 'Platelets',       'ABS', NULL, NULL, '<',  100,  'PLT < 100k/uL'),
- (46, 'HbA1c',           'ABS', '>=', 8.0,  NULL, NULL, 'HbA1c >= 8%'),
- (47, 'Hb',              'ABS', NULL, NULL, '<',  9.0,  'Hb < 9.0 g/dL'),
- (48, 'GFR',             'ABS', '>',  30,   '<',  60,   'GFR 30-60 (exclusive)'),
- (49, 'HbA1c',           'ABS', NULL, NULL, '<',  7.0,  'HbA1c < 7%');
+ -- Hb >= 5.6 mmol/L == hb_ge9 (>= 9 g/dL) post-conversion.
+ (@t_dx_anc_lt1500, 'ANC',             'ABS', NULL, NULL, '<',  1.5,  'ANC < 1500/uL'),
+ (@t_dx_plt_lt100k, 'Platelets',       'ABS', NULL, NULL, '<',  100,  'PLT < 100k/uL'),
+ (@t_dx_hba1c_ge8,  'HbA1c',           'ABS', '>=', 8.0,  NULL, NULL, 'HbA1c >= 8%'),
+ (@t_dx_hb_lt9,     'Hb',              'ABS', NULL, NULL, '<',  9.0,  'Hb < 9.0 g/dL'),
+ (@t_dx_gfr_30_60,  'GFR',             'ABS', '>',  30,   '<',  60,   'GFR 30-60 (exclusive)'),
+ (@t_hba1c_lt7,     'HbA1c',           'ABS', NULL, NULL, '<',  7.0,  'HbA1c < 7%');
 
 /* ---------------------------------------------------------------------------
    1.  AGGREGATE measurements per (measurement_concept_id, unit_concept_id,

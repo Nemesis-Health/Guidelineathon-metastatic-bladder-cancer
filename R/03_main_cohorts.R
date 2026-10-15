@@ -24,8 +24,6 @@ jsonCohorts <- readJsonCohorts(file.path(cohortsDir, "01_Target"))
 # so the standard OHDSI attrition table can be pulled after generation below.
 jsonSet <- buildCohortSet(jsonCohorts = jsonCohorts, startId = 1L, generateStats = TRUE)
 
-cohort1Id <- cohortIdByName(jsonSet, "Target 1A")
-stopifnot(!is.na(cohort1Id))
 nextId <- max(jsonSet$cohortId) + 1L
 
 customRows <- list()
@@ -35,13 +33,24 @@ addCustom <- function(name, sql) {
   id <- nextId; nextId <<- nextId + 1L; id
 }
 
-# --- study cohort naming: "<code> <descriptor>" ----------------------------
-# Codes: T1 = mBC; T1pt/T1npt/T1ce = attrition steps under T1 (previously
-# treated / not previously treated / combination-therapy eligible);
-# T2x = eligibility leaves; T3x = eligible & initiated (EAU);
-# T4x/T5x/T6x = initiated splits under the EAU / HemOnc-mBC / any-regimen lens.
+# --- study cohort naming ----------------------------------------------------
+# The one declaration of every cohort name the steps look up (code -> name).
+# Codes: T1 = mBC; T1pc / T1mb = its PC-allowed / mixed-bag variants;
+# T1pt/T1npt/T1ce = attrition steps under T1 (previously treated / not
+# previously treated / combination-therapy eligible); Base = initiated base
+# (ARTEMIS episodes); BaseL01* = initiated on a raw L01 drug (or procedure),
+# with/without PC allowed; T2x = eligibility leaves; T3x = eligible &
+# initiated (EAU); T4x/T5x/T6x = initiated splits under the EAU /
+# HemOnc-mBC / any-regimen lens.
 cohortNames <- c(
   T1  = "T1 Metastatic bladder cancer",
+  T1pc = "T1 Metastatic bladder cancer (PC allowed)",
+  T1mb = "T1 Metastatic bladder cancer (mixed bag)",
+  Base          = "mBC initiated base",
+  BaseL01       = "mBC initiated base (L01)",
+  BaseL01pc     = "mBC initiated base (L01, PC allowed)",
+  BaseL01proc   = "mBC initiated base (L01 or procedure)",
+  BaseL01procpc = "mBC initiated base (L01 or procedure, PC allowed)",
   T1pt  = "T1-PT Previously treated mBC",
   T1npt = "T1-NPT Not previously treated mBC",
   T1ce  = "T1-CE Combination-therapy eligible mBC",
@@ -78,53 +87,35 @@ lensCode <- c(eau = "4", hemonc_mbc = "5", any = "6")
 labCode  <- c(ev_pembro = "a", cisplatin = "b", carboplatin = "c",
               pdl1_mono = "d", other_recommended = "e", other = "f")
 
-# T1 = the Target 1A JSON cohort (captured above by its file-derived name).
-jsonSet$cohortName[jsonSet$cohortId == cohort1Id] <- cohortNames[["T1"]]
-
-# PC-allowed variant of T1 (Target_1A_PC_allowed.json): same tree, with the
-# "no other cancer" rule loosened to allow prostate cancer. Renamed off its
-# file-derived "Target 1A PC allowed" onto T1's own name + the "(PC allowed)"
-# modifier, matching the L01-anchored PC-allowed cohort's naming below instead
-# of the raw filename.
-cohort1PcId <- cohortIdByName(jsonSet, "Target 1A PC allowed")
-stopifnot(!is.na(cohort1PcId))
-jsonSet$cohortName[jsonSet$cohortId == cohort1PcId] <- paste0(cohortNames[["T1"]], " (PC allowed)")
-
-# Mixed bag variant of T1 (Target_1A_mixed_bag.json): the "no other cancer"
-# rule inverted to require another primary in the same window; exit at death
-# only, since every member already has another primary at entry.
-cohort1MixedId <- cohortIdByName(jsonSet, "Target 1A mixed bag")
-stopifnot(!is.na(cohort1MixedId))
-jsonSet$cohortName[jsonSet$cohortId == cohort1MixedId] <- paste0(cohortNames[["T1"]], " (mixed bag)")
-
-# L01-anchored initiated cohorts (Target_1A_initiated_L01.json,
-# Target_1A_PC_allowed_initiated_L01.json): standalone ATLAS/Circe cohorts,
-# analogous to "mBC initiated base" below but indexed on the earliest
-# qualifying raw L01 (antineoplastic) drug exposure instead of an
-# ARTEMIS-detected regimen episode. Self-contained (their own InclusionRules
-# re-derive metastasis/prior-cancer/no-other-cancer and the L01-naive
-# washout) rather than descending from Cohort 1's generated table, so they
-# stay portable as plain ATLAS cohort definitions.
-l01InitId          <- cohortIdByName(jsonSet, "Target 1A initiated L01")
-l01InitPcAllowedId <- cohortIdByName(jsonSet, "Target 1A PC allowed initiated L01")
-stopifnot(!is.na(l01InitId), !is.na(l01InitPcAllowedId))
-jsonSet$cohortName[jsonSet$cohortId == l01InitId]          <- "mBC initiated base (L01)"
-jsonSet$cohortName[jsonSet$cohortId == l01InitPcAllowedId] <- "mBC initiated base (L01, PC allowed)"
-
-# Same pair, but qualifying on an L01 drug exposure OR a chemo/hormone/immuno/
-# targeted-chemo procedure (Target_1A_initiated_L01_or_procedure.json,
-# Target_1A_PC_allowed_initiated_L01_or_procedure.json) -- catches regimens
-# recorded only as a procedure code, with no matching drug exposure.
-l01OrProcInitId          <- cohortIdByName(jsonSet, "Target 1A initiated L01 or procedure")
-l01OrProcInitPcAllowedId <- cohortIdByName(jsonSet, "Target 1A PC allowed initiated L01 or procedure")
-stopifnot(!is.na(l01OrProcInitId), !is.na(l01OrProcInitPcAllowedId))
-jsonSet$cohortName[jsonSet$cohortId == l01OrProcInitId]          <- "mBC initiated base (L01 or procedure)"
-jsonSet$cohortName[jsonSet$cohortId == l01OrProcInitPcAllowedId] <- "mBC initiated base (L01 or procedure, PC allowed)"
+# JSON cohorts are read under their file-derived names; rename each onto its
+# study name. T1 = Target 1A. T1pc: "no other cancer" loosened to allow
+# prostate cancer. T1mb: that rule inverted to require another primary in the
+# same window (exit at death only). BaseL01/BaseL01pc: standalone Circe
+# cohorts analogous to Base but indexed on the earliest qualifying raw L01
+# (antineoplastic) drug exposure instead of an ARTEMIS regimen episode;
+# self-contained (own InclusionRules re-derive metastasis/prior-cancer/
+# no-other-cancer and the L01-naive washout) so they stay portable as plain
+# ATLAS definitions. BaseL01proc/BaseL01procpc: same pair, also qualifying on
+# a chemo/hormone/immuno/targeted-chemo procedure (regimens recorded only as
+# a procedure code).
+jsonFileCodes <- c(
+  "Target 1A"                                       = "T1",
+  "Target 1A PC allowed"                            = "T1pc",
+  "Target 1A mixed bag"                             = "T1mb",
+  "Target 1A initiated L01"                         = "BaseL01",
+  "Target 1A PC allowed initiated L01"              = "BaseL01pc",
+  "Target 1A initiated L01 or procedure"            = "BaseL01proc",
+  "Target 1A PC allowed initiated L01 or procedure" = "BaseL01procpc")
+for (fileName in names(jsonFileCodes)) {
+  id <- cohortIdByName(jsonSet, fileName)
+  jsonSet$cohortName[jsonSet$cohortId == id] <- cohortNames[[jsonFileCodes[[fileName]]]]
+}
+cohort1Id <- cohortIdByName(jsonSet, cohortNames[["T1"]])
 
 # --- initiated base ---------------------------------------------------------
 baseTemplate <- paste(readLines(file.path(sqlDir, "Target_1A_initiated_template.sql"),
                                 warn = FALSE), collapse = "\n")
-baseId <- addCustom("mBC initiated base", SqlRender::render(
+baseId <- addCustom(cohortNames[["Base"]], SqlRender::render(
   baseTemplate, cohort1_id = cohort1Id,
   regimen_episode_table = settings$episodeTable,
   regimen_classification_table = settings$regimenClassTable))
@@ -166,22 +157,23 @@ renderElig <- function(leaf, ...) {
   sql <- paste(readLines(file.path(sqlDir, file), warn = FALSE), collapse = "\n")
   args <- list(...)
   used <- vapply(names(args), function(p) grepl(paste0("@", p), sql, fixed = TRUE), logical(1))
-  do.call(SqlRender::render, c(list(sql = sql), args[used]))
+  .checkTestIdsRendered(do.call(SqlRender::render, c(list(sql = sql), args[used])), file)
 }
 # Generated in priority order (2a before 2b before 2c) so 2b/2c can anti-join the
 # real 2a/2b membership for their "NOT enfortumab" / "NOT cisplatin" exclusions.
-labRows <- renderSqlFile("eligibility_lab_rows.sql",
+labRows <- do.call(renderSqlFile, c(list("eligibility_lab_rows.sql",
   closest = settings$labValueSelection == "closest",
   lab_cohort_table = settings$labCohortTable,
   raw_lab_results_table = settings$rawLabResultsTable, cohort1_id = cohort1Id,
   lab_window_before_days = settings$labWindowBeforeDays,
-  lab_window_after_days  = settings$labWindowAfterDays)
-labReg <- list(lab_cohort_table = settings$labCohortTable, eligibility_lab_rows_sql = labRows,
-               regimen_episode_table = settings$episodeTable, cohort1_id = cohort1Id,
-               lab_window_before_days = settings$labWindowBeforeDays,
-               lab_window_after_days  = settings$labWindowAfterDays,
-               condition_flag_window_before_days = settings$conditionFlagWindowBeforeDays,
-               condition_flag_window_after_days  = settings$conditionFlagWindowAfterDays)
+  lab_window_after_days  = settings$labWindowAfterDays), testIdParams()))
+labReg <- c(list(lab_cohort_table = settings$labCohortTable, eligibility_lab_rows_sql = labRows,
+                 regimen_episode_table = settings$episodeTable, cohort1_id = cohort1Id,
+                 lab_window_before_days = settings$labWindowBeforeDays,
+                 lab_window_after_days  = settings$labWindowAfterDays,
+                 condition_flag_window_before_days = settings$conditionFlagWindowBeforeDays,
+                 condition_flag_window_after_days  = settings$conditionFlagWindowAfterDays),
+            testIdParams())
 elig2 <- list()
 elig2$a <- addCustom(cohortNames[["T2a"]], do.call(renderElig, c(list("a"), labReg)))
 elig2$b <- addCustom(cohortNames[["T2b"]], do.call(renderElig,

@@ -1,0 +1,42 @@
+test_id,key,kind,source_cohort,ecog_grade,label
+1,aptt_le1_5uln,lab,,,aPTT<=1.5xULN
+2,alt_le2_5uln,lab,,,ALT<=2.5xULN
+3,alt_le5uln,lab,,,ALT<=5xULN
+4,anc_ge1500,lab,,,ANC>=1500
+5,ast_le2_5uln,lab,,,AST<=2.5xULN
+6,ast_le5uln,lab,,,AST<=5xULN
+7,crcl_ge30,lab,,,CrCl>=30
+8,cr_le1_5uln,lab,,,Cr<=1.5xULN
+9,dbil_le_uln,lab,,,DBil<=ULN
+10,gfr_lt30,lab,,,GFR<30
+11,gfr_30_60,lab,,,GFR30-60excl
+12,gfr_lt60,lab,,,GFR<60
+13,gfr_gt60,lab,,,GFR>60
+14,gfr_ge30,lab,,,GFR>=30
+15,hb_ge9,lab,,,Hb>=9
+16,hba1c_7_8,lab,,,HbA1c7-<8%
+17,hba1c_lt6,lab,,,HbA1c<6%
+18,inr_le1_5uln,lab,,,INR<=1.5xULN
+19,plt_ge100k,lab,,,PLT>=100k
+20,pt_le1_5uln,lab,,,PT<=1.5xULN
+21,tbil_le3uln,lab,,,TBil<=3xULN
+22,tbil_le1_5uln,lab,,,TBil<=1.5xULN
+23,tbil_gt1_5uln,lab,,,TBil>1.5xULN
+24,ecog0,ecog,ECOG 0,0,ECOG 0
+25,ecog1,ecog,ECOG 1,1,ECOG 1
+26,ecog2,ecog,ECOG 2,2,ECOG 2
+27,ecog3plus,ecog,ECOG 3plus,3,ECOG >=3
+28,liver_met,condition,Liver Metastasis,,Liver metastasis
+29,gilbert,condition,Gilberts Syndrome,,Gilbert's syndrome
+31,anticoagulant,drug,Anticoagulant Therapy,,Anticoagulant therapy
+33,neuropathy,condition,Peripheral Neuropathy,,Neuropathy (present)
+34,skin_disorder,condition,Significant Skin Disorders,,Skin disorders (present)
+35,polyuria,symptom,Polyuria,,Polyuria
+36,polydipsia,symptom,Polydipsia,,Polydipsia
+40,hearing_loss,condition,Audiometric Hearing Loss,,Hearing loss (present)
+44,dx_anc_lt1500,lab,,,ANC<1500
+45,dx_plt_lt100k,lab,,,PLT<100k
+46,dx_hba1c_ge8,lab,,,HbA1c>=8%
+47,dx_hb_lt9,lab,,,Hb<9
+48,dx_gfr_30_60,lab,,,GFR30-60excl
+49,hba1c_lt7,lab,,,HbA1c<7%

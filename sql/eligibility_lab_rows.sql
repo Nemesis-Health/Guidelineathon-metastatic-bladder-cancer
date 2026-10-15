@@ -11,13 +11,14 @@
 -- labValueSelection = "closest": per Cohort 1 member and lab
 -- group (cat), the one scorable result closest to index within [index -
 -- labWindowBeforeDays, index + labWindowAfterDays] decides every test of the
--- group, with the pass rule of lab_cohorts.sql section 5. ECOG [24-27] is
+-- group, with the pass rule of lab_cohorts.sql section 5. ECOG 0-3+ is
 -- treated as one group: the closest record by start date. Ties, in order:
 --   1. equal distance: the result before index wins;
 --   2. same day: the worst value counts (lowest Hb/ANC/Platelets/GFR/CrCl,
 --      highest of the rest, ULN-based labs as value / ULN; highest ECOG);
 --   3. then lowest value, then lowest ULN.
--- Other rows (ids 28-43: conditions, anticoagulants, symptoms) pass through.
+-- Condition, anticoagulant and symptom rows pass through. Test ids are
+-- declared in cohorts/extras/eligibility_test_ids.csv.
 -- =============================================================================
 {@closest} ? {
 SELECT test_id AS cohort_definition_id, subject_id,
@@ -53,14 +54,14 @@ SELECT test_id AS cohort_definition_id, subject_id,
          WHERE c1.cohort_definition_id = @cohort1_id
            AND (r.basis = 'ABS' OR r.uln_std IS NOT NULL)
         UNION ALL
-        -- ECOG records live in the window
+        -- ECOG records live in the window; worst = the ECOG grade
         SELECT c1.subject_id, c1.cohort_start_date, 'ECOG', e.cohort_definition_id,
                e.cohort_start_date, e.cohort_end_date,
-               CAST(e.cohort_definition_id AS FLOAT), NULL, NULL, 1
+               CAST(CASE e.cohort_definition_id @ecog_grade_cases END AS FLOAT), NULL, NULL, 1
           FROM @target_database_schema.@target_cohort_table c1
           JOIN @target_database_schema.@lab_cohort_table e
             ON e.subject_id = c1.subject_id
-           AND e.cohort_definition_id IN (24, 25, 26, 27)
+           AND e.cohort_definition_id IN (@ecog_ids)
            AND e.cohort_start_date <= DATEADD(day,  @lab_window_after_days,  c1.cohort_start_date)
            AND e.cohort_end_date   >= DATEADD(day, -@lab_window_before_days, c1.cohort_start_date)
          WHERE c1.cohort_definition_id = @cohort1_id
@@ -70,7 +71,7 @@ SELECT test_id AS cohort_definition_id, subject_id,
 UNION ALL
 SELECT cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
   FROM @target_database_schema.@lab_cohort_table
- WHERE cohort_definition_id BETWEEN 28 AND 43
+ WHERE cohort_definition_id IN (@passthrough_ids)
 } : {
 SELECT cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
   FROM @target_database_schema.@lab_cohort_table

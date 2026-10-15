@@ -1,9 +1,9 @@
 -- =============================================================================
 -- ps_overlap.sql — performance-status strata overlap, every main cohort
 -- =============================================================================
--- ECOG membership (KPS folded in) lives in @lab_cohort_table at the reserved
--- test-id slots: 24 = ECOG 0, 25 = ECOG 1, 26 = ECOG 2, 27 = ECOG >=3, each
--- dated at the PS record. A member of a cohort in @cohort_definition_ids (the
+-- ECOG membership (KPS folded in) lives in @lab_cohort_table at the ECOG
+-- test-id slots (cohorts/extras/eligibility_test_ids.csv), each dated at the
+-- PS record. A member of a cohort in @cohort_definition_ids (the
 -- full main tree, same scope as covariate_overlap.sql above) counts toward a
 -- stratum if they have an ECOG record in that stratum's id-set within
 -- @lab_window_before_days days before to @lab_window_after_days days after
@@ -21,6 +21,7 @@
 --   @work_database_schema @cohort_table @lab_cohort_table
 --   @cohort_definition_ids  comma-separated cohort_definition_id list
 --   @lab_window_before_days @lab_window_after_days
+--   @t_ecog0 @t_ecog1 @t_ecog2 @t_ecog3plus  ECOG test ids
 --   subject_strata_sql      pre-rendered fragment -- see the `strata` CTE below
 -- =============================================================================
 
@@ -68,15 +69,15 @@ tc_strat AS (
     JOIN strata s ON s.cohort_definition_id = tc.cohort_definition_id AND s.subject_id = tc.subject_id
 ),
 ps_codes AS (
-  SELECT 'PS1' AS code, 24 AS test_id UNION ALL
-  SELECT 'PS2', 25 UNION ALL
-  SELECT 'PS2+', 26 UNION ALL
-  SELECT 'PS2+', 27 UNION ALL
-  SELECT 'PS 0-2', 24 UNION ALL
-  SELECT 'PS 0-2', 25 UNION ALL
-  SELECT 'PS 0-2', 26 UNION ALL
-  SELECT 'PS 0-1', 24 UNION ALL
-  SELECT 'PS 0-1', 25
+  SELECT 'PS1' AS code, @t_ecog0 AS test_id UNION ALL
+  SELECT 'PS2', @t_ecog1 UNION ALL
+  SELECT 'PS2+', @t_ecog2 UNION ALL
+  SELECT 'PS2+', @t_ecog3plus UNION ALL
+  SELECT 'PS 0-2', @t_ecog0 UNION ALL
+  SELECT 'PS 0-2', @t_ecog1 UNION ALL
+  SELECT 'PS 0-2', @t_ecog2 UNION ALL
+  SELECT 'PS 0-1', @t_ecog0 UNION ALL
+  SELECT 'PS 0-1', @t_ecog1
 )
 SELECT tc_strat.stratum_type,
        tc_strat.stratum_value,
