@@ -36,6 +36,10 @@ if (is.null(settings$strataColumns))
 # eligibility labs/ECOG: "closest" (default) or "any" (see README)
 if (is.null(settings$labValueSelection)) settings$labValueSelection <- "closest"
 stopifnot(settings$labValueSelection %in% c("closest", "any"))
+# lab window for cohorts indexed on treatment start (default: 30 days before
+# up to the start date)
+if (is.null(settings$treatedLabWindowBeforeDays)) settings$treatedLabWindowBeforeDays <- 30L
+if (is.null(settings$treatedLabWindowAfterDays))  settings$treatedLabWindowAfterDays  <- 0L
 
 # default maintenance merging ON for configs predating the option
 if (is.null(settings$maintenanceMerge))      settings$maintenanceMerge      <- TRUE
