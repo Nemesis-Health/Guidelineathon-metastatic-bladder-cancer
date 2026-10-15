@@ -45,7 +45,7 @@ labs AS (
          lab.cohort_definition_id AS test_id, lab.cohort_start_date AS lab_date,
          lab.cohort_end_date AS lab_end_date
     FROM base b
-    LEFT JOIN @target_database_schema.@lab_cohort_table lab
+    LEFT JOIN (@eligibility_lab_rows_sql) lab
       ON lab.subject_id = b.subject_id
      -- every criterion below needs at most the wider of win_hi/win_hi_cond
      AND lab.cohort_start_date <= (CASE WHEN b.win_hi >= b.win_hi_cond THEN b.win_hi ELSE b.win_hi_cond END)

@@ -107,7 +107,7 @@ closest_any AS (
          ROW_NUMBER() OVER (
            PARTITION BY tc.cohort_definition_id, tc.subject_id, lab.cat
            ORDER BY ABS(DATEDIFF(day, lab.measurement_date, tc.cohort_start_date)),
-                    lab.measurement_date DESC
+                    lab.measurement_date
          ) AS rn
     FROM target_cohorts tc
    INNER JOIN lab_measurements lab

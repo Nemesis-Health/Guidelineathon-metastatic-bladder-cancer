@@ -170,7 +170,13 @@ renderElig <- function(leaf, ...) {
 }
 # Generated in priority order (2a before 2b before 2c) so 2b/2c can anti-join the
 # real 2a/2b membership for their "NOT enfortumab" / "NOT cisplatin" exclusions.
-labReg <- list(lab_cohort_table = settings$labCohortTable,
+labRows <- renderSqlFile("eligibility_lab_rows.sql",
+  closest = settings$labValueSelection == "closest",
+  lab_cohort_table = settings$labCohortTable,
+  raw_lab_results_table = settings$rawLabResultsTable, cohort1_id = cohort1Id,
+  lab_window_before_days = settings$labWindowBeforeDays,
+  lab_window_after_days  = settings$labWindowAfterDays)
+labReg <- list(lab_cohort_table = settings$labCohortTable, eligibility_lab_rows_sql = labRows,
                regimen_episode_table = settings$episodeTable, cohort1_id = cohort1Id,
                lab_window_before_days = settings$labWindowBeforeDays,
                lab_window_after_days  = settings$labWindowAfterDays,
