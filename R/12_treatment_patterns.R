@@ -6,18 +6,18 @@
 # treated population), % of Cohort 1 who received no treatment at all, and
 # Sankey-ready LoT1->LoT2->LoT3 flow data.
 #
-# Builds a `treatedPatients`-equivalent tibble directly in R (no new SQL):
-# the in-memory `episodes` (R/01_artemis.R), anchored to each Cohort-1
-# member's own index date (anchorEpisodes(), R/eventBuilders.R — same fix as
-# R/09_outcomes.R, so a pre-existing unrelated episode isn't mis-ranked as
-# line 1), joined to the in-memory `regimenClass` data frame (also a global
-# from R/01_artemis.R) by episode_source_value = regName. Reimplemented
-# directly against this shape rather than porting onco-study-modules'
-# computeCategoryCounts()/computeTreatmentPathways() input contract, though
-# the same pure-dplyr approach.
+# The treated population is the base treated cohort ("mBC initiated base"),
+# the same patients T3-T6 are built from, and its lines come from
+# treatedLines() (R/eventBuilders.R): line 1 is the regimen the cohort was
+# indexed on, later lines follow from treatment start. So line-1 categories
+# reproduce the T4/T5/T6 arms. Lines are joined to the in-memory
+# `regimenClass` (R/01_artemis.R) by episode_source_value = regName.
 #
 # Outputs:
-#   treatment_pattern_untreated.csv — Cohort 1 n, treated n, untreated n/pct.
+#   treatment_pattern_untreated.csv — Cohort 1 n, treated (base cohort) n,
+#                                      untreated n/pct. Why untreated, and
+#                                      when late starters started:
+#                                      outcome_dti_buckets.csv (R/09).
 #   treatment_pattern_regimen.csv   — lot_number x regimen name, n + pct-of-LoT.
 #   treatment_pattern_category.csv  — lot_number x lens category (class_eau /
 #                                      class_hemonc_mbc / class_any x a-f).
@@ -31,9 +31,9 @@
 #                                      stratified by index year to evaluate
 #                                      the changes in the treatment of mBC...
 #                                      with the introduction of enfortumab."
-#                                      Unlike the tables above (pooled across
-#                                      every Cohort-1 initiator but not split
-#                                      by cohort), this one is PER TREATED
+#                                      Unlike the tables above (the whole base
+#                                      treated cohort, not split by cohort),
+#                                      this one is PER TREATED
 #                                      COHORT - "treatment share by cohort" -
 #                                      including "mBC initiated base" itself
 #                                      (the whole unsplit treated population -
@@ -83,17 +83,19 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
 
   } else {
 
-    episodesAnchored <- anchorEpisodes(episodes, t1Members)
-    # fold maintenance into the line it maintains before lines are numbered
-    # (mergeMaintenance(), R/eventBuilders.R; docs/MAINTENANCE_LINES.md)
-    if (isTRUE(settings$maintenanceMerge))
-      episodesAnchored <- mergeMaintenance(episodesAnchored, regimenClass, settings$maintenanceMaxGapDays)
+    baseMembers <- querySqlFile(connection, "outcome_target_data.sql",
+      work_database_schema = settings$workDatabaseSchema,
+      cohort_table         = settings$cohortTable,
+      target_cohort_ids    = as.character(idsByCodes("Base")))
+    names(baseMembers) <- tolower(names(baseMembers))
+    baseMembers$subject_id <- as.character(baseMembers$subject_id)
 
-    treatedPatients <- episodesAnchored |>
-      dplyr::arrange(.data$person_id, .data$episode_start_date,
-                     .data$episode_end_date, .data$episode_source_value) |>
-      dplyr::mutate(lot_number = dplyr::row_number(), .by = "person_id") |>
+    # lines of therapy by the base cohort's rules; maintenance folded in
+    # (mergeMaintenance(); docs/MAINTENANCE_LINES.md)
+    treatedPatients <- treatedLines(episodes, baseMembers, t1Members, regimenClass,
+        maintenance = settings$maintenanceMerge, maxGapDays = settings$maintenanceMaxGapDays) |>
       dplyr::left_join(regimenClass, by = c(episode_source_value = "regName"))
+
 
     censorN <- function(x)
       ifelse(!is.na(x) & x > 0 & x < settings$minCellCount, -settings$minCellCount, x)

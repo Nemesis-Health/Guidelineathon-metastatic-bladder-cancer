@@ -5,12 +5,13 @@
 # (R/timeToEvent.R) + extractSurvivalMilestones() (R/survivalMilestones.R),
 # fed by the event builders in R/eventBuilders.R:
 #
-#   dti      — T1 only.       first LoT start - Cohort 1 index, counting
-#              lines that start up to 30 days before index (the treated
-#              cohorts' attribution buffer), so times can be negative.
-#              Descriptive stats, no KM; also by the first line's treatment
-#              category under each classification lens
-#              (outcome_dti_by_category_*.csv).
+#   dti      — T1 only.       treatment start - Cohort 1 index for the base
+#              treated cohort's members, i.e. by its rules (first classified
+#              regimen starting 30 days before to 90 days after index, washout)
+#              via treatedLines(), so -30 to 90 days. Descriptive stats, no KM;
+#              also by the first line's treatment category under each
+#              classification lens (outcome_dti_by_category_*.csv). Untreated
+#              and late starters are in treatment_pattern_untreated.csv.
 #   os       — every cohort    (T1, T2a-e, T3a-e, T4-6a-f, plus the L01-
 #              anchored initiated cohorts). Index -> death, KM.
 #   ttnt     — treated cohorts (T3a-e, T4-6a-f; indexed at LoT1 start). KM to
@@ -77,15 +78,13 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
   treatedTargetCohortIds <- as.integer(c(t3Ids, t456Ids))
 
   outcomeCohortIds <- list(
-    dti      = t1Id,
     os       = allTargetCohortIds,
     ttnt     = treatedTargetCohortIds,
     ttd      = treatedTargetCohortIds,
     ttd_lot2 = treatedTargetCohortIds,
     tfi      = treatedTargetCohortIds
   )
-  outcomeTypes <- c(dti = "time_diff", os = "km", ttnt = "km", ttd = "km",
-                    ttd_lot2 = "km", tfi = "km")
+  outcomeTypes <- c(os = "km", ttnt = "km", ttd = "km", ttd_lot2 = "km", tfi = "km")
 
   # --- target data: membership + dates + strata ------------------------------
   targetData <- querySqlFile(connection, "outcome_target_data.sql",
@@ -127,16 +126,21 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
   } else {
 
     # --- anchor episodes before any line-of-therapy ranking -------------------
-    episodesForDti <- anchorEpisodes(episodes,
-      dplyr::filter(targetData, .data$cohort_definition_id == t1Id), daysBefore = 30L)
+    baseMembers <- querySqlFile(connection, "outcome_target_data.sql",
+      work_database_schema = settings$workDatabaseSchema,
+      cohort_table         = settings$cohortTable,
+      target_cohort_ids    = as.character(idsByCodes("Base")))
+    names(baseMembers) <- tolower(names(baseMembers))
+    baseMembers$subject_id <- as.character(baseMembers$subject_id)
+    t1Data    <- dplyr::filter(targetData, .data$cohort_definition_id == t1Id)
+    dtiStatus <- firstLineStatus(episodes, baseMembers, t1Data, regimenClass,
+        maintenance = settings$maintenanceMerge, maxGapDays = settings$maintenanceMaxGapDays)
     episodesForTreatment <- anchorEpisodes(episodes,
       dplyr::filter(targetData, .data$cohort_definition_id %in% treatedTargetCohortIds))
     # fold maintenance into the line it maintains before lines are numbered
     # (mergeMaintenance(), R/eventBuilders.R; docs/MAINTENANCE_LINES.md)
-    if (isTRUE(settings$maintenanceMerge)) {
-      episodesForDti       <- mergeMaintenance(episodesForDti, regimenClass, settings$maintenanceMaxGapDays)
+    if (isTRUE(settings$maintenanceMerge))
       episodesForTreatment <- mergeMaintenance(episodesForTreatment, regimenClass, settings$maintenanceMaxGapDays)
-    }
 
     # --- shared person-level / episode-level events ---------------------------
     deathEvents <- fetchDeathEvents(connection, allTargetCohortIds)
@@ -168,7 +172,6 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
 
     eventFor <- function(nm, target) {
       switch(nm,
-        dti      = buildDtiEvents(target, episodesForDti, lineNumber = 1L),
         os       = deathEvents,
         ttnt     = ttntEvents,
         ttd      = ttdEvents,
@@ -206,37 +209,20 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
         for (stratumName in names(outcomeStrata)) {
           stratumCols <- outcomeStrata[[stratumName]]
 
-          if (outcomeTypes[[nm]] == "time_diff") {
-            evGrouped <- ev
-            if (!is.null(stratumCols)) {
-              evGrouped <- dplyr::left_join(ev,
-                dplyr::select(target, "subject_id", dplyr::all_of(stratumCols)),
-                by = "subject_id")
-            }
-            res <- computeTimeDiffStats(evGrouped, timeCol = "time_diff",
-              groupCols = stratumCols, minCellCount = settings$minCellCount)
-
-            summaryParts[[length(summaryParts) + 1L]] <-
-              tagRows(res$summaryStats, cid, stratumName)
-            histParts[[length(histParts) + 1L]] <-
-              tagRows(res$histogram, cid, stratumName)
-
+          res <- computeTimeToEvent(targetData = target, eventData = ev,
+            strata = stratumCols, minCellCount = settings$minCellCount)
+          milestones <- if (nrow(res$kmData) > 0L) {
+            extractSurvivalMilestones(res$kmData, milestones = c(365, 730, 1095),
+                                      minCellCount = settings$minCellCount)
           } else {
-            res <- computeTimeToEvent(targetData = target, eventData = ev,
-              strata = stratumCols, minCellCount = settings$minCellCount)
-            milestones <- if (nrow(res$kmData) > 0L) {
-              extractSurvivalMilestones(res$kmData, milestones = c(365, 730, 1095),
-                                        minCellCount = settings$minCellCount)
-            } else {
-              tibble::tibble()
-            }
-
-            summaryParts[[length(summaryParts) + 1L]]   <- tagRows(res$summaryStats, cid, stratumName)
-            histParts[[length(histParts) + 1L]]          <- tagRows(res$histogram, cid, stratumName)
-            kmParts[[length(kmParts) + 1L]]              <- tagRows(res$kmData, cid, stratumName)
-            medianParts[[length(medianParts) + 1L]]      <- tagRows(res$medianSurvival, cid, stratumName)
-            milestoneParts[[length(milestoneParts) + 1L]] <- tagRows(milestones, cid, stratumName)
+            tibble::tibble()
           }
+
+          summaryParts[[length(summaryParts) + 1L]]   <- tagRows(res$summaryStats, cid, stratumName)
+          histParts[[length(histParts) + 1L]]          <- tagRows(res$histogram, cid, stratumName)
+          kmParts[[length(kmParts) + 1L]]              <- tagRows(res$kmData, cid, stratumName)
+          medianParts[[length(medianParts) + 1L]]      <- tagRows(res$medianSurvival, cid, stratumName)
+          milestoneParts[[length(milestoneParts) + 1L]] <- tagRows(milestones, cid, stratumName)
         }
       }
 
@@ -258,34 +244,68 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
       message("  ", nm, ": done (", length(cohortIds), " cohort(s))")
     }
 
-    # --- DTI by the first line's treatment category, under each lens ----------
-    # Category = the first line's regimen classification (as T4/T5/T6 split
-    # cohorts); regimens with no classification are "unclassified".
-    t1Data <- dplyr::filter(targetData, .data$cohort_definition_id == t1Id)
-    dtiEv  <- eventFor("dti", t1Data)   # the same events as outcome_dti_*
+    # --- DTI: time from the T1 index to the first line --------------------------
+    # firstLineStatus() places every T1 member: treated (base cohort, -30 to
+    # 90 days), started_late (first classified regimen after day 90), or not
+    # started (prior_treatment / other_treatment / no_treatment). Summaries
+    # for two definitions, each with its own n: treated (-30 to 90 days) and
+    # unbound (-30 days on: treated + started_late). Buckets cover every T1
+    # member. Category = the first regimen's classification under each lens.
+    dti <- dplyr::left_join(dplyr::select(t1Data, -"cohort_definition_id"), dtiStatus,
+                            by = "subject_id")
+    started <- dplyr::filter(dti, .data$status %in% c("treated", "started_late"))
+    defs <- dplyr::bind_rows(
+      dplyr::mutate(dplyr::filter(started, .data$status == "treated"), definition = "treated"),
+      dplyr::mutate(started, definition = "unbound"))
     lenses <- c(eau = "class_eau", hemonc_mbc = "class_hemonc_mbc", any = "class_any")
-    dtiByCat <- dplyr::bind_rows(lapply(names(lenses), function(lens) {
-      cls <- dplyr::select(regimenClass, regimen = "regName", category = dplyr::all_of(lenses[[lens]]))
-      dplyr::left_join(dtiEv, dplyr::distinct(cls), by = "regimen") |>
-        dplyr::mutate(lens = lens, category = dplyr::coalesce(.data$category, "unclassified"))
+    byLens <- function(d) dplyr::bind_rows(lapply(names(lenses), function(lens) {
+      cls <- dplyr::distinct(dplyr::select(regimenClass, regimen = "regName",
+                                           category = dplyr::all_of(lenses[[lens]])))
+      dplyr::mutate(dplyr::left_join(d, cls, by = "regimen"), lens = lens,
+                    category = dplyr::coalesce(.data$category, "unclassified"))
     }))
-    # every DTI subject falls in exactly one category per lens
-    stopifnot(all(table(factor(dtiByCat$lens, levels = names(lenses))) == nrow(dtiEv)))
-    catSummary <- catHist <- list()
-    for (stratumName in names(outcomeStrata)) {
-      stratumCols <- outcomeStrata[[stratumName]]
-      evGrouped <- dtiByCat
-      if (!is.null(stratumCols))
-        evGrouped <- dplyr::left_join(dtiByCat,
-          dplyr::select(t1Data, "subject_id", dplyr::all_of(stratumCols)), by = "subject_id")
-      res <- computeTimeDiffStats(evGrouped, timeCol = "time_diff",
-        groupCols = c("lens", "category", stratumCols), minCellCount = settings$minCellCount)
-      catSummary[[stratumName]] <- tagRows(res$summaryStats, t1Id, stratumName)
-      catHist[[stratumName]]    <- tagRows(res$histogram, t1Id, stratumName)
+    defsCat <- byLens(defs)
+    stopifnot(nrow(defsCat) == length(lenses) * nrow(defs))   # one category per lens
+    dti$bucket <- dplyr::case_when(
+      dti$status == "prior_treatment" ~ "not started: prior treatment",
+      dti$status == "other_treatment"                 ~ "not started: other treatment only",
+      dti$status == "no_treatment"                    ~ "not started: none recorded",
+      TRUE ~ as.character(cut(dti$days, c(-30, 0, 31, 61, 91, 181, 361, Inf), right = FALSE,
+               labels = c("-30 to -1", "0-30", "31-60", "61-90", "91-180", "181-360", ">360"))))
+    dti$bucket <- factor(dti$bucket, levels = c("-30 to -1", "0-30", "31-60", "61-90", "91-180",
+      "181-360", ">360", "not started: prior treatment", "not started: other treatment only",
+      "not started: none recorded"))
+    startedCat <- byLens(dplyr::filter(dti, !is.na(.data$days)))
+    censorN <- function(x) ifelse(x > 0 & x < settings$minCellCount, -settings$minCellCount, x)
+    bucketCounts <- function(d, keys, stratumCols, stratumName) {
+      by <- c(keys, stratumCols)
+      out <- dplyr::count(d, dplyr::across(dplyr::all_of(c(by, "bucket"))), name = "n") |>
+        dplyr::mutate(n_total = sum(.data$n), .by = dplyr::all_of(by)) |>
+        dplyr::mutate(pct = round(100 * .data$n / .data$n_total, 2))
+      out$pct[out$n < settings$minCellCount | out$n_total < settings$minCellCount] <- NA_real_
+      out$n <- censorN(out$n); out$n_total <- censorN(out$n_total)
+      tagRows(out, t1Id, stratumName)
     }
-    nm <- "dti_by_category"
-    writeOutcomeCsv(catSummary, "summary")
-    writeOutcomeCsv(catHist, "histogram")
-    message("  dti_by_category: done")
+    dtiParts <- list(summary = list(), buckets = list(), by_category_summary = list(),
+                     by_category_buckets = list())
+    for (stratumName in names(outcomeStrata)) {
+      sc <- outcomeStrata[[stratumName]]
+      dtiParts$summary[[stratumName]] <- tagRows(computeTimeDiffStats(defs, timeCol = "days",
+        groupCols = c("definition", sc), minCellCount = settings$minCellCount)$summaryStats, t1Id, stratumName)
+      dtiParts$by_category_summary[[stratumName]] <- tagRows(computeTimeDiffStats(defsCat, timeCol = "days",
+        groupCols = c("definition", "lens", "category", sc), minCellCount = settings$minCellCount)$summaryStats,
+        t1Id, stratumName)
+      dtiParts$buckets[[stratumName]] <- bucketCounts(dti, character(0), sc, stratumName)
+      dtiParts$by_category_buckets[[stratumName]] <- bucketCounts(startedCat, c("lens", "category"), sc, stratumName)
+    }
+    for (part in names(dtiParts)) {
+      tbl <- dplyr::bind_rows(dtiParts[[part]])
+      if (nrow(tbl) == 0L) next
+      tbl <- dplyr::left_join(tbl, nameMap, by = "cohort_definition_id") |>
+        dplyr::relocate("cohort_name", .after = "cohort_definition_id")
+      writeResultCsv(tbl, paste0("outcome_dti_", part), "outcomes")
+    }
+    message("  dti: ", sum(dti$status == "treated"), " treated, ",
+            sum(dti$status == "started_late"), " started after day 90, of ", nrow(dti), " T1")
   }
 }

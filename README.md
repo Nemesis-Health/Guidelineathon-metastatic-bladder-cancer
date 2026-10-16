@@ -1109,8 +1109,9 @@ censoring" and "Stratification" above apply here too.
 
 | File | Written by | Population | Grain (one row per…) |
 |---|---|---|---|
-| `outcome_dti_summary.csv` / `_histogram.csv` | `09_outcomes.R` | Target 1A | stratum type × stratum value (+ time bin for histogram) |
-| `outcome_dti_by_category_summary.csv` / `_histogram.csv` | `09_outcomes.R` | Target 1A | lens × first-line treatment category × stratum type × stratum value (+ time bin for histogram) |
+| `outcome_dti_summary.csv` | `09_outcomes.R` | Target 1A | definition (treated / unbound) × stratum type × stratum value |
+| `outcome_dti_buckets.csv` | `09_outcomes.R` | Target 1A (every member) | stratum type × stratum value × bucket |
+| `outcome_dti_by_category_summary.csv` / `_buckets.csv` | `09_outcomes.R` | Target 1A, started | (definition ×) lens × first-line treatment category × stratum type × stratum value (× bucket) |
 | `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_summary.csv` / `_histogram.csv` | `09_outcomes.R` | os: every cohort (T1/T2a-e/T3a-e/T4-6a-f); ttnt/ttd/ttd_lot2/tfi: treatment-initiated cohorts only (T3a-e/T4-6a-f) | cohort × stratum type × stratum value (+ time bin for histogram) |
 | `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_km.csv` | `09_outcomes.R` | same as above | cohort × stratum type × stratum value × KM step |
 | `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_median_survival.csv` | `09_outcomes.R` | same as above | cohort × stratum type × stratum value |
@@ -1131,13 +1132,19 @@ grouping column itself when `stratum_type` isn't `overall` (e.g. an
 
 Episode ranking for every line-of-therapy-based event (DTI, TTNT, TTD,
 TTD-LoT2, TFI) is anchored to the relevant index date before ranking
-(`anchorEpisodes()`, `R/eventBuilders.R`) — see Known gaps for why. For DTI
-the first line may start up to 30 days before the Target 1A index (the
-treated cohorts' attribution buffer), so DTI times can be negative; they are
-kept as they are (a median or percentile floored at 0 is the raw one floored
-at 0), and the summary adds the mean both raw and with negative times as 0,
-plus how many started before index. DTI is descriptive among those who
-started a first line; untreated patients are not in it (no Kaplan-Meier). TTNT, TTD,
+(`anchorEpisodes()`, `R/eventBuilders.R`) — see Known gaps for why. DTI and
+the treatment-pattern outputs use the base treated cohort's own rules
+(`treatedLines()`, `R/eventBuilders.R`; `sql/Target_1A_initiated_template.sql`):
+treated means a member of "mBC initiated base", whose first line is a
+classified regimen starting from 30 days before to 90 days after the Target 1A
+index, with no regimen in the year before; that regimen is line 1. DTI (time from
+the Target 1A index to the first line) is descriptive, no Kaplan-Meier, and
+reported two ways: the summary for two definitions, each with its own `count`
+— `treated` (base cohort, −30 to 90 days) and `unbound` (from −30 days on,
+adding patients whose first classified regimen started after day 90; the
+washout still applies) — and buckets covering every Target 1A member,
+including those who did not start and why. Negative times are kept as they
+are (a median or percentile floored at 0 is the raw one floored at 0). TTNT, TTD,
 TTD-LoT2, and TFI are all death-aware (`combineEarliestEvent()`): the
 protocol defines each as "... or death, whichever occurs first."
 
@@ -1150,18 +1157,29 @@ to first LoT; the rest: censored survival time from `computeTimeToEvent()`).
 | `count` | Subjects in that cohort × stratum (censored). |
 | `n_event` | Subjects with the event observed (DTI has none — every DTI row already requires a first LoT). |
 | `min_time`, `c10_time`, `q25_time`/`lq_time`, `median_time`, `q75_time`/`uq_time`, `c90_time`, `max_time` | Time-to-event distribution among events, in days (blanked when `count`/`n_event` is censored). |
-| `mean_time`, `mean_time_min0` | DTI files only: mean time, raw and with negative times counted as 0 (blanked when `count` is censored). |
-| `n_before`, `pct_before` | DTI files only: subjects whose first line started before index, and their share of `count` (censored; `pct_before` blanked when `n_before` is). |
+| `definition` | DTI only: `treated` (−30 to 90 days, the base cohort) or `unbound` (−30 days on). |
+| `mean_time`, `mean_time_min0` | DTI only: mean time, raw and with negative times counted as 0 (blanked when `count` is censored). |
+| `n_before`, `pct_before` | DTI only: subjects whose first line started before index, and their share of `count` (censored; `pct_before` blanked when `n_before` is). |
 
-### `outcome_dti_by_category_summary.csv` / `_histogram.csv`
-The DTI summary and histogram split by the first line's treatment category
-under each classification lens: `lens` (`eau`, `hemonc_mbc`, `any` — the
-T4/T5/T6 lenses) and `category` (`ev_pembro`, `cisplatin`, `carboplatin`,
-`pdl1_mono`, `other_recommended`, `other`, or `unclassified` for a regimen
-with no classification). Same columns as `outcome_dti_summary.csv` /
-`outcome_dti_histogram.csv`, plus `lens` and `category`.
+### `outcome_dti_buckets.csv`
+Every Target 1A member in one bucket, by when their first classified regimen
+started relative to the index: `-30 to -1`, `0-30`, `31-60`, `61-90` (these
+four are the base treated cohort), `91-180`, `181-360`, `>360` (started after
+the cohort's window), or not started: `prior treatment` (a regimen in the year
+before index — the washout), `other treatment only` (episodes, none
+qualifying), `none recorded`. Columns: `bucket`, `n`, `n_total` (Target 1A in
+that stratum), `pct` (of `n_total`); counts censored, `pct` blanked when
+either is.
 
-### `outcome_dti_histogram.csv`, `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_histogram.csv`
+### `outcome_dti_by_category_summary.csv` / `_buckets.csv`
+The DTI summary and the started buckets split by the first regimen's
+treatment category under each classification lens: `lens` (`eau`,
+`hemonc_mbc`, `any` — the T4/T5/T6 lenses) and `category` (`ev_pembro`,
+`cisplatin`, `carboplatin`, `pdl1_mono`, `other_recommended`, `other`).
+In the buckets file `n_total` is the started patients in that lens ×
+category.
+
+### `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_histogram.csv`
 Binned time-to-event counts (breaks: ⩽−365, −180, −90, −60, −30, 0, 30, 60,
 90, 180, 365, ⩾365 days).
 
@@ -1272,14 +1290,16 @@ above) — a partner can disable stratification for these
 | File | Written by | Population | Grain (one row per…) |
 |---|---|---|---|
 | `treatment_pattern_untreated.csv` | `12_treatment_patterns.R` | Target 1A | stratum (overall/age_group/sex/age_sex) |
-| `treatment_pattern_regimen.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | stratum × line of therapy × regimen name |
-| `treatment_pattern_category.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | stratum × classification lens × line of therapy × category (a-f) |
-| `treatment_pathways.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | stratum × LoT1 × LoT2 × LoT3 category combination (`class_eau`, capped at 3 lines) |
-| `treatment_pattern_maintenance.csv` | `12_treatment_patterns.R` | Treated (Target 1A-anchored) | stratum × line of therapy × line regimen × maintenance regimen |
+| `treatment_pattern_regimen.csv` | `12_treatment_patterns.R` | Treated ("mBC initiated base") | stratum × line of therapy × regimen name |
+| `treatment_pattern_category.csv` | `12_treatment_patterns.R` | Treated ("mBC initiated base") | stratum × classification lens × line of therapy × category (a-f) |
+| `treatment_pathways.csv` | `12_treatment_patterns.R` | Treated ("mBC initiated base") | stratum × LoT1 × LoT2 × LoT3 category combination (`class_eau`, capped at 3 lines) |
+| `treatment_pattern_maintenance.csv` | `12_treatment_patterns.R` | Treated ("mBC initiated base") | stratum × line of therapy × line regimen × maintenance regimen |
 | `treatment_pattern_by_year.csv` | `12_treatment_patterns.R` | Per treated cohort ("mBC initiated base", T3a-e, T4-6a-f) | cohort × lot × index year × lens category × stratum (overall/age_group/sex/age_sex) |
 
 ### `treatment_pattern_untreated.csv`
-Per stratum: how many of Cohort 1 never initiated any systemic regimen.
+Per stratum: how many of Cohort 1 are in the base treated cohort ("mBC
+initiated base"). Why the rest are not, and when late starters started, is in
+`outcome_dti_buckets.csv`.
 
 | Column | Meaning |
 |---|---|
@@ -1290,9 +1310,9 @@ Per stratum: how many of Cohort 1 never initiated any systemic regimen.
 | `pct_untreated` | % of `n_t1` (blanked if either count above is censored). |
 
 ### `treatment_pattern_regimen.csv`
-Regimen distribution by line of therapy, among Cohort 1 members who
-initiated treatment (episodes anchored to each subject's own index — see
-Known gaps).
+Regimen distribution by line of therapy, among the base treated cohort's
+members. Line 1 is the regimen the cohort was indexed on, so line-1 counts
+by category reproduce the T4/T5/T6 arms.
 
 | Column | Meaning |
 |---|---|

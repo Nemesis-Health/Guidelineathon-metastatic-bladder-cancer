@@ -25,10 +25,8 @@
 # `subject_id`/`cohort_start_date` (e.g. a target cohort's own rows); the
 # anchor is per-subject, not per-row, so duplicate subjects (a person
 # appearing under several cohort aliases with the same index date) collapse
-# via `distinct()` before the join. `daysBefore` lets episodes starting up to
-# that many days before the anchor count (DTI uses the treated cohorts'
-# 30-day attribution buffer).
-anchorEpisodes <- function(episodes, anchorDates, daysBefore = 0L) {
+# via `distinct()` before the join.
+anchorEpisodes <- function(episodes, anchorDates) {
   if (!is.data.frame(episodes))
     stop("`episodes` must be a data frame.", call. = FALSE)
   for (col in c("subject_id", "cohort_start_date")) {
@@ -55,8 +53,94 @@ anchorEpisodes <- function(episodes, anchorDates, daysBefore = 0L) {
   episodes |>
     dplyr::mutate(person_id = as.character(.data$person_id)) |>
     dplyr::inner_join(anchors, by = "person_id") |>
-    dplyr::filter(.data$episode_start_date >= .data$.anchor - daysBefore) |>
+    dplyr::filter(.data$episode_start_date >= .data$.anchor) |>
     dplyr::select(-".anchor")
+}
+
+
+# --- treatedLines() ----------------------------------------------------------
+# Lines of therapy for the base treated cohort ("mBC initiated base"), by the
+# same rules as sql/Target_1A_initiated_template.sql, so every treated output
+# describes the same patients and the same first line. `base` holds the
+# cohort's rows (subject_id, cohort_start_date = treatment start), `t1` the
+# Cohort 1 rows (subject_id, cohort_start_date = mBC index). Episodes before
+# treatment start are dropped; maintenance is folded in when `maintenance` is
+# TRUE (mergeMaintenance()); lines are numbered by start date. On the
+# treatment-start day, line 1 is the episode the cohort was indexed on: a
+# classified regimen still active after the Cohort 1 index, first by end date
+# and then name, as the SQL picks it. Returns the episodes with `lot_number`.
+treatedLines <- function(episodes, base, t1, regimenClass,
+                         maintenance = TRUE, maxGapDays = 180L) {
+  starts <- dplyr::inner_join(
+    dplyr::distinct(dplyr::transmute(base, person_id = as.character(.data$subject_id),
+                                     .start = as.Date(.data$cohort_start_date))),
+    dplyr::distinct(dplyr::transmute(t1, person_id = as.character(.data$subject_id),
+                                     .t1 = as.Date(.data$cohort_start_date))),
+    by = "person_id")
+  ep <- episodes |>
+    dplyr::mutate(person_id = as.character(.data$person_id)) |>
+    dplyr::semi_join(starts, by = "person_id")
+  ep <- anchorEpisodes(ep, dplyr::transmute(starts, subject_id = .data$person_id,
+                                            cohort_start_date = .data$.start))
+  if (isTRUE(maintenance)) ep <- mergeMaintenance(ep, regimenClass, maxGapDays)
+  ep |>
+    dplyr::inner_join(starts, by = "person_id") |>
+    dplyr::mutate(.index = .data$episode_start_date == .data$.start &
+                    .data$episode_source_value %in% regimenClass$regName &
+                    .data$episode_end_date > .data$.t1) |>
+    dplyr::arrange(.data$person_id, .data$episode_start_date, dplyr::desc(.data$.index),
+                   .data$episode_end_date, .data$episode_source_value) |>
+    dplyr::mutate(lot_number = dplyr::row_number(), .by = "person_id") |>
+    dplyr::select(-".start", -".t1", -".index")
+}
+
+
+# --- firstLineStatus() -------------------------------------------------------
+# One row per Cohort 1 member: when their first line started and, if it is
+# not in the base treated cohort, why. `status`:
+#   treated           - base cohort member; line 1 from treatedLines()
+#                       (starts 30 days before to 90 days after index)
+#   started_late      - first classified regimen starting after day 90
+#   prior_treatment   - a regimen in [index - 365, index - 30) (the washout)
+#   other_treatment   - ARTEMIS episodes from day -30 on, none qualifying
+#   no_treatment      - none of the above
+# checked in this order. `days` (start - index) and `regimen` are set for
+# treated and started_late. Mirrors sql/Target_1A_initiated_template.sql.
+firstLineStatus <- function(episodes, base, t1, regimenClass,
+                            maintenance = TRUE, maxGapDays = 180L) {
+  idx <- dplyr::summarise(t1, .idx = min(as.Date(.data$cohort_start_date)),
+                          .by = "subject_id") |>
+    dplyr::mutate(subject_id = as.character(.data$subject_id))
+  baseIds <- as.character(base$subject_id)
+  treated <- treatedLines(episodes, base, t1, regimenClass, maintenance, maxGapDays) |>
+    dplyr::filter(.data$lot_number == 1L) |>
+    dplyr::transmute(subject_id = .data$person_id, start = .data$episode_start_date,
+                     regimen = .data$episode_source_value) |>
+    dplyr::inner_join(idx, by = "subject_id") |>
+    dplyr::transmute(.data$subject_id, status = "treated",
+                     days = as.integer(.data$start - .data$.idx), .data$regimen)
+  rest <- episodes |>
+    dplyr::mutate(subject_id = as.character(.data$person_id)) |>
+    dplyr::inner_join(dplyr::filter(idx, !.data$subject_id %in% baseIds), by = "subject_id") |>
+    dplyr::mutate(days = as.integer(.data$episode_start_date - .data$.idx),
+                  late = .data$episode_source_value %in% regimenClass$regName & .data$days > 90) |>
+    dplyr::arrange(.data$subject_id, dplyr::desc(.data$late), .data$days,
+                   .data$episode_end_date, .data$episode_source_value) |>
+    dplyr::summarise(
+      prior   = any(.data$days < -30 & .data$episode_end_date >= .data$.idx - 365),
+      late    = dplyr::first(.data$late),
+      other   = any(.data$days >= -30),
+      days    = dplyr::first(.data$days),
+      regimen = dplyr::first(.data$episode_source_value),
+      .by = "subject_id") |>
+    dplyr::mutate(status = dplyr::case_when(
+      .data$prior ~ "prior_treatment", .data$late ~ "started_late",
+      .data$other ~ "other_treatment", TRUE ~ "no_treatment"))
+  rest$days[rest$status != "started_late"]    <- NA_integer_
+  rest$regimen[rest$status != "started_late"] <- NA_character_
+  dplyr::bind_rows(treated, dplyr::select(rest, "subject_id", "status", "days", "regimen")) |>
+    dplyr::right_join(dplyr::select(idx, "subject_id"), by = "subject_id") |>
+    dplyr::mutate(status = dplyr::coalesce(.data$status, "no_treatment"))
 }
 
 
@@ -293,8 +377,7 @@ buildDtiEvents <- function(targetData, episodes, lineNumber = 1L) {
                    .data$episode_end_date, .data$episode_source_value) |>
     dplyr::mutate(.lot = dplyr::row_number(), .by = "person_id") |>
     dplyr::filter(.data$.lot == lineNumber) |>
-    dplyr::select(subject_id = "person_id", lot_start_date = "episode_start_date",
-                  regimen = "episode_source_value")
+    dplyr::select(subject_id = "person_id", lot_start_date = "episode_start_date")
 
   # subject_id cast to character before this join, not after -- see
   # anchorEpisodes()'s comment; targetData$subject_id here is cast the same
@@ -307,6 +390,5 @@ buildDtiEvents <- function(targetData, episodes, lineNumber = 1L) {
     dplyr::inner_join(ranked, by = "subject_id")
 
   tibble::tibble(subject_id = joined$subject_id,
-                 time_diff  = as.integer(joined$lot_start_date - joined$cohort_start_date),
-                 regimen    = joined$regimen)
+                 time_diff  = as.integer(joined$lot_start_date - joined$cohort_start_date))
 }
