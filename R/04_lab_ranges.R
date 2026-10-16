@@ -8,6 +8,9 @@
 #   before treatment start (defaults).
 # lab_results_summary_portable.sql    : per (cat, concept, unit) QC summary of
 #   the raw normalised table (unit-resolution sanity check).
+# lab_unit_resolution.sql             : per unit-resolution group (concept x
+#   unit x recorded reference range), the range, the recorded values' spread,
+#   and the factor chosen with its scores.
 # lab_results_rollup_portable.sql     : per-category headline of the same table,
 #   one row per (cat, is_ambiguous) in the standard unit, with unit-resolution
 #   health folded into QC columns instead of extra rows.
@@ -82,6 +85,15 @@ labSummary <- querySqlFile(connection, "lab_results_summary_portable.sql",
 names(labSummary) <- tolower(names(labSummary))
 writeResultCsv(labSummary, "lab_results_summary", "labs")
 message("  lab_results_summary: ", nrow(labSummary), " rows")
+
+labResolution <- querySqlFile(connection, "lab_unit_resolution.sql",
+  work_database_schema       = settings$workDatabaseSchema,
+  resolved_table             = "bc_lab_resolved",
+  vocabulary_database_schema = settings$vocabDatabaseSchema,
+  min_cell_count             = settings$minCellCount)
+names(labResolution) <- tolower(names(labResolution))
+writeResultCsv(labResolution, "lab_unit_resolution", "labs")
+message("  lab_unit_resolution: ", nrow(labResolution), " rows")
 
 labRollup <- querySqlFile(connection, "lab_results_rollup_portable.sql",
   work_database_schema       = settings$workDatabaseSchema,

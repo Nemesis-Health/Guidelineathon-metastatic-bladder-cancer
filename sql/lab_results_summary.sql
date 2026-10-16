@@ -2,7 +2,7 @@
 -- lab_results_summary.sql
 -- Export/QC summary of @raw_lab_results_table (the former #eval table written by
 -- lab_cohorts.sql). One row per (cat, measurement_concept_id, unit_concept_id,
--- status, is_ambiguous): patient + measurement counts and the distribution of
+-- factor, status, is_ambiguous): patient + measurement counts and the distribution of
 -- the normalised value (std_value). Use it to sanity-check unit resolution —
 -- every unit for a given lab should land in the same std_value range.
 --
@@ -22,24 +22,27 @@
 
 WITH meas AS (
   SELECT DISTINCT
-         cat, measurement_concept_id, unit_concept_id, status, is_ambiguous,
-         person_id, measurement_date, std_value
+         cat, measurement_concept_id, unit_concept_id, factor, status, is_ambiguous,
+         person_id, measurement_date, std_value,
+         -- factor is FLOAT, which BigQuery cannot PARTITION BY; the string key
+         -- partitions identically on every dialect.
+         CAST(factor AS VARCHAR(50)) AS factor_key
     FROM @work_database_schema.@raw_lab_results_table
    WHERE std_value IS NOT NULL
 ),
 pct AS (
-  SELECT cat, measurement_concept_id, unit_concept_id, status, is_ambiguous,
+  SELECT cat, measurement_concept_id, unit_concept_id, factor, status, is_ambiguous,
          person_id, std_value,
          PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY std_value)
-           OVER (PARTITION BY measurement_concept_id, unit_concept_id, status, is_ambiguous) AS lq,
+           OVER (PARTITION BY measurement_concept_id, unit_concept_id, factor_key, status, is_ambiguous) AS lq,
          PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY std_value)
-           OVER (PARTITION BY measurement_concept_id, unit_concept_id, status, is_ambiguous) AS med,
+           OVER (PARTITION BY measurement_concept_id, unit_concept_id, factor_key, status, is_ambiguous) AS med,
          PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY std_value)
-           OVER (PARTITION BY measurement_concept_id, unit_concept_id, status, is_ambiguous) AS uq
+           OVER (PARTITION BY measurement_concept_id, unit_concept_id, factor_key, status, is_ambiguous) AS uq
     FROM meas
 ),
 agg AS (
-  SELECT cat, measurement_concept_id, unit_concept_id, status, is_ambiguous,
+  SELECT cat, measurement_concept_id, unit_concept_id, factor, status, is_ambiguous,
          COUNT(DISTINCT person_id)          AS n_patients,
          COUNT(*)                           AS n_measurements,
          AVG(CAST(std_value AS FLOAT))      AS mean_value,
@@ -50,13 +53,14 @@ agg AS (
          MAX(uq)                            AS uq_value,
          MAX(std_value)                     AS max_value
     FROM pct
-   GROUP BY cat, measurement_concept_id, unit_concept_id, status, is_ambiguous
+   GROUP BY cat, measurement_concept_id, unit_concept_id, factor, status, is_ambiguous
 )
 SELECT a.cat,
        a.measurement_concept_id,
        mc.concept_name AS measurement_concept_name,
        a.unit_concept_id,
        uc.concept_name AS unit_concept_name,
+       a.factor,
        a.status,
        a.is_ambiguous,
        CASE WHEN a.n_patients < @min_cell_count THEN -1 * @min_cell_count ELSE a.n_patients END      AS n_patients,
@@ -71,4 +75,4 @@ SELECT a.cat,
   FROM agg a
   LEFT JOIN @vocabulary_database_schema.concept mc ON mc.concept_id = a.measurement_concept_id
   LEFT JOIN @vocabulary_database_schema.concept uc ON uc.concept_id = a.unit_concept_id
- ORDER BY a.cat, a.measurement_concept_id, a.unit_concept_id, a.status;
+ ORDER BY a.cat, a.measurement_concept_id, a.unit_concept_id, a.status, a.factor;
