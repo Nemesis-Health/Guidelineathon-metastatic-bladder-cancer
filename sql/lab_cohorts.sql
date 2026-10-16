@@ -980,20 +980,22 @@ WITH grp_base AS (
          -- clause below.
          CASE WHEN m.range_low  > 0 THEN CAST(m.range_low  AS VARCHAR(50)) END AS rlo_key,
          CASE WHEN m.range_high > 0 THEN CAST(m.range_high AS VARCHAR(50)) END AS rhi_key,
-         m.value_as_number                                AS val
+         m.value_as_number                                AS val,
+         m.person_id
     FROM @cdm_database_schema.measurement m
     JOIN @work_database_schema.@cat_concept_table cc
       ON cc.measurement_concept_id = m.measurement_concept_id
    WHERE m.value_as_number > 0
 ),
 grp_ranked AS (
-  SELECT cat, m_id, u_id, rlo, rhi, val,
+  SELECT cat, m_id, u_id, rlo, rhi, val, person_id,
          ROW_NUMBER() OVER (PARTITION BY cat, m_id, u_id, rlo_key, rhi_key ORDER BY val) AS rn,
          COUNT(*)     OVER (PARTITION BY cat, m_id, u_id, rlo_key, rhi_key)              AS n
     FROM grp_base
 )
 SELECT cat, m_id, u_id, rlo, rhi,
        COUNT(*) AS records,
+       COUNT(DISTINCT person_id) AS n_patients,
        SUM(CASE WHEN rn = FLOOR(0.03 * (n - 1)) + 1
                 THEN val * (1.0 - (0.03 * (n - 1) - FLOOR(0.03 * (n - 1))))
                 WHEN rn = FLOOR(0.03 * (n - 1)) + 2
@@ -1036,7 +1038,8 @@ SELECT DISTINCT cat, factor, val_offset INTO @work_database_schema.@scales_table
 
 DROP TABLE IF EXISTS @work_database_schema.@scored_table;
 SELECT
-  g.m_id, g.u_id, g.rlo, g.rhi, g.cat, g.records, s.factor, s.val_offset,
+  g.m_id, g.u_id, g.rlo, g.rhi, g.cat, g.records, g.n_patients, g.p03, g.p25, g.p75, g.p97,
+  s.factor, s.val_offset,
   -- range_decade: bound-to-bound vs the standard normal, gated on the normal's matching.
   --   'both'  -> data must supply BOTH bounds (else NULL -> distribution)
   --   'upper' -> data must supply the high bound (else NULL -> distribution)
@@ -1125,7 +1128,8 @@ SELECT m_id, u_id, rlo, rhi, cat,
         WHEN grp_best IS NULL AND prov_factor IS NOT NULL THEN 'unverified'
         ELSE 'unresolved' END AS status,
    CASE WHEN grp_npass > 1 THEN 1 ELSE 0 END AS is_ambiguous,
-   grp_best AS best_score, prov_score
+   grp_best AS best_score, prov_score, con_best AS concept_score,
+   records, n_patients, p03, p25, p75, p97
 INTO @work_database_schema.@resolved_table
 FROM (
   SELECT y.*,
@@ -1147,7 +1151,8 @@ FROM (
       -- rather than repeated in every PARTITION BY clause above.
       SELECT sc.m_id, sc.u_id, sc.rlo, sc.rhi,
              CAST(sc.rlo AS VARCHAR(50)) AS rlo_key, CAST(sc.rhi AS VARCHAR(50)) AS rhi_key,
-             sc.cat, sc.factor, sc.val_offset,
+             sc.cat, sc.records, sc.n_patients, sc.p03, sc.p25, sc.p75, sc.p97,
+             sc.factor, sc.val_offset,
              COALESCE(sc.range_decade, sc.dist_decade) AS score,   -- range first, distribution only as fallback
              CASE WHEN uf.unit_concept_id IS NOT NULL THEN 1 ELSE 0 END AS is_provided,
              CASE WHEN uc.unit_class IS NOT NULL THEN 1 ELSE 0 END AS is_allowed
@@ -1180,7 +1185,7 @@ SELECT
    CASE WHEN t.basis = 'ULN'
         THEN t.max_val * COALESCE(NULLIF(m.range_high,0)*r.factor+r.val_offset, n.range_high)
         ELSE t.max_val END                                                      AS max_bound,
-   r.status, r.is_ambiguous
+   r.factor, r.status, r.is_ambiguous
 INTO @work_database_schema.@raw_lab_results_table
 FROM @cdm_database_schema.measurement m
 JOIN @work_database_schema.@cat_concept_table cc ON cc.measurement_concept_id = m.measurement_concept_id

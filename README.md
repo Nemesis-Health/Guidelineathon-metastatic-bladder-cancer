@@ -289,7 +289,7 @@ ARTEMIS.
 | **(a)** ARTEMIS regimen alignment | `R/01_artemis.R` | `bc_artemis_episodes`, `bc_regimen_classifications` |
 | **(b)** eligibility labs **+** cohorts → one table | `R/02_eligibility_inputs.R` | `bc_lab_cohort` (labs **+** ECOG **+** conditions), `bc_raw_lab_results` |
 | **(c)** main cohort tree | `R/03_main_cohorts.R` | `bc_cohort`, `results/eligibility/cohort_counts.csv` |
-| **(d)** lab test ranges on (c) | `R/04_lab_ranges.R` | `lab_value_distribution.csv`, `lab_timing_to_index.csv`, `lab_results_summary.csv`, `lab_results_rollup.csv` |
+| **(d)** lab test ranges on (c) | `R/04_lab_ranges.R` | `lab_value_distribution.csv`, `lab_timing_to_index.csv`, `lab_results_summary.csv`, `lab_unit_resolution.csv`, `lab_results_rollup.csv` |
 | — eligibility-input counts + coverage | `R/05_eligibility_coverage.R` | `lab_cohort_counts.csv`, `eligibility_input_coverage.csv` |
 | — ARTEMIS alignment assessment | `R/06_artemis_assessment.R` | `artemis_summary.csv`, `artemis_coverage.csv`, `artemis_drug_exposures.csv`, `artemis_regimens_aligned.csv`, `artemis_episodes_per_patient.csv`, `artemis_uncaptured_drugs.csv` |
 | — per-cohort demographics | `R/07_demographics.R` | `demographics.csv`, `demographics_age_continuous.csv` |
@@ -398,6 +398,7 @@ At the end of a run, results are packaged into two archives:
 | `lab_value_distribution_portable.sql` | Per cohort × lab (cat) × stratum summary of `std_value` (mean/SD/median/IQR/min/max), censored, on the result eligibility uses (`eligibility_lab_rows.sql`). Used by step (d); `lab_value_distribution.sql` is the PERCENTILE_CONT original, kept for comparison. |
 | `lab_timing_to_index_portable.sql` | Per Target 1A (+ PC allowed) × lab (cat) × direction (before/after/any) × stratum, distance in days from index to the closest measurement in a subject's entire history. Used by step (d). |
 | `lab_results_summary_portable.sql` | Per (cat, concept, unit) QC summary of `bc_raw_lab_results` (unit-resolution sanity check). Used by step (d); `lab_results_summary.sql` is the PERCENTILE_CONT original, kept for comparison. |
+| `lab_unit_resolution.sql` | Per unit-resolution group of `bc_lab_resolved` (concept × unit × recorded reference range): the range, the recorded values' spread, the factor chosen and its scores. Used by step (d). |
 | `lab_results_rollup_portable.sql` | Per-category headline of `bc_raw_lab_results`: one row per (cat, is_ambiguous) in the standard unit, with unit-resolution health as QC columns. Used by step (d); `lab_results_rollup.sql` is the PERCENTILE_CONT original, kept for comparison. |
 | `lab_cohort_counts.sql` | Whole-population counts of `bc_lab_cohort` per test-id. |
 | `eligibility_input_coverage.sql` | Each input × cohort × stratum (every cohort in the main tree): `n_tested` (measured) + `n_passed` (criterion met), from the rows eligibility uses (`eligibility_lab_rows.sql`). |
@@ -805,7 +806,8 @@ cohorts, plus unit-resolution QC on the raw normalised measurement table
 | `eligibility_input_coverage.csv` | `05_eligibility_coverage.R` | Per main cohort | cohort × stratum type × stratum value × eligibility test-id |
 | `lab_value_distribution.csv` | `04_lab_ranges.R` | Per main cohort | cohort × lab (cat) × stratum type × stratum value |
 | `lab_timing_to_index.csv` | `04_lab_ranges.R` | Target 1A + Target 1A PC allowed | cohort × lab (cat) × direction (before/after/any) |
-| `lab_results_summary.csv` | `04_lab_ranges.R` | **Whole population** | cat × measurement concept × unit × status × ambiguity |
+| `lab_results_summary.csv` | `04_lab_ranges.R` | **Whole population** | cat × measurement concept × unit × factor × status × ambiguity |
+| `lab_unit_resolution.csv` | `04_lab_ranges.R` | **Whole population** | cat × measurement concept × unit × recorded reference range |
 | `lab_results_rollup.csv` | `04_lab_ranges.R` | **Whole population** | cat × ambiguity (standard unit; QC columns) |
 | `covariate_lab_coverage.csv` | `13_covariate_lab_coverage.R` | Target 1A only | comorbidity subgroup (with/without) × lab (cat) |
 
@@ -922,8 +924,8 @@ QC / unit-resolution sanity check on the raw normalised table
 (`bc_raw_lab_results`), collapsed to one physical measurement before counting.
 **Whole population** — every person in the CDM with these measurements, not the
 bladder-cancer cohort.
-Row per (cat × measurement concept × unit × status × ambiguity). Every unit for
-a given lab should land in the same `std_value` range.
+Row per (cat × measurement concept × unit × factor × status × ambiguity). Every
+unit for a given lab should land in the same `std_value` range.
 
 | Column | Meaning |
 |---|---|
@@ -932,12 +934,42 @@ a given lab should land in the same `std_value` range.
 | `measurement_concept_name` | Concept name (from vocabulary; blank if unresolved). |
 | `unit_concept_id` | OMOP unit concept id. |
 | `unit_concept_name` | Unit name (from vocabulary; blank if unresolved). |
+| `factor` | Conversion factor applied to the recorded value (`std_value = value_as_number × factor`, plus an offset for HbA1c). |
 | `status` | How the (concept, unit) scale was chosen: `verified` (recorded unit), `concept` (unit stated by the concept name), `overridden` (best-scoring scale), `unverified` (recorded unit, no evidence to check it), `unresolved` (none; not converted). |
 | `is_ambiguous` | Flag: unit resolution was ambiguous. |
 | `n_patients` | Distinct patients (censored). |
 | `n_measurements` | Measurement count (blanked when censored). |
 | `mean_value`, `sd_value` | Mean and SD of `std_value` (blanked when censored). |
 | `min_value`, `lq_value`, `median_value`, `uq_value`, `max_value` | Min, quartiles, median, max of `std_value` (blanked when censored). |
+
+### `lab_unit_resolution.csv`
+Why each lab group got its conversion factor. Unit resolution
+(`lab_cohorts.sql` step 3) works per group of (concept × unit × recorded
+reference range), so a concept and unit with several reference ranges has
+several rows. **Whole population**, including groups that could not be
+resolved (`status = unresolved`, not converted), which `lab_results_summary.csv`
+omits. Every score can be recomputed from the range and percentiles.
+
+| Column | Meaning |
+|---|---|
+| `cat` | Lab category / analyte code. |
+| `measurement_concept_id`, `measurement_concept_name` | OMOP measurement concept. |
+| `unit_concept_id`, `unit_concept_name` | Recorded unit (0 = none). |
+| `range_low`, `range_high` | Reference range recorded in the measurement table (blank if not recorded or not > 0). |
+| `n_patients` | Distinct patients (censored). |
+| `n_records` | Measurement count (blanked when censored). |
+| `p03_value`, `p25_value`, `p75_value`, `p97_value` | Percentiles of the recorded value, before conversion (blanked when censored). |
+| `factor`, `val_offset` | Conversion applied (blank if unresolved). |
+| `status` | As in `lab_results_summary.csv`. |
+| `is_ambiguous` | Flag: more than one scale passed the 0.7-decade check. |
+| `recorded_unit_score` | Score of the recorded unit's scale, in decades from the normal range (blank if the unit is unknown or could not be scored; blanked when censored). |
+| `concept_unit_score` | Best score among the scales the concept name allows (blank for concepts that state no unit; blanked when censored). |
+| `best_score` | Best score over all scales (blanked when censored). |
+
+A score uses the recorded range when the category's normal has the matching
+bound(s), otherwise the value percentiles (groups over 20 records only). The
+range, factor and status are not censored: they describe the lab's reference
+range and the resolver's choice, not patient values.
 
 ### `lab_results_rollup.csv`
 Per-category headline of the same normalised table, the companion to
