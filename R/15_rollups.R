@@ -14,14 +14,21 @@
 # is empty falls back to drug_exposure start dates (logged, and recorded in
 # drug_rollup.csv's source_table column).
 #
-# Two outputs: condition_rollup.csv and drug_rollup.csv (cohort_definition_id,
-# cohort_name, stratum_type, stratum_value, category [+ atc_code], n_cohort,
-# n_subjects), both counts censored to -minCellCount.
+# other_cancer_rollup.csv: condition_rollup.sql with cancer =
+#   TRUE on T1, the mixed bag and T1all: the cohorts' own "Excluded
+#   primaries" codes within [index - 180d, index + 30d], by cancer site (the
+#   ICD-10 C-blocks), with records and subjects with >= 2 records.
+#
+# Three outputs: condition_rollup.csv, drug_rollup.csv and
+# other_cancer_rollup.csv (cohort_definition_id, cohort_name, stratum_type,
+# stratum_value, category [+ atc_code], n_cohort, n_subjects [+
+# n_subjects_2plus, n_records]), counts censored to -minCellCount.
 # ===========================================================================
 
 message("\n== (o) condition and drug roll-ups ==")
 
 mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
+cohortNames  <- loadState("cohortNames", "R/03_main_cohorts.R")
 targetIds    <- mainManifest$cohortId
 
 strataFragment <- renderSqlFile("subject_strata.sql",
@@ -52,6 +59,10 @@ shapeRollup <- function(raw) {
   out <- out[out$stratum_type %in% activeStrataTypes(), ]
   censor <- function(x) ifelse(!is.na(x) & x > 0 & x < settings$minCellCount,
                                -settings$minCellCount, x)
+  if ("n_records" %in% names(out)) {   # condition_rollup.sql only
+    out$n_records[out$n_subjects > 0 & out$n_subjects < settings$minCellCount] <- NA
+    out$n_subjects_2plus <- censor(as.integer(out$n_subjects_2plus))
+  }
   out$n_cohort   <- censor(out$n_cohort)
   out$n_subjects <- censor(out$n_subjects)
   out <- dplyr::left_join(out, nameMap, by = "cohort_definition_id")
@@ -65,6 +76,7 @@ conditions <- shapeRollup(querySqlFile(connection, "condition_rollup.sql",
   cdm_database_schema        = settings$cdmDatabaseSchema,
   vocabulary_database_schema = settings$vocabDatabaseSchema,
   cohort_definition_ids      = paste(targetIds, collapse = ", "),
+  cancer                     = FALSE,
   subject_strata_sql         = strataFragment))
 conditions$category_order <- as.integer(conditions$category_order)
 # Not reported: the vocabulary maps metastases recorded as conditions to the
@@ -96,3 +108,28 @@ writeResultCsv(drugs[c("cohort_definition_id", "cohort_name", "stratum_type", "s
                "drug_rollup", "characterization")
 message("  drug_rollup (", drugSource, "): ", dplyr::n_distinct(drugs$category), " groups across ",
         dplyr::n_distinct(drugs$cohort_definition_id), " cohorts")
+
+# Other cancers: the "Excluded primaries" concept set the T1 cohorts' rule uses.
+cancerSet <- Filter(function(cs) cs$name == "[GDE] Excluded primaries",
+  jsonlite::fromJSON(file.path(cohortsDir, "01_Target", "Target_1A.json"),
+                     simplifyVector = FALSE)$ConceptSets)[[1]]
+cancerCodeset <- SqlRender::render(
+  CirceR::buildConceptSetQuery(as.character(jsonlite::toJSON(cancerSet$expression, auto_unbox = TRUE))),
+  vocabulary_database_schema = settings$vocabDatabaseSchema)
+cancers <- shapeRollup(querySqlFile(connection, "condition_rollup.sql",
+  work_database_schema       = settings$workDatabaseSchema,
+  cohort_table               = settings$cohortTable,
+  cdm_database_schema        = settings$cdmDatabaseSchema,
+  vocabulary_database_schema = settings$vocabDatabaseSchema,
+  cohort_definition_ids      = paste(idsByCodes(c("T1", "T1mb", "T1all")), collapse = ", "),
+  cancer                     = TRUE,
+  cancer_codeset_sql         = cancerCodeset,
+  subject_strata_sql         = strataFragment))
+cancers$category_order <- as.integer(cancers$category_order)
+cancers <- cancers[order(cancers$cohort_definition_id, cancers$stratum_type,
+                         cancers$stratum_value, cancers$category_order), ]
+writeResultCsv(cancers[c("cohort_definition_id", "cohort_name", "stratum_type", "stratum_value",
+                         "category", "n_cohort", "n_subjects", "n_subjects_2plus", "n_records")],
+               "other_cancer_rollup", "characterization")
+message("  other_cancer_rollup: ", dplyr::n_distinct(cancers$category), " sites across ",
+        dplyr::n_distinct(cancers$cohort_definition_id), " cohorts")

@@ -27,18 +27,67 @@
 -- 'Other condition'; unmapped records (concept 0) are not counted.
 --
 -- Output: cohort_definition_id, stratum_type, stratum_value, category_order,
---         category, n_subjects; plus one category_order = -1 row per
---         cohort x stratum carrying the denominator in n_subjects.
+--         category, n_subjects, n_subjects_2plus, n_records; plus one
+--         category_order = -1 row per cohort x stratum carrying the
+--         denominator in n_subjects.
+--
+-- cancer = TRUE (other cancers): only codes in cancer_codeset_sql
+-- (the cohorts' "Excluded primaries" concept set, pre-rendered) within
+-- [index - 180d, index + 30d], the cohort rule's window, rolled up to cancer
+-- sites that follow the ICD-10 C-blocks; the rest is 'Other cancer'. Adds
+-- n_records and n_subjects_2plus (subjects with >= 2 records).
 --
 -- SqlRender parameters: @work_database_schema @cohort_table
 --   @cdm_database_schema @vocabulary_database_schema @cohort_definition_ids
---   subject_strata_sql (pre-rendered subject_strata.sql)
+--   @cancer; subject_strata_sql (pre-rendered subject_strata.sql),
+--   cancer_codeset_sql
 -- =============================================================================
 
 WITH strata AS (
   @subject_strata_sql
 ),
 rollup_categories AS (
+{@cancer} ? {
+  SELECT 1 AS category_order, 'Lung' AS category, 443388 AS ancestor_concept_id
+  UNION ALL SELECT 1, 'Lung', 443399
+  UNION ALL SELECT 2, 'Pleura and mesothelioma', 4180795
+  UNION ALL SELECT 2, 'Pleura and mesothelioma', 37166566
+  UNION ALL SELECT 3, 'Head and neck', 436045
+  UNION ALL SELECT 4, 'Prostate', 4163261
+  UNION ALL SELECT 5, 'Testis', 4177115
+  UNION ALL SELECT 6, 'Breast', 4112853
+  UNION ALL SELECT 7, 'Ovary', 4181351
+  UNION ALL SELECT 8, 'Uterus and cervix', 197230
+  UNION ALL SELECT 8, 'Uterus and cervix', 198984
+  UNION ALL SELECT 9, 'Kidney', 196653
+  UNION ALL SELECT 10, 'Renal pelvis and ureter', 4181357
+  UNION ALL SELECT 10, 'Renal pelvis and ureter', 4178972
+  UNION ALL SELECT 11, 'Urethra', 4177230
+  UNION ALL SELECT 12, 'Colorectal and anus', 443396
+  UNION ALL SELECT 12, 'Colorectal and anus', 4180911
+  UNION ALL SELECT 13, 'Oesophagus', 4181343
+  UNION ALL SELECT 14, 'Stomach', 443387
+  UNION ALL SELECT 15, 'Liver', 4246127
+  UNION ALL SELECT 16, 'Pancreas', 4180793
+  UNION ALL SELECT 17, 'Brain and CNS', 4155285
+  UNION ALL SELECT 18, 'Thyroid', 4178976
+  UNION ALL SELECT 19, 'Bone', 443564
+  UNION ALL SELECT 19, 'Bone', 35610234
+  UNION ALL SELECT 20, 'Melanoma', 4162276
+  UNION ALL SELECT 21, 'Lymphoma', 432571
+  UNION ALL SELECT 22, 'Myeloma', 437233
+  UNION ALL SELECT 23, 'Leukaemia', 317510
+  UNION ALL SELECT 24, 'Unknown primary site', 4149322
+  UNION ALL SELECT 25, 'Other respiratory', 40493428
+  UNION ALL SELECT 26, 'Other digestive', 4116238
+  UNION ALL SELECT 27, 'Other male genital', 4181487
+  UNION ALL SELECT 28, 'Other female genital', 4177244
+  UNION ALL SELECT 29, 'Other endocrine', 4156115
+  UNION ALL SELECT 30, 'Other skin', 4155297
+  UNION ALL SELECT 31, 'Other haematological', 4147164
+  UNION ALL SELECT 32, 'Soft tissue and sarcoma', 4153882
+  UNION ALL SELECT 32, 'Soft tissue and sarcoma', 4311439
+} : {
   SELECT 0 AS category_order, 'Bladder cancer' AS category, 197508 AS ancestor_concept_id
   UNION ALL SELECT 1, 'Blood or immune disease', 440371
   UNION ALL SELECT 1, 'Blood or immune disease', 443723
@@ -75,10 +124,12 @@ rollup_categories AS (
   UNION ALL SELECT 19, 'Iatrogenic condition', 4053838
   UNION ALL SELECT 19, 'Iatrogenic condition', 444199
   UNION ALL SELECT 20, 'Not categorized', 441840
+
+}
 ),
 category_names AS (
   SELECT DISTINCT category_order, category FROM rollup_categories
-  UNION ALL SELECT 99, 'Other condition'
+  UNION ALL SELECT 99, {@cancer} ? {'Other cancer'} : {'Other condition'}
 ),
 target AS (
   SELECT DISTINCT cohort_definition_id, subject_id, cohort_start_date
@@ -86,12 +137,19 @@ target AS (
    WHERE cohort_definition_id IN (@cohort_definition_ids)
 ),
 subject_concepts AS (
-  SELECT DISTINCT t.cohort_definition_id, t.subject_id, co.condition_concept_id
+  SELECT t.cohort_definition_id, t.subject_id, co.condition_concept_id, COUNT(*) AS n_rec
     FROM target t
     JOIN @cdm_database_schema.condition_occurrence co
       ON co.person_id = t.subject_id
+{@cancer} ? {
+     AND co.condition_start_date >= DATEADD(day, -180, t.cohort_start_date)
+     AND co.condition_start_date <= DATEADD(day, 30, t.cohort_start_date)
+   WHERE co.condition_concept_id IN (SELECT concept_id FROM (@cancer_codeset_sql) cs)
+} : {
      AND co.condition_start_date <= t.cohort_start_date
    WHERE co.condition_concept_id <> 0
+}
+   GROUP BY t.cohort_definition_id, t.subject_id, co.condition_concept_id
 ),
 concept_category AS (
   SELECT ca.descendant_concept_id AS concept_id,
@@ -103,11 +161,12 @@ concept_category AS (
    GROUP BY ca.descendant_concept_id
 ),
 subject_category AS (
-  SELECT DISTINCT sc.cohort_definition_id, sc.subject_id,
-         COALESCE(cc.category_order, 99) AS category_order
+  SELECT sc.cohort_definition_id, sc.subject_id,
+         COALESCE(cc.category_order, 99) AS category_order, SUM(sc.n_rec) AS n_rec
     FROM subject_concepts sc
     LEFT JOIN concept_category cc
       ON cc.concept_id = sc.condition_concept_id
+   GROUP BY sc.cohort_definition_id, sc.subject_id, COALESCE(cc.category_order, 99)
 ),
 target_strata AS (
   SELECT s.*
@@ -132,7 +191,9 @@ tagged AS (
 ),
 counts AS (
   SELECT tg.stratum_type, tg.stratum_value, tg.cohort_definition_id, sc.category_order,
-         COUNT(DISTINCT tg.subject_id) AS n_subjects
+         COUNT(DISTINCT tg.subject_id) AS n_subjects,
+         COUNT(DISTINCT CASE WHEN sc.n_rec >= 2 THEN tg.subject_id END) AS n_subjects_2plus,
+         SUM(sc.n_rec) AS n_records
     FROM tagged tg
     JOIN subject_category sc
       ON sc.cohort_definition_id = tg.cohort_definition_id AND sc.subject_id = tg.subject_id
@@ -140,16 +201,17 @@ counts AS (
 ),
 denominators AS (
   SELECT tg.stratum_type, tg.stratum_value, tg.cohort_definition_id, -1 AS category_order,
-         COUNT(DISTINCT tg.subject_id) AS n_subjects
+         COUNT(DISTINCT tg.subject_id) AS n_subjects,
+         CAST(NULL AS INT) AS n_subjects_2plus, CAST(NULL AS INT) AS n_records
     FROM tagged tg
    GROUP BY tg.stratum_type, tg.stratum_value, tg.cohort_definition_id
 )
 SELECT c.stratum_type, c.stratum_value, c.cohort_definition_id, c.category_order,
-       cn.category, c.n_subjects
+       cn.category, c.n_subjects, c.n_subjects_2plus, c.n_records
   FROM counts c
   JOIN category_names cn ON cn.category_order = c.category_order
 UNION ALL
 SELECT d.stratum_type, d.stratum_value, d.cohort_definition_id, d.category_order,
-       'n_cohort' AS category, d.n_subjects
+       'n_cohort' AS category, d.n_subjects, d.n_subjects_2plus, d.n_records
   FROM denominators d
 ;
