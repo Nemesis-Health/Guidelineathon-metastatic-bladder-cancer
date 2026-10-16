@@ -5,7 +5,12 @@
 # (R/timeToEvent.R) + extractSurvivalMilestones() (R/survivalMilestones.R),
 # fed by the event builders in R/eventBuilders.R:
 #
-#   dti      — T1 only.       first LoT start - Cohort 1 index. Median (IQR).
+#   dti      — T1 only.       first LoT start - Cohort 1 index, counting
+#              lines that start up to 30 days before index (the treated
+#              cohorts' attribution buffer), so times can be negative.
+#              Descriptive stats, no KM; also by the first line's treatment
+#              category under each classification lens
+#              (outcome_dti_by_category_*.csv).
 #   os       — every cohort    (T1, T2a-e, T3a-e, T4-6a-f, plus the L01-
 #              anchored initiated cohorts). Index -> death, KM.
 #   ttnt     — treated cohorts (T3a-e, T4-6a-f; indexed at LoT1 start). KM to
@@ -123,7 +128,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
 
     # --- anchor episodes before any line-of-therapy ranking -------------------
     episodesForDti <- anchorEpisodes(episodes,
-      dplyr::filter(targetData, .data$cohort_definition_id == t1Id))
+      dplyr::filter(targetData, .data$cohort_definition_id == t1Id), daysBefore = 30L)
     episodesForTreatment <- anchorEpisodes(episodes,
       dplyr::filter(targetData, .data$cohort_definition_id %in% treatedTargetCohortIds))
     # fold maintenance into the line it maintains before lines are numbered
@@ -252,5 +257,35 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
       }
       message("  ", nm, ": done (", length(cohortIds), " cohort(s))")
     }
+
+    # --- DTI by the first line's treatment category, under each lens ----------
+    # Category = the first line's regimen classification (as T4/T5/T6 split
+    # cohorts); regimens with no classification are "unclassified".
+    t1Data <- dplyr::filter(targetData, .data$cohort_definition_id == t1Id)
+    dtiEv  <- eventFor("dti", t1Data)   # the same events as outcome_dti_*
+    lenses <- c(eau = "class_eau", hemonc_mbc = "class_hemonc_mbc", any = "class_any")
+    dtiByCat <- dplyr::bind_rows(lapply(names(lenses), function(lens) {
+      cls <- dplyr::select(regimenClass, regimen = "regName", category = dplyr::all_of(lenses[[lens]]))
+      dplyr::left_join(dtiEv, dplyr::distinct(cls), by = "regimen") |>
+        dplyr::mutate(lens = lens, category = dplyr::coalesce(.data$category, "unclassified"))
+    }))
+    # every DTI subject falls in exactly one category per lens
+    stopifnot(all(table(factor(dtiByCat$lens, levels = names(lenses))) == nrow(dtiEv)))
+    catSummary <- catHist <- list()
+    for (stratumName in names(outcomeStrata)) {
+      stratumCols <- outcomeStrata[[stratumName]]
+      evGrouped <- dtiByCat
+      if (!is.null(stratumCols))
+        evGrouped <- dplyr::left_join(dtiByCat,
+          dplyr::select(t1Data, "subject_id", dplyr::all_of(stratumCols)), by = "subject_id")
+      res <- computeTimeDiffStats(evGrouped, timeCol = "time_diff",
+        groupCols = c("lens", "category", stratumCols), minCellCount = settings$minCellCount)
+      catSummary[[stratumName]] <- tagRows(res$summaryStats, t1Id, stratumName)
+      catHist[[stratumName]]    <- tagRows(res$histogram, t1Id, stratumName)
+    }
+    nm <- "dti_by_category"
+    writeOutcomeCsv(catSummary, "summary")
+    writeOutcomeCsv(catHist, "histogram")
+    message("  dti_by_category: done")
   }
 }
