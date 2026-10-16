@@ -246,12 +246,25 @@ computeTimeDiffStats <- function(data,
       uq_time     = suppressWarnings(stats::quantile(.data[[timeCol]], 0.75, na.rm = TRUE)),
       c90_time    = suppressWarnings(stats::quantile(.data[[timeCol]], 0.90, na.rm = TRUE)),
       max_time    = suppressWarnings(max(.data[[timeCol]], na.rm = TRUE)),
+      mean_time   = mean(.data[[timeCol]], na.rm = TRUE),
+      mean_time_min0 = mean(pmax(.data[[timeCol]], 0), na.rm = TRUE),
+      n_before    = sum(.data[[timeCol]] < 0, na.rm = TRUE),
       .groups     = "drop"
     ) |>
     tibble::as_tibble()
 
+  # Negative times (event before the anchor) are kept: quantiles floored at 0
+  # equal the raw ones floored at 0, so only the mean needs its own min-0
+  # version. n_before / pct_before: how many had a negative time.
+  summaryStats$pct_before <- 100 * summaryStats$n_before / summaryStats$count
+  summaryStats$n_before <- dplyr::case_when(
+    summaryStats$n_before > 0 & summaryStats$n_before < minCellCount ~ as.double(-minCellCount),
+    TRUE ~ as.double(summaryStats$n_before))
+  summaryStats$pct_before[summaryStats$n_before < 0] <- NA_real_
+
   stat_cols <- c("min_time", "c10_time", "lq_time", "median_time",
-                 "uq_time", "c90_time", "max_time")
+                 "uq_time", "c90_time", "max_time", "mean_time", "mean_time_min0",
+                 "n_before", "pct_before")
   summaryStats <- summaryStats |>
     dplyr::mutate(dplyr::across(dplyr::all_of(stat_cols),
       ~ dplyr::if_else(is.infinite(.x), NA_real_, as.double(.x))))

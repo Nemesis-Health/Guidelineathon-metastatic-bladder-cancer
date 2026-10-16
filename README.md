@@ -1110,6 +1110,7 @@ censoring" and "Stratification" above apply here too.
 | File | Written by | Population | Grain (one row per…) |
 |---|---|---|---|
 | `outcome_dti_summary.csv` / `_histogram.csv` | `09_outcomes.R` | Target 1A | stratum type × stratum value (+ time bin for histogram) |
+| `outcome_dti_by_category_summary.csv` / `_histogram.csv` | `09_outcomes.R` | Target 1A | lens × first-line treatment category × stratum type × stratum value (+ time bin for histogram) |
 | `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_summary.csv` / `_histogram.csv` | `09_outcomes.R` | os: every cohort (T1/T2a-e/T3a-e/T4-6a-f); ttnt/ttd/ttd_lot2/tfi: treatment-initiated cohorts only (T3a-e/T4-6a-f) | cohort × stratum type × stratum value (+ time bin for histogram) |
 | `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_km.csv` | `09_outcomes.R` | same as above | cohort × stratum type × stratum value × KM step |
 | `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_median_survival.csv` | `09_outcomes.R` | same as above | cohort × stratum type × stratum value |
@@ -1130,7 +1131,13 @@ grouping column itself when `stratum_type` isn't `overall` (e.g. an
 
 Episode ranking for every line-of-therapy-based event (DTI, TTNT, TTD,
 TTD-LoT2, TFI) is anchored to the relevant index date before ranking
-(`anchorEpisodes()`, `R/eventBuilders.R`) — see Known gaps for why. TTNT, TTD,
+(`anchorEpisodes()`, `R/eventBuilders.R`) — see Known gaps for why. For DTI
+the first line may start up to 30 days before the Target 1A index (the
+treated cohorts' attribution buffer), so DTI times can be negative; they are
+kept as they are (a median or percentile floored at 0 is the raw one floored
+at 0), and the summary adds the mean both raw and with negative times as 0,
+plus how many started before index. DTI is descriptive among those who
+started a first line; untreated patients are not in it (no Kaplan-Meier). TTNT, TTD,
 TTD-LoT2, and TFI are all death-aware (`combineEarliestEvent()`): the
 protocol defines each as "... or death, whichever occurs first."
 
@@ -1143,6 +1150,16 @@ to first LoT; the rest: censored survival time from `computeTimeToEvent()`).
 | `count` | Subjects in that cohort × stratum (censored). |
 | `n_event` | Subjects with the event observed (DTI has none — every DTI row already requires a first LoT). |
 | `min_time`, `c10_time`, `q25_time`/`lq_time`, `median_time`, `q75_time`/`uq_time`, `c90_time`, `max_time` | Time-to-event distribution among events, in days (blanked when `count`/`n_event` is censored). |
+| `mean_time`, `mean_time_min0` | DTI files only: mean time, raw and with negative times counted as 0 (blanked when `count` is censored). |
+| `n_before`, `pct_before` | DTI files only: subjects whose first line started before index, and their share of `count` (censored; `pct_before` blanked when `n_before` is). |
+
+### `outcome_dti_by_category_summary.csv` / `_histogram.csv`
+The DTI summary and histogram split by the first line's treatment category
+under each classification lens: `lens` (`eau`, `hemonc_mbc`, `any` — the
+T4/T5/T6 lenses) and `category` (`ev_pembro`, `cisplatin`, `carboplatin`,
+`pdl1_mono`, `other_recommended`, `other`, or `unclassified` for a regimen
+with no classification). Same columns as `outcome_dti_summary.csv` /
+`outcome_dti_histogram.csv`, plus `lens` and `category`.
 
 ### `outcome_dti_histogram.csv`, `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_histogram.csv`
 Binned time-to-event counts (breaks: ⩽−365, −180, −90, −60, −30, 0, 30, 60,

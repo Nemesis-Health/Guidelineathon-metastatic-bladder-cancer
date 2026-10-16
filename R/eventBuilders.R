@@ -25,8 +25,10 @@
 # `subject_id`/`cohort_start_date` (e.g. a target cohort's own rows); the
 # anchor is per-subject, not per-row, so duplicate subjects (a person
 # appearing under several cohort aliases with the same index date) collapse
-# via `distinct()` before the join.
-anchorEpisodes <- function(episodes, anchorDates) {
+# via `distinct()` before the join. `daysBefore` lets episodes starting up to
+# that many days before the anchor count (DTI uses the treated cohorts'
+# 30-day attribution buffer).
+anchorEpisodes <- function(episodes, anchorDates, daysBefore = 0L) {
   if (!is.data.frame(episodes))
     stop("`episodes` must be a data frame.", call. = FALSE)
   for (col in c("subject_id", "cohort_start_date")) {
@@ -53,7 +55,7 @@ anchorEpisodes <- function(episodes, anchorDates) {
   episodes |>
     dplyr::mutate(person_id = as.character(.data$person_id)) |>
     dplyr::inner_join(anchors, by = "person_id") |>
-    dplyr::filter(.data$episode_start_date >= .data$.anchor) |>
+    dplyr::filter(.data$episode_start_date >= .data$.anchor - daysBefore) |>
     dplyr::select(-".anchor")
 }
 
@@ -291,7 +293,8 @@ buildDtiEvents <- function(targetData, episodes, lineNumber = 1L) {
                    .data$episode_end_date, .data$episode_source_value) |>
     dplyr::mutate(.lot = dplyr::row_number(), .by = "person_id") |>
     dplyr::filter(.data$.lot == lineNumber) |>
-    dplyr::select(subject_id = "person_id", lot_start_date = "episode_start_date")
+    dplyr::select(subject_id = "person_id", lot_start_date = "episode_start_date",
+                  regimen = "episode_source_value")
 
   # subject_id cast to character before this join, not after -- see
   # anchorEpisodes()'s comment; targetData$subject_id here is cast the same
@@ -304,5 +307,6 @@ buildDtiEvents <- function(targetData, episodes, lineNumber = 1L) {
     dplyr::inner_join(ranked, by = "subject_id")
 
   tibble::tibble(subject_id = joined$subject_id,
-                 time_diff  = as.integer(joined$lot_start_date - joined$cohort_start_date))
+                 time_diff  = as.integer(joined$lot_start_date - joined$cohort_start_date),
+                 regimen    = joined$regimen)
 }
