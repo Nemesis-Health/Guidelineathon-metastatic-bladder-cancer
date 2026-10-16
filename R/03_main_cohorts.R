@@ -35,7 +35,8 @@ addCustom <- function(name, sql) {
 
 # --- study cohort naming ----------------------------------------------------
 # The one declaration of every cohort name the steps look up (code -> name).
-# Codes: T1 = mBC; T1pc / T1mb = its PC-allowed / mixed-bag variants;
+# Codes: T1 = mBC; T1pc / T1mb = its PC-allowed / mixed-bag variants; T1all
+# = T1 + mixed bag (no other-cancer criterion);
 # T1pt/T1npt/T1ce = attrition steps under T1 (previously treated / not
 # previously treated / combination-therapy eligible); Base = initiated base
 # (ARTEMIS episodes); BaseL01* = initiated on a raw L01 drug (or procedure),
@@ -46,6 +47,7 @@ cohortNames <- c(
   T1  = "T1 Metastatic bladder cancer",
   T1pc = "T1 Metastatic bladder cancer (PC allowed)",
   T1mb = "T1 Metastatic bladder cancer (mixed bag)",
+  T1all = "T1 Metastatic bladder cancer (all, incl. other cancers)",
   Base          = "mBC initiated base",
   BaseL01       = "mBC initiated base (L01)",
   BaseL01pc     = "mBC initiated base (L01, PC allowed)",
@@ -87,7 +89,7 @@ saveState("cohortNames", cohortNames)
 # The index event of every cohort above: its first metastasis, or treatment
 # start. Sets each cohort's lab window (labWindow* or treatedLabWindow*).
 cohortIndex <- c(
-  stats::setNames(rep("metastasis", 11), c("T1", "T1pc", "T1mb", "T1pt", "T1npt", "T1ce",
+  stats::setNames(rep("metastasis", 12), c("T1", "T1pc", "T1mb", "T1all", "T1pt", "T1npt", "T1ce",
                                            paste0("T2", letters[1:5]))),
   stats::setNames(rep("treatment", 28), c("Base", "BaseL01", "BaseL01pc", "BaseL01proc",
                                           "BaseL01procpc", paste0("T3", letters[1:5]),
@@ -105,7 +107,8 @@ labCode  <- c(ev_pembro = "a", cisplatin = "b", carboplatin = "c",
 # JSON cohorts are read under their file-derived names; rename each onto its
 # study name. T1 = Target 1A. T1pc: "no other cancer" loosened to allow
 # prostate cancer. T1mb: that rule inverted to require another primary in the
-# same window (exit at death only). BaseL01/BaseL01pc: standalone Circe
+# same window (exit at death only). T1all: that rule dropped, so T1 + mixed
+# bag (exit at death only). BaseL01/BaseL01pc: standalone Circe
 # cohorts analogous to Base but indexed on the earliest qualifying raw L01
 # (antineoplastic) drug exposure instead of an ARTEMIS regimen episode;
 # self-contained (own InclusionRules re-derive metastasis/prior-cancer/
@@ -117,6 +120,7 @@ jsonFileCodes <- c(
   "Target 1A"                                       = "T1",
   "Target 1A PC allowed"                            = "T1pc",
   "Target 1A mixed bag"                             = "T1mb",
+  "Target 1mBC"                                     = "T1all",
   "Target 1A initiated L01"                         = "BaseL01",
   "Target 1A PC allowed initiated L01"              = "BaseL01pc",
   "Target 1A initiated L01 or procedure"            = "BaseL01proc",
