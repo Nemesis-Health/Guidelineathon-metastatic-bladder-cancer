@@ -932,7 +932,7 @@ a given lab should land in the same `std_value` range.
 | `measurement_concept_name` | Concept name (from vocabulary; blank if unresolved). |
 | `unit_concept_id` | OMOP unit concept id. |
 | `unit_concept_name` | Unit name (from vocabulary; blank if unresolved). |
-| `status` | Normalisation status for the (concept, unit). |
+| `status` | How the (concept, unit) scale was chosen: `verified` (recorded unit), `concept` (unit stated by the concept name), `overridden` (best-scoring scale), `unverified` (recorded unit, no evidence to check it), `unresolved` (none; not converted). |
 | `is_ambiguous` | Flag: unit resolution was ambiguous. |
 | `n_patients` | Distinct patients (censored). |
 | `n_measurements` | Measurement count (blanked when censored). |
@@ -957,7 +957,7 @@ health is carried as QC columns instead of extra rows.
 | `n_patients` | Distinct patients pooled across the category's streams (censored) — a true patient count, not the sum of `lab_results_summary` rows. |
 | `n_measurements` | Measurement count (blanked when censored). |
 | `n_concepts`, `n_units` | Distinct source measurement concepts / units feeding the category (unit-resolution spread). |
-| `pct_overridden` | Share of measurements whose recorded unit was overridden by the resolver (blanked when censored). |
+| `pct_overridden` | Share of measurements whose recorded unit was set aside by the resolver (`overridden` or `concept`; blanked when censored). |
 | `pct_unverified` | Share whose unit could not be verified but was trusted as recorded (blanked when censored). |
 | `mean_value`, `sd_value` | Mean and SD of `std_value` (blanked when censored). |
 | `min_value`, `lq_value`, `median_value`, `uq_value`, `max_value` | Min, quartiles, median, max of `std_value` (blanked when censored). |
@@ -1442,19 +1442,20 @@ callable interactively, not run automatically for every combination.
   one lab record, and up to 147% where they average five to thirty.
   Ever-in-window remains the right reading for toxicity/safety.
   The closest-value rule still needs PI sign-off.
-- **Lab unit resolution accepts a recorded unit that is within 5× of the
-  best-scoring scale.** `lab_cohorts.sql` step 3 takes the recorded unit
-  whenever it scores under 0.7 decades, without comparing it to the best
-  scale. That floor is wider than the separation between Hb's g/dL and
-  mmol/L scales (0.207 decades) and between GFR's mL/min and mL/min/1.73m²
-  scales (0.238); every other category separates by ≥0.95 decades and is
-  unaffected. Hb and GFR therefore carry `is_ambiguous = 1` at most sites,
-  and a site whose values are mis-scaled by those factors will produce
-  shifted strata rather than an error. `is_ambiguous` is reported in
-  `lab_results_rollup.csv` but does not gate the cohort INSERT, and
-  `std_value` has no plausibility bound beyond `value_as_number > 0`, so
-  sentinel values and mis-scaled streams survive into `bc_lab_cohort`.
-  Check `lab_results_rollup.csv` per site before using Hb or GFR strata.
+- **Lab unit resolution can still pick the wrong scale for Hb and GFR.**
+  `lab_cohorts.sql` step 3 keeps a recorded unit that scores under 0.7
+  decades; failing that it uses the unit the concept name states
+  (`@concept_unit_table`: GFR "/1.73 sq M" means ×1, Hb [Mass/volume] or
+  [Moles/volume]), then the best-scoring scale, with equal scores going to
+  the factor closest to 1. Open gaps: a recorded unit that contradicts the
+  concept still wins (e.g. GFR recorded as mL/min/m² on a "/1.73 sq M"
+  concept gets ×1.73); a reference range recorded in a different unit from
+  its values decides the scale, because the range is scored before the
+  values; GFR's one-sided normal (≥ 90) favours ×1.73 for concepts that
+  state no unit; and `std_value` has no plausibility bound beyond
+  `value_as_number > 0`, so sentinel values survive into `bc_lab_cohort`.
+  Check `lab_results_summary.csv` (`status`, per concept and unit) before
+  using Hb or GFR strata.
 - **Cohorts 4/5/6(a–f) are three independent, non-exclusive regimen
   classifications** (`class_eau` / `class_hemonc_mbc` / `class_any`), not
   the protocol's exclusive tiers.

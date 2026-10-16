@@ -14,6 +14,7 @@
      -- scratch/reference tables (persisted, not #temp — survive across the
      --   statement batches DatabaseConnector runs, and stay inspectable):
      @cat_concept_table  @unit_factor_table  @normals_table  @criteria_table
+     @concept_unit_table  @unit_class_table
      @grp_table  @scales_table  @scored_table  @resolved_table  @debug_table
 
    All work tables are DROP TABLE IF EXISTS'd first, so the script is
@@ -828,6 +829,78 @@ INSERT INTO @work_database_schema.@normals_table (cat, std_unit_concept_id, rang
  ('Direct bilirubin',8840, NULL, 0.3,  'upper'),
  ('Total bilirubin', 8840, 0.3,  1.2,  'both');
 
+-- Units stated by the concept name: GFR concepts named "/1.73 sq M", Hb
+-- concepts named [Mass/volume] or [Moles/volume]. Used in step 3 when the
+-- recorded unit does not pass: the best of the scales allowed for the class
+-- (@unit_class_table) wins if it passes. Concepts not listed skip that step.
+DROP TABLE IF EXISTS @work_database_schema.@concept_unit_table;
+CREATE TABLE @work_database_schema.@concept_unit_table (cat varchar(40), measurement_concept_id int, unit_class varchar(20));
+INSERT INTO @work_database_schema.@concept_unit_table (cat, measurement_concept_id, unit_class) VALUES
+ ('GFR',1619025,'per_1.73'),
+ ('GFR',1619026,'per_1.73'),
+ ('GFR',3029829,'per_1.73'),
+ ('GFR',3029859,'per_1.73'),
+ ('GFR',3030104,'per_1.73'),
+ ('GFR',3030354,'per_1.73'),
+ ('GFR',3043621,'per_1.73'),
+ ('GFR',3049187,'per_1.73'),
+ ('GFR',3053283,'per_1.73'),
+ ('GFR',3559661,'per_1.73'),
+ ('GFR',3561268,'per_1.73'),
+ ('GFR',3561269,'per_1.73'),
+ ('GFR',3965919,'per_1.73'),
+ ('GFR',36031320,'per_1.73'),
+ ('GFR',36031846,'per_1.73'),
+ ('GFR',36303797,'per_1.73'),
+ ('GFR',36306178,'per_1.73'),
+ ('GFR',36660257,'per_1.73'),
+ ('GFR',37041188,'per_1.73'),
+ ('GFR',37055720,'per_1.73'),
+ ('GFR',37393011,'per_1.73'),
+ ('GFR',37393012,'per_1.73'),
+ ('GFR',40764999,'per_1.73'),
+ ('GFR',40771922,'per_1.73'),
+ ('GFR',42869913,'per_1.73'),
+ ('GFR',46235172,'per_1.73'),
+ ('GFR',46236952,'per_1.73'),
+ ('GFR',46236975,'per_1.73'),
+ ('Hb',1091111,'mass'),
+ ('Hb',1091321,'mass'),
+ ('Hb',1616317,'mass'),
+ ('Hb',1617021,'mass'),
+ ('Hb',1617122,'mass'),
+ ('Hb',3000963,'mass'),
+ ('Hb',3002173,'mass'),
+ ('Hb',3003675,'mass'),
+ ('Hb',3004119,'mass'),
+ ('Hb',3006184,'mass'),
+ ('Hb',3006239,'mass'),
+ ('Hb',3007302,'mass'),
+ ('Hb',3027484,'mass'),
+ ('Hb',3027901,'mass'),
+ ('Hb',3029461,'mass'),
+ ('Hb',3034666,'mass'),
+ ('Hb',3048275,'mass'),
+ ('Hb',40757420,'mass'),
+ ('Hb',40758903,'mass'),
+ ('Hb',46235391,'mass'),
+ ('Hb',46235392,'mass'),
+ ('Hb',1002216,'molar'),
+ ('Hb',1092194,'molar'),
+ ('Hb',1259766,'molar'),
+ ('Hb',21490721,'molar'),
+ ('Hb',40762351,'molar');
+
+DROP TABLE IF EXISTS @work_database_schema.@unit_class_table;
+CREATE TABLE @work_database_schema.@unit_class_table (cat varchar(40), unit_class varchar(20), factor float);
+INSERT INTO @work_database_schema.@unit_class_table (cat, unit_class, factor) VALUES
+ ('GFR', 'per_1.73', 1.0),
+ ('Hb',  'mass',     1.0),
+ ('Hb',  'mass',     0.1),
+ ('Hb',  'mass',     0.001),
+ ('Hb',  'mass',     100.0),
+ ('Hb',  'molar',    1.6113);
+
 
 DROP TABLE IF EXISTS @work_database_schema.@criteria_table;
 -- basis: 'ULN' => bound = mult * upper-normal ;  'ABS' => bound is a fixed value already in standard units
@@ -892,7 +965,7 @@ DROP TABLE IF EXISTS @work_database_schema.@grp_table;
 WITH grp_base AS (
   SELECT cc.cat,
          m.measurement_concept_id                         AS m_id,
-         m.unit_concept_id                                AS u_id,
+         COALESCE(m.unit_concept_id, 0)                   AS u_id,   -- a missing unit is treated as 0 (no matching concept)
          CASE WHEN m.range_low  > 0 THEN m.range_low  END AS rlo,
          CASE WHEN m.range_high > 0 THEN m.range_high END AS rhi,
          -- rlo_key/rhi_key: BigQuery-only fix ("Partitioning by expressions
@@ -1021,26 +1094,33 @@ JOIN @work_database_schema.@normals_table n ON n.cat = g.cat;
    3.  RESOLVE the unit/factor per group.
        The single best scale wins (ORDER BY score, rn=1); 0.7 is only a floor.
        Policy: verify the recorded unit first -> if it passes use it;
+               else the best scale the concept name allows (@concept_unit_table),
+               if it passes ('concept');
                else override with the best; else (no signal) trust recorded;
-               else unresolved.  is_ambiguous = more than one scale cleared 0.7
+               else unresolved.  Equal scores go to the factor closest to 1.
+               is_ambiguous = more than one scale cleared 0.7
                (e.g. Hb g/dL vs mmol/L are ~0.21 decades apart).
    --------------------------------------------------------------------------- */
 DROP TABLE IF EXISTS @work_database_schema.@resolved_table;
 SELECT m_id, u_id, rlo, rhi, cat,
 -- conversion factor for best match
    CASE WHEN prov_score < 0.7 THEN prov_factor
+        WHEN con_best   < 0.7 THEN con_factor
         WHEN grp_best   < 0.7 THEN factor
         WHEN grp_best IS NULL AND prov_factor IS NOT NULL THEN prov_factor
         ELSE NULL END AS factor,
 -- val_offset for best match
    CASE WHEN prov_score < 0.7 THEN prov_offset
+        WHEN con_best   < 0.7 THEN con_offset
         WHEN grp_best   < 0.7 THEN val_offset
         WHEN grp_best IS NULL AND prov_factor IS NOT NULL THEN prov_offset
         ELSE NULL END AS val_offset,
 -- assessement for match:
--- verified if provided unit=best match unit, overridden with best if they don't match
--- unverified if unit provided but no match, unresolved if nothing
+-- verified if provided unit=best match unit, concept if the concept name's unit
+-- matches, overridden with best if neither; unverified if unit provided but no
+-- match, unresolved if nothing
    CASE WHEN prov_score < 0.7 THEN 'verified'
+        WHEN con_best   < 0.7 THEN 'concept'
         WHEN grp_best   < 0.7 THEN 'overridden'
         WHEN grp_best IS NULL AND prov_factor IS NOT NULL THEN 'unverified'
         ELSE 'unresolved' END AS status,
@@ -1048,13 +1128,19 @@ SELECT m_id, u_id, rlo, rhi, cat,
    grp_best AS best_score, prov_score
 INTO @work_database_schema.@resolved_table
 FROM (
+  SELECT y.*,
+      MAX(CASE WHEN rn_con = 1 THEN factor     END) OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key) AS con_factor,
+      MAX(CASE WHEN rn_con = 1 THEN val_offset END) OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key) AS con_offset
+  FROM (
    SELECT i.*,
+      MIN(CASE WHEN is_allowed = 1 THEN score END) OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key) AS con_best,
+      ROW_NUMBER() OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key ORDER BY is_allowed DESC, CASE WHEN score IS NULL THEN 1 ELSE 0 END, score, ABS(LOG10(factor))) AS rn_con,
       MIN(score)                                   OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key) AS grp_best,
       SUM(CASE WHEN score < 0.7 THEN 1 ELSE 0 END) OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key) AS grp_npass,
       MAX(CASE WHEN is_provided = 1 THEN score  END) OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key) AS prov_score,
       MAX(CASE WHEN is_provided = 1 THEN factor END) OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key) AS prov_factor,
       MAX(CASE WHEN is_provided = 1 THEN val_offset END) OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key) AS prov_offset,
-      ROW_NUMBER() OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key ORDER BY CASE WHEN score IS NULL THEN 1 ELSE 0 END, score) AS rn
+      ROW_NUMBER() OVER (PARTITION BY m_id, u_id, rlo_key, rhi_key ORDER BY CASE WHEN score IS NULL THEN 1 ELSE 0 END, score, ABS(LOG10(factor))) AS rn
    FROM (
       -- rlo_key/rhi_key: BigQuery-only fix, see the matching NB above
       -- grp_ranked's definition earlier in this file. Computed once here
@@ -1063,12 +1149,19 @@ FROM (
              CAST(sc.rlo AS VARCHAR(50)) AS rlo_key, CAST(sc.rhi AS VARCHAR(50)) AS rhi_key,
              sc.cat, sc.factor, sc.val_offset,
              COALESCE(sc.range_decade, sc.dist_decade) AS score,   -- range first, distribution only as fallback
-             CASE WHEN uf.unit_concept_id IS NOT NULL THEN 1 ELSE 0 END AS is_provided
+             CASE WHEN uf.unit_concept_id IS NOT NULL THEN 1 ELSE 0 END AS is_provided,
+             CASE WHEN uc.unit_class IS NOT NULL THEN 1 ELSE 0 END AS is_allowed
       FROM @work_database_schema.@scored_table sc
       LEFT JOIN @work_database_schema.@unit_factor_table uf
              ON uf.cat = sc.cat AND uf.unit_concept_id = sc.u_id
             AND uf.factor = sc.factor AND uf.val_offset = sc.val_offset
+      LEFT JOIN @work_database_schema.@concept_unit_table cu
+             ON cu.cat = sc.cat AND cu.measurement_concept_id = sc.m_id
+      LEFT JOIN @work_database_schema.@unit_class_table uc
+             ON uc.cat = cu.cat AND uc.unit_class = cu.unit_class
+            AND ABS(uc.factor - sc.factor) < 0.000001
    ) i
+  ) y
 ) z
 WHERE rn = 1;
 
@@ -1091,7 +1184,7 @@ SELECT
 INTO @work_database_schema.@raw_lab_results_table
 FROM @cdm_database_schema.measurement m
 JOIN @work_database_schema.@cat_concept_table cc ON cc.measurement_concept_id = m.measurement_concept_id
-JOIN @work_database_schema.@resolved_table    r  ON r.m_id = m.measurement_concept_id AND r.u_id = m.unit_concept_id
+JOIN @work_database_schema.@resolved_table    r  ON r.m_id = m.measurement_concept_id AND r.u_id = COALESCE(m.unit_concept_id, 0)
     AND COALESCE(r.rlo,-1) = COALESCE(CASE WHEN m.range_low>0  THEN m.range_low  END,-1)
     AND COALESCE(r.rhi,-1) = COALESCE(CASE WHEN m.range_high>0 THEN m.range_high END,-1)
 JOIN @work_database_schema.@criteria_table  t  ON t.cat = cc.cat
@@ -1137,7 +1230,7 @@ FROM (
    FROM @cdm_database_schema.measurement m
    JOIN @work_database_schema.@cat_concept_table cc ON cc.measurement_concept_id = m.measurement_concept_id
    JOIN @work_database_schema.@criteria_table  t  ON t.cat = cc.cat
-   LEFT JOIN @work_database_schema.@resolved_table r ON r.m_id = m.measurement_concept_id AND r.u_id = m.unit_concept_id
+   LEFT JOIN @work_database_schema.@resolved_table r ON r.m_id = m.measurement_concept_id AND r.u_id = COALESCE(m.unit_concept_id, 0)
     AND COALESCE(r.rlo,-1) = COALESCE(CASE WHEN m.range_low>0  THEN m.range_low  END,-1)
     AND COALESCE(r.rhi,-1) = COALESCE(CASE WHEN m.range_high>0 THEN m.range_high END,-1)
    WHERE m.value_as_number > 0 AND r.factor IS NULL
@@ -1145,7 +1238,7 @@ FROM (
 GROUP BY test_id, cat, measurement_concept_id, unit_concept_id, reason;
 
 -- Audit helpers:
---   SELECT * FROM @work_database_schema.@resolved_table WHERE status IN ('overridden','unresolved','unverified') OR is_ambiguous = 1;
+--   SELECT * FROM @work_database_schema.@resolved_table WHERE status IN ('concept','overridden','unresolved','unverified') OR is_ambiguous = 1;
 --   SELECT * FROM @work_database_schema.@debug_table ORDER BY record_count DESC;
 
 

@@ -60,7 +60,7 @@ agg AS (
          COUNT(*)                                                     AS n_measurements,
          COUNT(DISTINCT measurement_concept_id)                       AS n_concepts,
          COUNT(DISTINCT unit_concept_id)                              AS n_units,
-         SUM(CASE WHEN status = 'overridden' THEN 1 ELSE 0 END)       AS n_overridden,
+         SUM(CASE WHEN status IN ('overridden', 'concept') THEN 1 ELSE 0 END)       AS n_overridden,
          SUM(CASE WHEN status = 'unverified' THEN 1 ELSE 0 END)       AS n_unverified,
          AVG(CAST(std_value AS FLOAT))                                AS mean_value,
          STDEV(CAST(std_value AS FLOAT))                              AS sd_value,

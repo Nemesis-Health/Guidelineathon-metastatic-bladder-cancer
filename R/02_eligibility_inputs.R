@@ -17,6 +17,7 @@ labScratch <- list(
   normals_table = "bc_lab_normals", criteria_table = "bc_lab_criteria",
   grp_table = "bc_lab_grp", scales_table = "bc_lab_scales",
   scored_table = "bc_lab_scored", resolved_table = "bc_lab_resolved",
+  concept_unit_table = "bc_lab_concept_unit", unit_class_table = "bc_lab_unit_class",
   debug_table = "bc_lab_debug")
 
 do.call(runSqlFile, c(list(connection = connection, file = "lab_cohorts.sql",
