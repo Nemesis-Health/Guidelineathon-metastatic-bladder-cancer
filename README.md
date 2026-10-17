@@ -290,7 +290,7 @@ ARTEMIS.
 | **(b)** eligibility labs **+** cohorts → one table | `R/02_eligibility_inputs.R` | `bc_lab_cohort` (labs **+** ECOG **+** conditions), `bc_raw_lab_results` |
 | **(c)** main cohort tree | `R/03_main_cohorts.R` | `bc_cohort`, `results/eligibility/cohort_counts.csv` |
 | **(d)** lab test ranges on (c) | `R/04_lab_ranges.R` | `lab_value_distribution.csv`, `lab_timing_to_index.csv`, `lab_results_summary.csv`, `lab_unit_resolution.csv`, `lab_results_rollup.csv` |
-| — eligibility-input counts + coverage | `R/05_eligibility_coverage.R` | `lab_cohort_counts.csv`, `eligibility_input_coverage.csv` |
+| — eligibility-input counts + coverage | `R/05_eligibility_coverage.R` | `lab_cohort_counts.csv`, `eligibility_input_coverage.csv`, `eligibility_test_kappa.csv`, `eligibility_lab_coverage_kappa.csv` |
 | — ARTEMIS alignment assessment | `R/06_artemis_assessment.R` | `artemis_summary.csv`, `artemis_coverage.csv`, `artemis_drug_exposures.csv`, `artemis_regimens_aligned.csv`, `artemis_episodes_per_patient.csv`, `artemis_uncaptured_drugs.csv` |
 | — per-cohort demographics | `R/07_demographics.R` | `demographics.csv`, `demographics_age_continuous.csv` |
 | — covariate overlap with the main tree | `R/08_covariates.R` | `covariate_overlap.csv`, `bc_covariate_cohort` |
@@ -365,7 +365,7 @@ At the end of a run, results are packaged into two archives:
 | `02_eligibility_inputs.R` | (b) run `lab_cohorts.sql`; generate ECOG + condition cohorts; insert them into `bc_lab_cohort` under test-id slots. |
 | `03_main_cohorts.R` | (c) build the full manifest (Target 1A, covariates, ARTEMIS + SQL templates: initiated base, 4/5/6, 2a–2e, the attrition cohorts T1-PT/T1-NPT/T1-CE, 3a–3e) and generate it; checks the attrition cohorts nest with 2a–2d. |
 | `04_lab_ranges.R` | (d) lab-value distribution + per-unit QC summary on the main cohorts. |
-| `05_eligibility_coverage.R` | eligibility-table counts and each input crossed with Target 1A (tested / passed). |
+| `05_eligibility_coverage.R` | eligibility-table counts, each input crossed with every main cohort (tested / passed), and Target 1A agreement between lab tests (pass/fail) and between labs (tested or not). |
 | `06_artemis_assessment.R` | ARTEMIS assessment: alignment stats, patient/exposure coverage, per-drug and per-regimen frequencies, uncaptured exposures — all from the in-memory `artemisResult`. |
 | `07_demographics.R` | Per-cohort demographic strata (age group / sex / index year, with `pct`) + continuous age summary. |
 | `08_covariates.R` | Comorbidity + performance-status overlap with every cohort in the main tree; also generates the comorbidity cohorts step (k) scores as Charlson CCI components. |
@@ -832,6 +832,8 @@ cohorts, plus unit-resolution QC on the raw normalised measurement table
 |---|---|---|---|
 | `lab_cohort_counts.csv` | `05_eligibility_coverage.R` | **Whole population** | eligibility test-id |
 | `eligibility_input_coverage.csv` | `05_eligibility_coverage.R` | Per main cohort | cohort × stratum type × stratum value × eligibility test-id |
+| `eligibility_test_kappa.csv` | `05_eligibility_coverage.R` | Target 1A | stratum type × stratum value × pair of lab tests |
+| `eligibility_lab_coverage_kappa.csv` | `05_eligibility_coverage.R` | Target 1A | stratum type × stratum value × pair of labs (ECOG as one) |
 | `lab_value_distribution.csv` | `04_lab_ranges.R` | Per main cohort | cohort × lab (cat) × stratum type × stratum value |
 | `lab_timing_to_index.csv` | `04_lab_ranges.R` | Target 1A + Target 1A PC allowed | cohort × lab (cat) × direction (before/after/any) |
 | `lab_results_summary.csv` | `04_lab_ranges.R` | **Whole population** | cat × measurement concept × unit × factor × status × ambiguity |
@@ -889,6 +891,40 @@ column overlaps.
 | `n_cohort` | This cohort's denominator, restricted to this row's stratum (censored). |
 | `n_tested` | Members (in this cohort × stratum) with a scorable result in the window (labs only; censored). |
 | `n_passed` | Members (in this cohort × stratum) who met the criterion / have the cohort (censored). |
+
+### `eligibility_test_kappa.csv`
+Agreement between every pair of lab tests in Target 1A, overall and per
+stratum. Each member's pass/fail per test is the one eligibility uses (the
+closest result, `eligibility_lab_rows.sql`); for each pair, among members with
+a result for both, the 2×2 counts, % agreement and Cohen's kappa. ECOG and
+condition inputs are not included. `same_lab` marks pairs on the same lab
+(e.g. Hb ≥ 9 and Hb < 9), which agree or disagree by construction; on these
+pairs `n_pass_both` must be 0 for mutually exclusive bands, which checks that
+each patient is scored on one result per lab.
+
+| Column | Meaning |
+|---|---|
+| `test_id_1`, `label_1`, `test_id_2`, `label_2` | The two tests (eligibility test ids). |
+| `same_lab` | Both tests are on the same lab. |
+| `n_both` | Members with a result for both tests (censored). |
+| `n_pass_both`, `n_pass_1_only`, `n_pass_2_only`, `n_fail_both` | The 2×2 counts (censored). |
+| `pct_agree`, `kappa` | % agreement and Cohen's kappa (blanked when `n_both` or any of the four cells is censored, since either would let the censored cell be worked out). |
+
+### `eligibility_lab_coverage_kappa.csv`
+Agreement on *whether* labs were tested, between every pair of labs in
+Target 1A, overall and per stratum: among all members, was each lab tested
+in the lab window (a scorable result, as counted in
+`eligibility_input_coverage.csv`'s `n_tested`). Testing is per lab, so all
+tests on one lab (e.g. the GFR bands) count once. ECOG counts as one item
+(any grade recorded in the window) and is always listed, so a site without
+ECOG records shows it as never tested.
+
+| Column | Meaning |
+|---|---|
+| `lab_1`, `lab_2` | The two labs (`cat`, or `ECOG`). |
+| `n_cohort` | Target 1A members in this stratum (censored). |
+| `n_tested_both`, `n_tested_1_only`, `n_tested_2_only`, `n_tested_neither` | The 2×2 counts (censored). |
+| `pct_agree`, `kappa` | % agreement and Cohen's kappa (blanked when `n_cohort` or any of the four cells is censored). |
 
 ### `lab_value_distribution.csv`
 Row per **cohort × lab (cat) × stratum** — the distribution of the
