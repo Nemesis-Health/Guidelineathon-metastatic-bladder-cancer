@@ -1553,6 +1553,10 @@ callable interactively, not run automatically for every combination.
   patients and combination-eligible patients who fit no arm. Whether to split
   those out into their own groups is not decided yet. Per-cohort limitations
   are in `docs/ELIGIBILITY_LOGIC.md`.
+- **4e and 6e are always empty.** No regimen carries `other_recommended` in
+  the EAU or the any-regimen lens, so these cohorts have no members by
+  construction. They are kept so that all three lenses report the same
+  categories (a–f).
 - **"No other cancer" looks back 180 days, not "at any time prior".** The
   Target 1A cohorts exclude other primaries recorded from 180 days before to
   30 days after index, an intentional choice rather than the protocol's

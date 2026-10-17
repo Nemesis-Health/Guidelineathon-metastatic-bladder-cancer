@@ -70,7 +70,7 @@ cohortNames <- c(
   T4b = "T4b Cis initiated mBC EAU",
   T4c = "T4c Carbo initiated mBC EAU",
   T4d = "T4d PD-L1 initiated mBC EAU",
-  T4e = "T4e Trt initiated other trt mBC EAU",
+  T4e = "T4e Trt initiated other trt mBC EAU",   # empty by construction (class_eau has no "other_recommended")
   T4f = "T4f Trt initiated other mBC EAU",
   T5a = "T5a EV-Pembro initiated mBC_HemOnc mBC",
   T5b = "T5b Cis initiated mBC_HemOnc mBC",
