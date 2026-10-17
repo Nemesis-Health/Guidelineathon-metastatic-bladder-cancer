@@ -149,6 +149,20 @@
           },
           {
             "concept": {
+              "CONCEPT_CLASS_ID": "Staging / Scales",
+              "CONCEPT_CODE": "ECOG-3",
+              "CONCEPT_ID": 1345895,
+              "CONCEPT_NAME": "ECOG performance status - grade 3",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "Cancer Modifier"
+            }
+          },
+          {
+            "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
               "CONCEPT_CODE": "423237006",
               "CONCEPT_ID": 4174251,
@@ -163,6 +177,20 @@
           },
           {
             "concept": {
+              "CONCEPT_CLASS_ID": "Staging / Scales",
+              "CONCEPT_CODE": "ECOG-4",
+              "CONCEPT_ID": 1345896,
+              "CONCEPT_NAME": "ECOG performance status - grade 4",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "Cancer Modifier"
+            }
+          },
+          {
+            "concept": {
               "CONCEPT_CLASS_ID": "Clinical Finding",
               "CONCEPT_CODE": "423409001",
               "CONCEPT_ID": 4173456,
@@ -173,6 +201,20 @@
               "STANDARD_CONCEPT": "N",
               "STANDARD_CONCEPT_CAPTION": "Non-Standard",
               "VOCABULARY_ID": "SNOMED"
+            }
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Staging / Scales",
+              "CONCEPT_CODE": "ECOG-5",
+              "CONCEPT_ID": 1345897,
+              "CONCEPT_NAME": "ECOG performance status - grade 5",
+              "DOMAIN_ID": "Measurement",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "Cancer Modifier"
             }
           }
         ]

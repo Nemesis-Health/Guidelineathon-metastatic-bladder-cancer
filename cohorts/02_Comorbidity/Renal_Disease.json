@@ -176,6 +176,22 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "716864001",
+              "CONCEPT_ID": 37399017,
+              "CONCEPT_NAME": "Hemorrhagic fever with renal syndrome",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true,
+            "includeDescendants": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "38481006",
               "CONCEPT_ID": 201313,
               "CONCEPT_NAME": "Hypertensive renal disease",
@@ -215,6 +231,21 @@
               "INVALID_REASON_CAPTION": "Invalid",
               "STANDARD_CONCEPT": "N",
               "STANDARD_CONCEPT_CAPTION": "Non-Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "428255004",
+              "CONCEPT_ID": 4177206,
+              "CONCEPT_NAME": "Tubulointerstitial nephritis",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": true
