@@ -97,7 +97,7 @@ source("R/artemis_uncaptured.R")  # uncapturedExposures(), plotUncapturedAlignme
 source("R/helpers.R")        # cohort generation + SQL utilities
 source("R/timeToEvent.R")    # computeTimeToEvent(), computeTimeDiffStats()
 source("R/survivalMilestones.R") # extractSurvivalMilestones()
-source("R/eventBuilders.R")  # fetchDeathEvents(), buildLineOfTherapyEvents(), buildDtiEvents(), anchorEpisodes(), combineEarliestEvent()
+source("R/eventBuilders.R")  # fetchDeathEvents(), treatedLines(), buildLineOfTherapyEvents(), anchorEpisodes(), combineEarliestEvent()
 source("R/guidelineAdherence.R") # computeGuidelineRelevance(), computeAdherenceRollup()
 source("R/charlsonScore.R")  # computeCharlsonScore(), charlsonComponents()
 source("R/setup.R")          # config checks + derived paths + executionSettings

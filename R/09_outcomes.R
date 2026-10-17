@@ -30,15 +30,15 @@
 # one at a time, matching the protocol's stratification list -- plus the
 # age x sex crossed view (subject_strata.sql's age_sex column).
 #
-# Episode ranking is ANCHORED before any line-of-therapy event is built
-# (anchorEpisodes(), R/eventBuilders.R): the protocol allows a patient into a
-# treated cohort with prior systemic therapy as long as it was >12 months
-# before the mBC index, so ARTEMIS may have an earlier, unrelated episode on
-# record that would otherwise be mis-ranked as "line 1" and shift every
-# subsequent line's numbering. DTI is anchored to Cohort 1's own index;
-# TTNT/TTD/TFI/TTD-LoT2 are anchored to the subject's own treatment-start
-# index (identical across every T3-6 alias a subject appears under, since
-# they all derive their cohort_start_date from the same base cohort row).
+# Lines of therapy are numbered once, by treatedLines() (R/eventBuilders.R),
+# the same numbering R/12 and the DTI use. Episodes are ANCHORED on the
+# treatment start first: the protocol allows a patient into a treated cohort
+# with prior systemic therapy as long as it was >12 months before the mBC
+# index, so ARTEMIS may have an earlier, unrelated episode on record that
+# would otherwise be mis-ranked as "line 1" and shift every subsequent line's
+# numbering. The treatment start is identical across every T3-6 alias a
+# subject appears under, since they all derive their cohort_start_date from
+# the same base cohort row, and line 1 is the regimen that row was indexed on.
 #
 # TTNT/TTD/TFI are death-aware (combineEarliestEvent(), R/eventBuilders.R):
 # the protocol defines each as "... or death, whichever occurs first" —
@@ -135,21 +135,20 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     t1Data    <- dplyr::filter(targetData, .data$cohort_definition_id == t1Id)
     dtiStatus <- firstLineStatus(episodes, baseMembers, t1Data, regimenClass,
         maintenance = settings$maintenanceMerge, maxGapDays = settings$maintenanceMaxGapDays)
-    episodesForTreatment <- anchorEpisodes(episodes,
-      dplyr::filter(targetData, .data$cohort_definition_id %in% treatedTargetCohortIds))
-    # fold maintenance into the line it maintains before lines are numbered
-    # (mergeMaintenance(), R/eventBuilders.R; docs/MAINTENANCE_LINES.md)
-    if (isTRUE(settings$maintenanceMerge))
-      episodesForTreatment <- mergeMaintenance(episodesForTreatment, regimenClass, settings$maintenanceMaxGapDays)
+    # lines of the base treated cohort, numbered once (treatedLines(),
+    # R/eventBuilders.R): every T3-6 cohort is indexed on the base cohort's
+    # line 1, so these are the lines of each treated cohort member
+    treatedLots <- treatedLines(episodes, baseMembers, t1Data, regimenClass,
+        maintenance = settings$maintenanceMerge, maxGapDays = settings$maintenanceMaxGapDays)
 
     # --- shared person-level / episode-level events ---------------------------
     deathEvents <- fetchDeathEvents(connection, allTargetCohortIds)
     ttntEvents  <- combineEarliestEvent(
-      buildLineOfTherapyEvents(episodesForTreatment, 1L, "next_lot"), deathEvents)
+      buildLineOfTherapyEvents(treatedLots, 1L, "next_lot"), deathEvents)
     ttdEvents   <- combineEarliestEvent(
-      buildLineOfTherapyEvents(episodesForTreatment, 1L, "discontinuation"), deathEvents)
+      buildLineOfTherapyEvents(treatedLots, 1L, "discontinuation"), deathEvents)
     ttdLot2Events <- combineEarliestEvent(
-      buildLineOfTherapyEvents(episodesForTreatment, 2L, "discontinuation"), deathEvents)
+      buildLineOfTherapyEvents(treatedLots, 2L, "discontinuation"), deathEvents)
     # TFI's terminal event ("next LoT start, or death before that") is
     # identical in construction to TTNT's — only the index date differs.
     tfiEvents <- ttntEvents
