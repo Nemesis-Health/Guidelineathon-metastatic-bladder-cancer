@@ -10,7 +10,10 @@
 #     +/- settings$bodyMeasurementsWindowDays (sql/baseline_body_measurements.sql).
 #     Every cohort in bc_cohort, same scope as R/07_demographics.R.
 #
-#   charlson_cci.csv — Charlson Comorbidity Index category distribution,
+#   charlson_cci.csv — Charlson Comorbidity Index category distribution in
+#     three versions (cci_version): calculated (below), reported (a recorded
+#     Charlson index within +/-30 days of index, sql/charlson_recorded.sql;
+#     subjects with one only) and max (the higher of the two per subject),
 #     every cohort in the main tree x subject_strata.sql stratum (matches
 #     R/08_covariates.R's own scope). Each cohort's components are anchored
 #     to THAT COHORT'S OWN index date via sql/charlson_components.sql (same
@@ -208,10 +211,29 @@ if (is.null(covSet) || nrow(covSet) == 0L) {
     cci$cohort_definition_id <- components$cohort_definition_id
     cci[strataColumnNames] <- components[strataColumnNames]
 
+    # Three versions: calculated (above), reported (a recorded Charlson
+    # index, subjects with one only) and max (the higher of the two).
+    reported <- querySqlFile(connection, "charlson_recorded.sql",
+      cdm_database_schema   = settings$cdmDatabaseSchema,
+      work_database_schema  = settings$workDatabaseSchema,
+      cohort_table          = settings$cohortTable,
+      cohort_definition_ids = paste(targetIds, collapse = ", "))
+    names(reported) <- tolower(names(reported))
+    reported$cohort_definition_id <- as.integer(reported$cohort_definition_id)
+    reported$subject_id <- as.character(reported$subject_id)
+    cci <- dplyr::left_join(cci, reported, by = c("cohort_definition_id", "subject_id"))
+    cciCategory <- function(s) dplyr::case_when(s == 0 ~ "0", s <= 2 ~ "1-2", s <= 4 ~ "3-4", TRUE ~ ">=5")
+    cci <- dplyr::bind_rows(
+      dplyr::mutate(cci, cci_version = "calculated"),
+      dplyr::mutate(dplyr::filter(cci, !is.na(.data$cci_reported)), cci_version = "reported",
+                    cci_category = cciCategory(round(.data$cci_reported))),
+      dplyr::mutate(cci, cci_version = "max",
+                    cci_category = cciCategory(pmax(.data$cci_score, round(.data$cci_reported), na.rm = TRUE))))
+
     cciStrataViews <- activeStrataSpecs()
     cciOut <- dplyr::bind_rows(lapply(names(cciStrataViews), function(st) {
       col <- cciStrataViews[[st]]
-      grp <- c("cohort_definition_id", col)
+      grp <- c("cohort_definition_id", "cci_version", col)
       agg <- dplyr::count(cci, dplyr::across(dplyr::all_of(grp)), .data$cci_category, name = "n")
       agg$stratum_type <- st
       agg$stratum_value <- if (is.null(col)) "overall" else agg[[col]]
@@ -223,12 +245,13 @@ if (is.null(covSet) || nrow(covSet) == 0L) {
       dplyr::relocate(c("cohort_definition_id", "cohort_name", "stratum_type", "stratum_value"),
                       .before = "cci_category")
     cciOut <- cciOut[c("cohort_definition_id", "cohort_name", "stratum_type",
-                       "stratum_value", "cci_category", "n")]
-    cciOut <- cciOut[order(cciOut$cohort_definition_id, cciOut$stratum_type,
+                       "stratum_value", "cci_version", "cci_category", "n")]
+    cciOut <- cciOut[order(cciOut$cohort_definition_id, cciOut$cci_version, cciOut$stratum_type,
                            cciOut$stratum_value, cciOut$cci_category), ]
 
     writeResultCsv(cciOut, "charlson_cci", "characterization")
-    message("  charlson_cci: ", dplyr::n_distinct(components$subject_id), " subject(s) across ",
+    message("  charlson_cci: ", sum(!is.na(reported$cci_reported)), " recorded Charlson index value(s); ",
+            dplyr::n_distinct(components$subject_id), " subject(s) across ",
             dplyr::n_distinct(components$cohort_definition_id), " cohorts, ",
             nrow(flagIds), " of 19 component(s) wired (metastatic_solid_tumor ",
             "deliberately excluded -- see header)")

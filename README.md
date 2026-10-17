@@ -568,7 +568,7 @@ censoring" and "Stratification" above apply here too.
 | `demographics_age_continuous.csv` | `07_demographics.R` | Per cohort | cohort × stratum type × stratum value |
 | `covariate_overlap.csv` | `08_covariates.R` | Per cohort | cohort × stratum type × stratum value × covariate (comorbidity / PS) |
 | `baseline_body_measurements.csv` | `11_baseline_characterization.R` | Per cohort | cohort × variable (weight_kg/height_cm/bmi) × stratum type × stratum value |
-| `charlson_cci.csv` | `11_baseline_characterization.R` | Per cohort | cohort × stratum type × stratum value × CCI category (0 / 1-2 / 3-4 / >=5) |
+| `charlson_cci.csv` | `11_baseline_characterization.R` | Per cohort | cohort × CCI version (calculated / reported / max) × stratum type × stratum value × CCI category (0 / 1-2 / 3-4 / >=5) |
 | `bladder_cancer_provenance.csv` | `14_provenance.R` | Metastasis + bladder cancer code (built in SQL, broader than Target 1A) | record type (`condition_type_concept_id`), plus an `ALL` row |
 | `other_malignancy_provenance.csv` | `14_provenance.R` | Metastasis + bladder cancer code (built in SQL, broader than Target 1A) | record type (`condition_type_concept_id`), plus an `ALL` row |
 | `condition_rollup.csv` | `15_rollups.R` | Each cohort (the tree) | cohort × stratum type × stratum value × condition category |
@@ -718,11 +718,20 @@ not informative for this study population. See Known gaps for the other two
 components that aren't wired, and why the score is a slight understatement
 for a small subset of patients as a result.
 
+Three versions are reported (`cci_version`): `calculated` (the score above,
+every member), `reported` (a recorded Charlson Comorbidity Index, concept
+42538860 in `measurement` or `observation`, closest to index within ±30 days;
+only members with one, so `n` adds up to those members) and `max` (the higher
+of the two per member; the calculated score where none is recorded). The
+age-adjusted index is not used, as it isn't comparable
+(`sql/charlson_recorded.sql`).
+
 | Column | Meaning |
 |---|---|
 | `cohort_definition_id`, `cohort_name` | As elsewhere. |
 | `stratum_type` | `overall`, or a stratum (see "Stratification" above). |
 | `stratum_value` | `overall`, or the stratum's value. |
+| `cci_version` | `calculated`, `reported` or `max`. |
 | `cci_category` | `0`, `1-2`, `3-4`, or `>=5`. |
 | `n` | Subjects in that cohort × stratum × category (censored). |
 
