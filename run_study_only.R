@@ -47,39 +47,15 @@ connectionDetails <- NULL   # <-- REPLACE with your connection
 Sys.setenv(DATABASE_CONNECTOR_BULK_UPLOAD = FALSE)
 
 # --- Site + OMOP CDM schemas ------------------------------------------------
+# Work table names, time windows, ARTEMIS filters and strata are fixed for
+# every site and live in R/study_settings.R; don't change them unless the
+# study team asks (see that file for how).
 settings <- list(
   databaseId          = "",   # short site id, e.g. "HUS"
   cdmDatabaseSchema   = "",
   vocabDatabaseSchema = "",    # defaults to cdmDatabaseSchema if blank
   workDatabaseSchema  = "",    # where cohort + lab + episode tables are written
-
-  # --- Work tables ----------------------------------------------------------
-  cohortTable          = "bc_cohort",
-  labCohortTable       = "bc_lab_cohort",       # unified eligibility table (labs + cohorts)
-  rawLabResultsTable   = "bc_raw_lab_results",
-  covariateCohortTable = "bc_covariate_cohort", # descriptive covariates (comorbidities); NOT part of the main tree
-  artemisCohortName    = "ARTEMIS bladder cohort",
-  episodeTable         = "bc_artemis_episodes",
-  regimenClassTable    = "bc_regimen_classifications",
-
-  # --- Run settings -- full detail on all of these in README.md's CONFIG settings reference ---
-  minCellCount        = 5L,
-  labWindowBeforeDays = 30L,   # near-index eligibility inputs (labs, ECOG/PS): days before index
-  labWindowAfterDays  = 30L,   # same, days after index
-  labValueSelection   = "closest",   # eligibility labs/ECOG: "closest" result to index decides; "any" passing result in the window
-  treatedLabWindowBeforeDays = 30L,   # same inputs for cohorts indexed on treatment start (initiated bases, T3-T6): days before
-  treatedLabWindowAfterDays  = 0L,    # same, days after (0 = up to and including the start date)
-  conditionFlagWindowBeforeDays = 30L,    # condition flags (liver mets, neuropathy, ...): days before index a live record may end
-  conditionFlagWindowAfterDays  = 30L,    # same, days after index
-  bodyMeasurementsWindowDays = 90L,   # baseline weight/height/BMI: days before/after index
-  stripEndocrineTherapy = TRUE,   # drop endocrine-therapy regimens from the ARTEMIS reference
-  validDrugsRegimenComponents = TRUE,   # keep only drugs that appear in a kept regimen
-  validDrugsAtcClasses = c("L01", "L02", "L03", "L04"),   # ATC classes kept in the alignment string
-  assessmentAtcClasses = NULL,   # ATC classes kept in exposure assessment (step f); NULL mirrors the regimen filter above
-  maintenanceMerge      = TRUE,  # fold maintenance (e.g. avelumab after platinum) into the line it maintains
-  maintenanceMaxGapDays = 180L,  # max days from the earlier regimen's end to the maintenance start
-  strataColumns = c("age_group", "sex", "age_sex",   # breakdowns reported on every stratified output
-                    "age_band", "index_period", "index_period_2021"),
+  minCellCount        = 5L,    # counts below this are censored in every output
   outputFolder        = file.path("results")
 )
 

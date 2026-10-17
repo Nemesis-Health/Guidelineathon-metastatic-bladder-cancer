@@ -51,7 +51,7 @@ labDist <- querySqlFile(connection, "lab_value_distribution_portable.sql",
 names(labDist) <- tolower(names(labDist))
 labDist$lab_window <- labWindowLabel(as.integer(labDist$cohort_definition_id))
 labDist <- dplyr::relocate(labDist, lab_window, .after = cohort_definition_id)
-# settings$strataColumns (run.R CONFIG, via activeStrataTypes()) controls
+# settings$strataColumns (R/study_settings.R, via activeStrataTypes()) controls
 # which stratum views actually reach the CSV -- the SQL always computes all
 # four (cheap), a site that wants fewer/none just filters here.
 labDist <- labDist[labDist$stratum_type %in% activeStrataTypes(), ]

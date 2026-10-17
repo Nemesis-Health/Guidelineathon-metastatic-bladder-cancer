@@ -58,14 +58,17 @@ At the end of a run, each step's outputs are packaged into their own zip —
 > `source()` the one you need.
 
 `run.R` holds the **CONFIG block** (the only thing to edit — `connectionDetails`,
-schemas, table names, run settings; it builds the `executionSettings` object the
-ARTEMIS code reads), then sources the numbered steps in order and writes
-CSVs under `results/eligibility/`.
+site id, schemas, minimum cell count and output folder), then sources the
+numbered steps in order and writes CSVs under `results/eligibility/`. The
+fixed study settings — work table names, time windows, ARTEMIS filters,
+strata — live in `R/study_settings.R`, which `R/setup.R` merges in.
 
 ### CONFIG settings reference
 
-The comments in `run.R`/`run_study_only.R` are deliberately terse — full detail on the
-less-obvious run settings lives here instead.
+These settings are the same at every site and are set in `R/study_settings.R`;
+don't change them unless the study team asks. If it does, add the field to
+the `settings` list in your run script rather than editing that file — a
+field set there takes precedence.
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -385,7 +388,8 @@ At the end of a run, results are packaged into two archives:
 | `guidelineAdherence.R` | `computeGuidelineRelevance()` / `computeAdherenceRollup()` — pure set-math for step 10; see that file's header for why the set logic differs from `onco-study-modules`' original. |
 | `charlsonScore.R` | `computeCharlsonScore()` / `charlsonComponents()`, ported from `onco-study-modules` (pure math, no DB dependency). Used by step 11. |
 | `vendor_utils.R` | `.getDbms()` + `%||%` (helpers used by the ARTEMIS code). |
-| `setup.R` | **Do not edit.** Validates the `run.R` CONFIG block and builds the derived paths + `executionSettings` object the steps read. |
+| `study_settings.R` | **Do not edit.** The fixed study settings (work table names, time windows, ARTEMIS filters, maintenance merging, strata), with a comment on each. |
+| `setup.R` | **Do not edit.** Validates the `run.R` CONFIG block, merges in `study_settings.R`, and builds the derived paths + `executionSettings` object the steps read. |
 
 ### `sql/` — SqlRender templates
 | File | Role |
@@ -543,8 +547,8 @@ Exact definitions:
   `strataColumns` if a site needs to avoid that.
 
 Which of these views actually get computed and written is controlled by a
-single setting, **`settings$strataColumns`** in `run.R`'s CONFIG block
-(default: all six). A site that wants no
+single setting, **`strataColumns`** in `R/study_settings.R`
+(default: all six; a site overrides it in its run script's `settings` list). A site that wants no
 stratification at all sets it to `character(0)`; a site that only wants,
 say, sex breakdowns sets it to `c("sex")`. `overall` is always produced
 regardless. This is the one place to change it — no per-file toggles.

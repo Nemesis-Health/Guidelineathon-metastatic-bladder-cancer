@@ -109,7 +109,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     # further down, which does its own (per-treated-cohort, not T1-only)
     # strata join and would collide with these same column names otherwise.
     # Fetched once here and reused there too (see that section). Which
-    # views actually run is settings$strataColumns (run.R CONFIG, via
+    # views actually run is settings$strataColumns (R/study_settings.R, via
     # activeStrataSpecs()) -- one setting, not per-file logic.
     strataTbl <- querySqlFile(connection, "subject_strata.sql",
       work_database_schema = settings$workDatabaseSchema,

@@ -153,7 +153,7 @@ runCohortDiagnostics <- function(connection, ...) {
   if (length(bad) > 0L)
     stop("querySqlFile/runSqlFile(\"", file, "\"): parameter(s) ",
          paste(bad, collapse = ", "), " are NULL/NA — check that `settings` ",
-         "defines them (see run.R) before sourcing this step.", call. = FALSE)
+         "defines them (see run.R and R/study_settings.R) before sourcing this step.", call. = FALSE)
 }
 
 # --- eligibility test ids ----------------------------------------------------
@@ -238,7 +238,7 @@ renderSqlFile <- function(file, ...) {
 }
 
 # --- which subject_strata.sql breakdowns are active --------------------------
-# Single control point for settings$strataColumns (run.R CONFIG), so every
+# Single control point for settings$strataColumns (R/study_settings.R), so every
 # stratified output reads the same setting instead of hardcoding its own
 # on/off list. Two shapes, for the two ways stratified outputs consume
 # subject_strata.sql:

@@ -88,7 +88,7 @@ if (nrow(bodyMeasurementsOut) == 0L) {
 } else {
 
   bodyMeasurementsOut$cohort_definition_id <- as.integer(bodyMeasurementsOut$cohort_definition_id)
-  # settings$strataColumns (run.R CONFIG, via activeStrataTypes()) controls
+  # settings$strataColumns (R/study_settings.R, via activeStrataTypes()) controls
   # which stratum views actually reach the CSV -- the SQL always computes all
   # four (cheap), a site that wants fewer/none just filters here.
   bodyMeasurementsOut <- bodyMeasurementsOut[bodyMeasurementsOut$stratum_type %in% activeStrataTypes(), ]

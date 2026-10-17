@@ -1,8 +1,9 @@
 # ===========================================================================
 # setup.R  —  derived config objects (do not edit)
 # ===========================================================================
-# Validates the CONFIG block in run.R and builds the paths + executionSettings
-# object the numbered steps rely on. Sourced by run.R at global scope.
+# Validates the CONFIG block in run.R, adds the fixed study settings
+# (R/study_settings.R) and builds the paths + executionSettings object the
+# numbered steps rely on. Sourced by run.R at global scope.
 # ===========================================================================
 
 if (is.null(connectionDetails))
@@ -14,36 +15,11 @@ stopifnot(nzchar(settings$databaseId),
 if (!nzchar(settings$vocabDatabaseSchema))
   settings$vocabDatabaseSchema <- settings$cdmDatabaseSchema
 
-# default the endocrine-therapy strip ON for site configs predating the option
-if (is.null(settings$stripEndocrineTherapy))
-  settings$stripEndocrineTherapy <- TRUE
+# fixed study settings; a field the site set in its own settings list wins
+source("R/study_settings.R")
+settings <- utils::modifyList(studySettings, settings)
 
-# default the validDrugs restriction for configs predating the options:
-# regimen-component filter ON, ATC filter OFF (see run.R for why)
-if (is.null(settings$validDrugsRegimenComponents))
-  settings$validDrugsRegimenComponents <- TRUE
-if (is.null(settings$validDrugsAtcClasses))
-  settings$validDrugsAtcClasses <- character(0)
-
-# default every strata column ON for configs predating
-# the option -- character(0) (all strata off) is a deliberate site choice,
-# not a missing setting, so only NULL (the field doesn't exist at all) gets
-# defaulted here.
-if (is.null(settings$strataColumns))
-  settings$strataColumns <- c("age_group", "sex", "age_sex", "age_band",
-                              "index_period", "index_period_2021")
-
-# eligibility labs/ECOG: "closest" (default) or "any" (see README)
-if (is.null(settings$labValueSelection)) settings$labValueSelection <- "closest"
 stopifnot(settings$labValueSelection %in% c("closest", "any"))
-# lab window for cohorts indexed on treatment start (default: 30 days before
-# up to the start date)
-if (is.null(settings$treatedLabWindowBeforeDays)) settings$treatedLabWindowBeforeDays <- 30L
-if (is.null(settings$treatedLabWindowAfterDays))  settings$treatedLabWindowAfterDays  <- 0L
-
-# default maintenance merging ON for configs predating the option
-if (is.null(settings$maintenanceMerge))      settings$maintenanceMerge      <- TRUE
-if (is.null(settings$maintenanceMaxGapDays)) settings$maintenanceMaxGapDays <- 180L
 
 projectRoot <- normalizePath(".", mustWork = FALSE)
 sqlDir      <- file.path(projectRoot, "sql")
