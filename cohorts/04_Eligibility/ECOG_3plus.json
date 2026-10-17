@@ -332,6 +332,11 @@
         "Observation": {
           "CodesetId": 18
         }
+      },
+      {
+        "Measurement": {
+          "CodesetId": 18
+        }
       }
     ],
     "ObservationWindow": {
