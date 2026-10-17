@@ -443,6 +443,21 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1344623000",
+              "CONCEPT_ID": 1448892,
+              "CONCEPT_NAME": "Peripheral circulatory disorder due to malnutrition-related diabetes mellitus",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "190407009",
               "CONCEPT_ID": 4096670,
               "CONCEPT_NAME": "Malnutrition-related diabetes mellitus with renal complications",
@@ -601,6 +616,21 @@
               "INVALID_REASON_CAPTION": "Invalid",
               "STANDARD_CONCEPT": "N",
               "STANDARD_CONCEPT_CAPTION": "Non-Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1172389004",
+              "CONCEPT_ID": 37160913,
+              "CONCEPT_NAME": "Disorder due to malnutrition related diabetes mellitus",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false

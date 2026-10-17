@@ -23,6 +23,21 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "281239006",
+              "CONCEPT_ID": 257581,
+              "CONCEPT_NAME": "Acute asthma",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "445378003",
               "CONCEPT_ID": 40483342,
               "CONCEPT_NAME": "Acute exacerbation of bronchiectasis",
@@ -113,6 +128,21 @@
           {
             "concept": {
               "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "707445000",
+              "CONCEPT_ID": 45768911,
+              "CONCEPT_NAME": "Exacerbation of mild persistent asthma",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
               "CONCEPT_CODE": "135171000119106",
               "CONCEPT_ID": 46273487,
               "CONCEPT_NAME": "Acute exacerbation of moderate persistent asthma",
@@ -121,6 +151,21 @@
               "INVALID_REASON_CAPTION": "Invalid",
               "STANDARD_CONCEPT": "N",
               "STANDARD_CONCEPT_CAPTION": "Non-Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "707446004",
+              "CONCEPT_ID": 45772937,
+              "CONCEPT_NAME": "Exacerbation of moderate persistent asthma",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
@@ -286,6 +331,21 @@
               "INVALID_REASON_CAPTION": "Invalid",
               "STANDARD_CONCEPT": "N",
               "STANDARD_CONCEPT_CAPTION": "Non-Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "1370984007",
+              "CONCEPT_ID": 37471650,
+              "CONCEPT_NAME": "Non-steroidal anti-inflammatory drug exacerbated respiratory disease",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
@@ -1216,6 +1276,21 @@
               "INVALID_REASON_CAPTION": "Invalid",
               "STANDARD_CONCEPT": "N",
               "STANDARD_CONCEPT_CAPTION": "Non-Standard",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "includeDescendants": false
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "83291003",
+              "CONCEPT_ID": 4307356,
+              "CONCEPT_NAME": "Cor pulmonale",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
               "VOCABULARY_ID": "SNOMED"
             },
             "includeDescendants": false
