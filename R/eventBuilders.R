@@ -1,12 +1,12 @@
 # ===========================================================================
 # eventBuilders.R  —  per-outcome event tibbles for computeTimeToEvent()
 # ===========================================================================
-# buildLineOfTherapyEvents() and buildDtiEvents() are ported verbatim from
-# onco-study-modules R/eventBuilders.R — pure-R over the ARTEMIS episode
-# tibble, no OncoStudyModules class dependency. fetchDeathEvents() is
-# reimplemented against this repo's own conventions (querySqlFile() +
-# sql/fetch_death_events.sql) instead of the OsmExecutionSettings-typed
-# original, since this repo does not vendor OncoStudyModules' SQL directory.
+# buildLineOfTherapyEvents() is adapted from onco-study-modules
+# R/eventBuilders.R; it reads lines numbered by treatedLines() instead of
+# numbering episodes itself. fetchDeathEvents() is reimplemented against this
+# repo's own conventions (querySqlFile() + sql/fetch_death_events.sql) instead
+# of the OsmExecutionSettings-typed original, since this repo does not vendor
+# OncoStudyModules' SQL directory.
 #
 # anchorEpisodes() and combineEarliestEvent() are new (not in the reference):
 # see R/09_outcomes.R for why line-of-therapy ranking needs an anchor, and
@@ -15,10 +15,10 @@
 
 # --- anchorEpisodes() --------------------------------------------------------
 # Restricts `episodes` to those on/after each subject's own anchor date
-# before line-of-therapy ranking. Without this, buildLineOfTherapyEvents()/
-# buildDtiEvents() rank a person's ARTEMIS episodes across their WHOLE
-# history — but the protocol allows prior systemic therapy into a treated
-# cohort as long as it was >12 months before the mBC index, so such a
+# before line-of-therapy ranking. Without this, treatedLines() would rank a
+# person's ARTEMIS episodes across their WHOLE history — but the protocol
+# allows prior systemic therapy into a treated cohort as long as it was >12
+# months before the mBC index, so such a
 # patient's true "line 1" for THIS disease can be preceded by an unrelated,
 # older episode that would otherwise be mis-ranked as line 1, shifting every
 # subsequent line's numbering. `anchorDates` is any data frame with
@@ -288,47 +288,34 @@ mergeMaintenance <- function(episodes, regimenClass, maxGapDays = 180L,
 
 
 # --- buildLineOfTherapyEvents() ---------------------------------------------
-# Converts an ARTEMIS episode tibble into the event-tibble shape
-# computeTimeToEvent() expects. Lines of therapy are numbered chronologically
-# per subject (episode 1 = earliest episode_start_date; ties broken by
-# episode_end_date then episode_source_value for determinism).
+# Converts numbered lines (treatedLines() output, with `lot_number`) into the
+# event-tibble shape computeTimeToEvent() expects.
 #
-#   eventType = "next_lot"        -> episode_start_date of episode
+#   eventType = "next_lot"        -> episode_start_date of line
 #                                     `lineNumber + 1` (powers TTNT when the
 #                                     target cohort is indexed at LoT-lineNumber
 #                                     start).
-#   eventType = "discontinuation" -> episode_end_date of episode `lineNumber`
+#   eventType = "discontinuation" -> episode_end_date of line `lineNumber`
 #                                     (powers TTD).
-buildLineOfTherapyEvents <- function(episodes,
+buildLineOfTherapyEvents <- function(lines,
                                       lineNumber = 1L,
                                       eventType = c("next_lot", "discontinuation")) {
   eventType <- match.arg(eventType)
 
-  if (!is.data.frame(episodes))
-    stop("`episodes` must be a data frame.", call. = FALSE)
-  required <- c("person_id", "episode_start_date", "episode_end_date",
-                "episode_source_value")
-  miss <- setdiff(required, names(episodes))
+  if (!is.data.frame(lines))
+    stop("`lines` must be a data frame.", call. = FALSE)
+  required <- c("person_id", "episode_start_date", "episode_end_date", "lot_number")
+  miss <- setdiff(required, names(lines))
   if (length(miss) > 0)
-    stop("`episodes` is missing columns: ", paste(miss, collapse = ", "),
+    stop("`lines` is missing columns: ", paste(miss, collapse = ", "),
          call. = FALSE)
 
   lineNumber <- as.integer(lineNumber)
   if (is.na(lineNumber) || lineNumber < 1L)
     stop("`lineNumber` must be a positive integer.", call. = FALSE)
 
-  if (nrow(episodes) == 0) {
-    return(tibble::tibble(subject_id = character(0),
-                          cohort_start_date = as.Date(character(0))))
-  }
-
-  ranked <- episodes |>
-    dplyr::arrange(.data$person_id, .data$episode_start_date,
-                   .data$episode_end_date, .data$episode_source_value) |>
-    dplyr::mutate(.lot = dplyr::row_number(), .by = "person_id")
-
   targetLine <- if (eventType == "next_lot") lineNumber + 1L else lineNumber
-  pick <- ranked |> dplyr::filter(.data$.lot == targetLine)
+  pick <- dplyr::filter(lines, .data$lot_number == targetLine)
 
   # subject_id stays character here too -- see anchorEpisodes()'s comment;
   # pick$person_id is still ARTEMIS's own wide person_id at this point.
@@ -339,56 +326,4 @@ buildLineOfTherapyEvents <- function(episodes,
     tibble::tibble(subject_id = as.character(pick$person_id),
                    cohort_start_date = as.Date(pick$episode_end_date))
   }
-}
-
-
-# --- buildDtiEvents() --------------------------------------------------------
-# DTI event tibble (Cohort T1 only): for each subject in `targetData`, joins
-# the first chronological ARTEMIS episode and returns
-# time_diff = episode_start_date - cohort_start_date (days). Subjects with no
-# episode are dropped (DTI is only defined for patients who initiated
-# treatment).
-buildDtiEvents <- function(targetData, episodes, lineNumber = 1L) {
-  if (!is.data.frame(targetData))
-    stop("`targetData` must be a data frame.", call. = FALSE)
-  for (col in c("subject_id", "cohort_start_date")) {
-    if (!col %in% names(targetData))
-      stop("`targetData` is missing column '", col, "'.", call. = FALSE)
-  }
-
-  if (!is.data.frame(episodes))
-    stop("`episodes` must be a data frame.", call. = FALSE)
-  required <- c("person_id", "episode_start_date", "episode_end_date",
-                "episode_source_value")
-  miss <- setdiff(required, names(episodes))
-  if (length(miss) > 0)
-    stop("`episodes` is missing columns: ", paste(miss, collapse = ", "),
-         call. = FALSE)
-
-  lineNumber <- as.integer(lineNumber)
-  if (is.na(lineNumber) || lineNumber < 1L)
-    stop("`lineNumber` must be a positive integer.", call. = FALSE)
-
-  if (nrow(episodes) == 0)
-    return(tibble::tibble(subject_id = character(0), time_diff = integer(0)))
-
-  ranked <- episodes |>
-    dplyr::arrange(.data$person_id, .data$episode_start_date,
-                   .data$episode_end_date, .data$episode_source_value) |>
-    dplyr::mutate(.lot = dplyr::row_number(), .by = "person_id") |>
-    dplyr::filter(.data$.lot == lineNumber) |>
-    dplyr::select(subject_id = "person_id", lot_start_date = "episode_start_date")
-
-  # subject_id cast to character before this join, not after -- see
-  # anchorEpisodes()'s comment; targetData$subject_id here is cast the same
-  # way upstream (R/09_outcomes.R), so both sides already agree by this
-  # point in the real pipeline -- this cast is defense-in-depth for any
-  # other caller of this exported function.
-  joined <- targetData |>
-    dplyr::mutate(subject_id = as.character(.data$subject_id)) |>
-    dplyr::select("subject_id", "cohort_start_date") |>
-    dplyr::inner_join(ranked, by = "subject_id")
-
-  tibble::tibble(subject_id = joined$subject_id,
-                 time_diff  = as.integer(joined$lot_start_date - joined$cohort_start_date))
 }

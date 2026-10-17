@@ -219,7 +219,7 @@ computeTimeToEvent <- function(targetData,
 
 # --- computeTimeDiffStats() -------------------------------------------------
 # Non-censored descriptive stats + histogram on a pre-computed time_diff
-# column (e.g. buildDtiEvents() output).
+# column (e.g. the DTI days in R/09_outcomes.R).
 computeTimeDiffStats <- function(data,
                                   timeCol = "time_diff",
                                   groupCols = NULL,
