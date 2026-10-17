@@ -88,7 +88,7 @@ if (nrow(ageCont) == 0L) {
 } else {
   ageCont$cohort_definition_id <- as.integer(ageCont$cohort_definition_id)
   ageCont$n                    <- as.integer(ageCont$n)
-  # settings$strataColumns (run.R CONFIG, via activeStrataTypes()) controls
+  # settings$strataColumns (R/study_settings.R, via activeStrataTypes()) controls
   # which stratum views actually reach the CSV -- the SQL always computes all
   # four (cheap), a site that wants fewer/none just filters here.
   ageCont <- ageCont[ageCont$stratum_type %in% activeStrataTypes(), ]

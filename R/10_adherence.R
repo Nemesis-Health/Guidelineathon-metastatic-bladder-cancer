@@ -81,7 +81,7 @@ if (nrow(membership) == 0L) {
 } else {
 
   # age_group/sex/age_sex come from activeStrataSpecs() (settings$strataColumns,
-  # run.R CONFIG) so a site can narrow/disable stratification in one place.
+  # R/study_settings.R) so a site can narrow/disable stratification in one place.
   stratumSpecs <- activeStrataSpecs()
   relevanceList <- adherenceList <- list()
   for (stratumType in names(stratumSpecs)) {

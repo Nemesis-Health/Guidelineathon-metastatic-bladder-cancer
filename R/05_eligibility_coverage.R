@@ -82,7 +82,7 @@ cov <- querySqlFile(connection, "eligibility_input_coverage.sql",
   lab_rows_sql          = labRowsSql(targetIds, passingOnly = FALSE, treatedIds = treatedIds),
   subject_strata_sql    = strataFragment)
 names(cov) <- tolower(names(cov))
-# settings$strataColumns (run.R CONFIG, via activeStrataTypes()) controls
+# settings$strataColumns (R/study_settings.R, via activeStrataTypes()) controls
 # which stratum views actually reach the CSV -- the SQL always computes all
 # four (cheap), a site that wants fewer/none just filters here.
 cov <- cov[cov$stratum_type %in% activeStrataTypes(), ]

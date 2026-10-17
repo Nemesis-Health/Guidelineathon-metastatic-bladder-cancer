@@ -181,7 +181,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     # one dimension at a time, per the protocol's stratification list, plus
     # the age x sex crossed view (subject_strata.sql's age_sex column).
     # age_group/sex/age_sex come from activeStrataSpecs() (settings$strataColumns,
-    # run.R CONFIG) so a site can narrow/disable them in one place; index_year
+    # R/study_settings.R) so a site can narrow/disable them in one place; index_year
     # is protocol-mandated and always on, independent of that setting.
     outcomeStrata <- c(activeStrataSpecs(), list(index_year = "index_year"))
 
