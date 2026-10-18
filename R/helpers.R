@@ -251,9 +251,9 @@ renderSqlFile <- function(file, ...) {
 #     before writing, so disabled views never reach the CSV.
 #   activeStrataSpecs() -- named list, stratum_type -> column name to group
 #     by (NULL for "overall"), filtered to the active types. R-side outputs
-#     that loop over stratum columns themselves (R/09_outcomes.R,
-#     R/10_adherence.R, R/11_baseline_characterization.R,
-#     R/12_treatment_patterns.R) iterate this instead of their own literal
+#     that loop over stratum columns themselves (R/steps/50_outcomes.R,
+#     R/steps/60_adherence.R, R/steps/22_baseline_characterization.R,
+#     R/steps/70_treatment_patterns.R) iterate this instead of their own literal
 #     list -- disabled strata are never computed there at all, not just
 #     hidden after the fact.
 #   strataColumnNames -- every per-subject strata column subject_strata.sql
@@ -310,7 +310,7 @@ writeCategoryReadmes <- function() {
 
 # --- id lookup for a generated cohort by manifest name ---------------------
 # Stops if the name isn't in the manifest (names come from cohortNames in
-# R/03_main_cohorts.R, so a miss is a typo or a stale manifest).
+# R/steps/12_main_cohorts.R, so a miss is a typo or a stale manifest).
 cohortIdByName <- function(manifest, name) {
   hit <- manifest$cohortId[manifest$cohortName == name]
   if (length(hit) == 0L)
@@ -322,15 +322,15 @@ cohortIdByName <- function(manifest, name) {
 idsByCodes <- function(codes, manifest = mainManifest, names = cohortNames)
   as.integer(vapply(codes, function(cd) cohortIdByName(manifest, names[[cd]]), integer(1)))
 
-# Cohorts indexed on treatment start, per cohortIndex (R/03_main_cohorts.R).
+# Cohorts indexed on treatment start, per cohortIndex (R/steps/12_main_cohorts.R).
 treatedCohortIds <- function(index = cohortIndex)
   idsByCodes(names(index)[index == "treatment"])
 
-# Cohorts of patients reaching the 2b/2c/2d check (R/03_main_cohorts.R). They
+# Cohorts of patients reaching the 2b/2c/2d check (R/steps/12_main_cohorts.R). They
 # exist as input-coverage denominators, so they appear in cohort counts and
 # input coverage only; every other per-cohort output leaves them out.
 reachedNodeCohortIds <- function(manifest = mainManifest) {
-  names <- loadState("cohortNames", "R/03_main_cohorts.R")
+  names <- loadState("cohortNames", "R/steps/12_main_cohorts.R")
   as.integer(manifest$cohortId[manifest$cohortName %in% names[c("T2bR", "T2cR", "T2dR")]])
 }
 

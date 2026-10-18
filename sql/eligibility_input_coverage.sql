@@ -17,7 +17,7 @@
 -- see that file's header for the standard consumption pattern this
 -- follows). stratum_type/stratum_value identify which view a row belongs
 -- to. The matching n_cohort denominator per (cohort, stratum) is added in R
--- (R/05_eligibility_coverage.R), from the same subject_strata.sql query,
+-- (R/steps/31_eligibility_coverage.R), from the same subject_strata.sql query,
 -- not duplicated here.
 --
 -- SqlRender params: @work_database_schema, @cohort_table, @cohort_definition_ids

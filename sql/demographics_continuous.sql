@@ -12,7 +12,7 @@
 -- UNION-ALL-of-shared-percentile-formula shape as
 -- lab_value_distribution_portable.sql -- see that file's header for the
 -- interpolation formula (reproduces PERCENTILE_CONT exactly, R quantile
--- type 7). Percentages/censoring are computed in R (R/07_demographics.R),
+-- type 7). Percentages/censoring are computed in R (R/steps/20_demographics.R),
 -- matching demographics.sql's own convention.
 --
 -- SqlRender parameters: @work_database_schema @cohort_table @cdm_database_schema

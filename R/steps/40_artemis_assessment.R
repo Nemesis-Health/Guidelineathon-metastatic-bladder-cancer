@@ -1,11 +1,11 @@
 # ===========================================================================
-# 06_artemis_assessment.R  —  ARTEMIS regimen-alignment assessment
+# 40_artemis_assessment.R  —  ARTEMIS regimen-alignment assessment
 # ===========================================================================
-# Descriptive assessment of the ARTEMIS run from step (a). Reads the in-memory
+# Descriptive assessment of the ARTEMIS run from step 10. Reads the in-memory
 # `artemisResult` (returned by runArtemis() and still in global scope) so no
 # extra CDM queries are needed. All patient/record counts < minCellCount are
 # censored to -minCellCount and the paired record/episode count is blanked,
-# matching R/05_eligibility_coverage.R.
+# matching R/steps/31_eligibility_coverage.R.
 #
 # This is the study-owned home for the ARTEMIS coverage/uncaptured analytics.
 # Upstream OncoStudyModules ships equivalents (computeArtemisCoverage() /
@@ -19,7 +19,7 @@
 # once per stratum, stacked in the same CSV:
 #   scan_cohort        — the full ARTEMIS scan cohort (as before).
 #   target_1a          — restricted to the "T1 Metastatic bladder cancer" cohort
-#                        (== cohort1Id; step 05's Target-1A coverage denominator).
+#                        (== cohort1Id; step 31's Target-1A coverage denominator).
 #                        This is "the metastatic subset".
 #   target_1a_post_met — the metastatic subset restricted to the STUDY PERIOD OF
 #                        INTEREST: only exposures / episodes dated on or after the
@@ -58,13 +58,13 @@
 
 message("\n== ARTEMIS assessment ==")
 
-# artemisResult is normally still in scope from step (a) in the same session,
-# but step (a) persists it to disk too (see R/01_artemis.R), so a session that
-# only re-runs (b)-(e) can reload it here instead of re-running the alignment.
+# artemisResult is normally still in scope from step 10 in the same session,
+# but step 10 persists it to disk too (see R/steps/10_artemis.R), so a session that
+# skips step 10 can reload it here instead of re-running the alignment.
 if (!exists("artemisResult")) {
   rdsPath <- file.path(settings$stateFolder, "artemis_result.rds")
   if (file.exists(rdsPath)) {
-    message("  artemisResult not in scope (ARTEMIS step (a) did not run this ",
+    message("  artemisResult not in scope (ARTEMIS step 10 did not run this ",
             "session) — reloading from ", rdsPath)
     artemisResult <- readRDS(rdsPath)
   }
@@ -115,7 +115,7 @@ if (!exists("artemisResult")) {
             " ingredient(s): ", n0, " -> ", nrow(validExp), " record(s).")
   }
 
-  # --- censoring helpers (same rule as step 05) -----------------------------
+  # --- censoring helpers (same rule as step 31) -----------------------------
   censorN <- function(x)
     ifelse(!is.na(x) & x > 0 & x < minCell, -minCell, as.integer(x))
   # censor a (patients, records) pair: blank records once patients are censored
@@ -131,7 +131,7 @@ if (!exists("artemisResult")) {
     if (is.data.frame(df) && col %in% names(df)) dplyr::n_distinct(df[[col]]) else NA_integer_
   pct  <- function(n, d) if (is.na(n) || is.na(d) || d <= 0) NA_real_ else round(100 * n / d, 1)
 
-  # ARTEMIS scan-cohort subjects (from step (a), if still in scope)
+  # ARTEMIS scan-cohort subjects (from step 10, if still in scope)
   nScan <- NA_integer_
   if (exists("artemisCounts") && exists("artemisCohortId"))
     nScan <- suppressWarnings(as.integer(

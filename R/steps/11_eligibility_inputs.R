@@ -1,15 +1,15 @@
 # ===========================================================================
-# 02_eligibility_inputs.R  —  (b) eligibility labs AND cohorts -> one table
+# 11_eligibility_inputs.R  —  eligibility labs AND cohorts -> one table
 # ===========================================================================
 # Approach A: every eligibility input lands in @labCohortTable.
 #   1. lab_cohorts.sql  -> labs + raw normalised rows
 #   2. generate ECOG + condition cohorts
 #   3. INSERT their membership into @labCohortTable under their test-id slots
 # Test-id slots: cohorts/extras/eligibility_test_ids.csv (see testIds()).
-# The eligibility_2*.sql templates (step 03) then read one table uniformly.
+# The eligibility_2*.sql templates (step 12) then read one table uniformly.
 # ===========================================================================
 
-message("\n== (b) eligibility inputs (labs + cohorts -> ", settings$labCohortTable, ") ==")
+message("\n== eligibility inputs (labs + cohorts -> ", settings$labCohortTable, ") ==")
 
 # --- 1. lab_cohorts.sql -----------------------------------------------------
 labScratch <- list(

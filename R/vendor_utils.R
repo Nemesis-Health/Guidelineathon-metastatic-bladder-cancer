@@ -209,7 +209,7 @@ checkConnection <- function(connection, writesTables = TRUE) {
 # as.numeric(), and insertInclusionRuleNames() inserts that double into an
 # INT64 column. BigQuery's JDBC driver rejects it ("Bad int64 value: 2.0");
 # every other dialect's driver coerces it. The main pipeline avoids this by
-# inserting the rows itself (R/03_main_cohorts.R), but CohortDiagnostics
+# inserting the rows itself (R/steps/12_main_cohorts.R), but CohortDiagnostics
 # calls insertInclusionRuleNames() internally, so this rewrites that one
 # as.numeric() to as.integer(). Only applied on BigQuery. No-op if the call
 # isn't found (fixed upstream, or restructured). Returns the original

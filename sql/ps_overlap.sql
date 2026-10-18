@@ -15,7 +15,7 @@
 -- Every (cohort, PS code) pair is computed once overall and once per
 -- subject_strata.sql stratum (age_group/sex/age_sex) -- same UNION-ALL
 -- pattern as covariate_overlap.sql/eligibility_input_coverage.sql. The
--- matching n_cohort denominator is added in R (R/08_covariates.R).
+-- matching n_cohort denominator is added in R (R/steps/21_covariates.R).
 --
 -- SqlRender parameters:
 --   @work_database_schema @cohort_table @lab_cohort_table

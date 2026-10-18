@@ -1,5 +1,5 @@
 # ===========================================================================
-# 12_treatment_patterns.R  —  (l) treatment patterns by line of therapy
+# 70_treatment_patterns.R  —  treatment patterns by line of therapy
 # ===========================================================================
 # Protocol's "Treatment patterns" section: regimen distribution per LoT
 # (number and percentage of patients on each regimen, at each LoT, for the
@@ -11,7 +11,7 @@
 # treatedLines() (R/eventBuilders.R): line 1 is the regimen the cohort was
 # indexed on, later lines follow from treatment start. So line-1 categories
 # reproduce the T4/T5/T6 arms. Lines are joined to the in-memory
-# `regimenClass` (R/01_artemis.R) by episode_source_value = regName.
+# `regimenClass` (R/steps/10_artemis.R) by episode_source_value = regName.
 #
 # Outputs:
 #   treatment_pattern_untreated.csv — Cohort 1 n, treated (base cohort) n,
@@ -50,12 +50,12 @@
 # interactively for whichever cohort/LoT/lens you want to look at.
 # ===========================================================================
 
-message("\n== (l) treatment patterns ==")
+message("\n== treatment patterns ==")
 
-mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
-cohortNames  <- loadState("cohortNames", "R/03_main_cohorts.R")
-regimenClass <- loadState("regimenClass", "R/01_artemis.R")
-episodes     <- loadState("episodes", "R/01_artemis.R")
+mainManifest <- loadState("mainManifest", "R/steps/12_main_cohorts.R")
+cohortNames  <- loadState("cohortNames", "R/steps/12_main_cohorts.R")
+regimenClass <- loadState("regimenClass", "R/steps/10_artemis.R")
+episodes     <- loadState("episodes", "R/steps/10_artemis.R")
 
 if (is.null(episodes) || nrow(episodes) == 0L) {
 
@@ -118,7 +118,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
       cdm_database_schema  = settings$cdmDatabaseSchema)
     names(strataTbl) <- tolower(names(strataTbl))
     strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
-    # subject_strata.sql is a widely-shared fragment -- see R/09_outcomes.R's
+    # subject_strata.sql is a widely-shared fragment -- see R/steps/50_outcomes.R's
     # comment on the same line for why this uses format() instead of a
     # SQL-side VARCHAR cast.
     strataTbl$subject_id           <- format(strataTbl$subject_id, scientific = FALSE, trim = TRUE)
@@ -269,7 +269,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
                                cohort_name = "cohortName")
 
     # Per-subject age group / sex / age x sex (sql/subject_strata.sql — the
-    # same lookup R/09_outcomes.R uses), so this table can be sliced the same
+    # same lookup R/steps/50_outcomes.R uses), so this table can be sliced the same
     # way every other stratified output in this pipeline is: one dimension
     # at a time (overall / age_group / sex), plus the age x sex crossed view.
     # `strataTbl` (full, unfiltered) was already fetched above -- reused

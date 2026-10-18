@@ -219,7 +219,7 @@ computeTimeToEvent <- function(targetData,
 
 # --- computeTimeDiffStats() -------------------------------------------------
 # Non-censored descriptive stats + histogram on a pre-computed time_diff
-# column (e.g. the DTI days in R/09_outcomes.R).
+# column (e.g. the DTI days in R/steps/50_outcomes.R).
 computeTimeDiffStats <- function(data,
                                   timeCol = "time_diff",
                                   groupCols = NULL,
@@ -397,7 +397,7 @@ computeTimeDiffStats <- function(data,
 # Privacy-censor count columns in a TTE summary table: counts below
 # minCellCount become -minCellCount, and any suppCols on a censored row are
 # blanked to NA. Same rule as this repo's other censoring code (e.g.
-# R/05_eligibility_coverage.R's `censor()`, R/03_main_cohorts.R inline).
+# R/steps/31_eligibility_coverage.R's `censor()`, R/steps/12_main_cohorts.R inline).
 .censorTteCounts <- function(df, minCellCount, countCols, suppCols) {
   for (cc in countCols) {
     if (cc %in% names(df)) {

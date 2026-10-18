@@ -1,5 +1,5 @@
 # ===========================================================================
-# 04_lab_ranges.R  —  (d) lab test ranges on the main cohorts
+# 30_lab_ranges.R  —  lab test ranges on the main cohorts
 # ===========================================================================
 # lab_value_distribution_portable.sql : per cohort x lab (cat) x stratum
 #   summary (mean/SD/median/IQR/min/max) of the closest result per subject --
@@ -24,7 +24,7 @@
 # are kept alongside for comparison.
 # ===========================================================================
 
-message("\n== (d) lab test ranges on main cohorts ==")
+message("\n== lab test ranges on main cohorts ==")
 
 # The manifest holds only the main cohort tree (T1-T6 + the Target 1A JSON
 # leaves), so take every cohort in it but the reached-node denominators.
@@ -34,8 +34,8 @@ targetIds <- setdiff(mainManifest$cohortId, reachedNodeCohortIds(mainManifest))
 message("Target cohorts for lab distribution: ", length(targetIds))
 
 # subject_strata.sql is the single source of truth for age_group/sex/age_sex
-# bucketing (shared with demographics.sql, R/09_outcomes.R,
-# R/12_treatment_patterns.R) -- resolve it once, reused as the
+# bucketing (shared with demographics.sql, R/steps/50_outcomes.R,
+# R/steps/70_treatment_patterns.R) -- resolve it once, reused as the
 # stratification join for every query in this step.
 strataFragment <- renderSqlFile("subject_strata.sql",
   work_database_schema = settings$workDatabaseSchema,

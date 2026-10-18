@@ -1,5 +1,5 @@
 # ===========================================================================
-# 10_adherence.R  —  (j) guideline relevance + adherence roll-up
+# 60_adherence.R  —  guideline relevance + adherence roll-up
 # ===========================================================================
 # Protocol's "Application of the Guideline to clinical practice" section:
 #   relevance  — per-cohort population size as a fraction of Cohort 1.
@@ -11,19 +11,19 @@
 #                Both in R/guidelineAdherence.R.
 #
 # Resolves its own cohort ids independently (cohortIdByName(mainManifest,
-# cohortNames[[...]]), both from R/03_main_cohorts.R) rather than reusing
-# R/09_outcomes.R's internals, matching this repo's existing convention of
+# cohortNames[[...]]), both from R/steps/12_main_cohorts.R) rather than reusing
+# R/steps/50_outcomes.R's internals, matching this repo's existing convention of
 # steps not depending on one another's local variables.
 # ===========================================================================
 
-message("\n== (j) guideline relevance + adherence ==")
+message("\n== guideline relevance + adherence ==")
 
-mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
-cohortNames  <- loadState("cohortNames", "R/03_main_cohorts.R")
+mainManifest <- loadState("mainManifest", "R/steps/12_main_cohorts.R")
+cohortNames  <- loadState("cohortNames", "R/steps/12_main_cohorts.R")
 
 leaves  <- c("a", "b", "c", "d", "e")
 # Leaf "e" (ineligible) pairs with each lens's "other" (f) catch-all, not
-# "e"/other_recommended — matches how 03_main_cohorts.R builds T3e from
+# "e"/other_recommended — matches how 12_main_cohorts.R builds T3e from
 # c456[["eau:other"]].
 armCode <- c(a = "a", b = "b", c = "c", d = "d", e = "f")
 
@@ -73,7 +73,7 @@ strataTbl <- querySqlFile(connection, "subject_strata.sql",
   cdm_database_schema  = settings$cdmDatabaseSchema)
 names(strataTbl) <- tolower(names(strataTbl))
 strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
-# subject_strata.sql is a widely-shared fragment -- see R/09_outcomes.R's
+# subject_strata.sql is a widely-shared fragment -- see R/steps/50_outcomes.R's
 # comment on the same line for why this uses format() instead of a SQL-side
 # VARCHAR cast.
 strataTbl$subject_id           <- format(strataTbl$subject_id, scientific = FALSE, trim = TRUE)

@@ -1,13 +1,13 @@
 # ===========================================================================
-# 01_artemis.R  —  (a) ARTEMIS scan cohort + regimen alignment -> episodes
+# 10_artemis.R  —  ARTEMIS scan cohort + regimen alignment -> episodes
 # ===========================================================================
 # runArtemis() reads subjects already present in the cohort table for the
 # ARTEMIS cohort id, so we generate that scan cohort first, then align.
 # Episodes are written to `episodeTable`; the regimen_reference.csv lens columns
-# are loaded into the work schema for the 4/5/6 splits in step 03.
+# are loaded into the work schema for the 4/5/6 splits in step 12.
 # ===========================================================================
 
-message("\n== (a) ARTEMIS ==")
+message("\n== ARTEMIS ==")
 
 # --- ARTEMIS scan cohort ----------------------------------------------------
 artemisJson <- readJsonCohorts(file.path(cohortsDir, "00_ARTEMIS"))
@@ -39,7 +39,7 @@ validDrugs$valid_concept_id[validDrugs$name == "Methotrexate"] <- "1305058"
 # settings$stripEndocrineTherapy is TRUE (default). This drops supportive /
 # hormone monotherapies (hydrocortisone, methylprednisolone, warfarin, ...) while
 # keeping chemo-plus-steroid combinations, which name-based blacklisting cannot.
-# The same file's lens columns are loaded into the work schema below (step 03).
+# The same file's lens columns are loaded into the work schema below (step 12).
 emptyBlacklist <- tempfile(fileext = ".txt"); file.create(emptyBlacklist)
 regimens <- ARTEMIS::loadRegimens(condition = "all",
   concept_file = emptyBlacklist, ignore_default_list = TRUE)
@@ -143,7 +143,7 @@ if (nrow(episodes) > 0L) {
   saveState("episodes", episodes)
 }
 
-# --- Regimen classification table (lens columns -> work schema for step 03) -
+# --- Regimen classification table (lens columns -> work schema for step 12) -
 regimenClass <- as.data.frame(regRef[, c("regName", "regCode",
   "class_eau", "class_hemonc_mbc", "class_any")])
 saveState("regimenClass", regimenClass)

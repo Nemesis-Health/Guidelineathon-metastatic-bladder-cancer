@@ -1,5 +1,5 @@
 # ===========================================================================
-# 13_covariate_lab_coverage.R  —  (m) lab test coverage by comorbidity
+# 32_covariate_lab_coverage.R  —  lab test coverage by comorbidity
 # subgroup, Target 1A only
 # ===========================================================================
 # covariate_lab_coverage.sql : Target 1A members split into with/without each
@@ -16,16 +16,16 @@
 # subgroup_count, test, n_with_test), n_with_test censored to -minCellCount
 # (same rule as lab_value_distribution.csv / covariate_overlap.csv).
 #
-# Depends on R/03_main_cohorts.R (mainManifest, cohortNames) and
-# R/08_covariates.R (covSet -- the generated covariate cohort ids), so must
+# Depends on R/steps/12_main_cohorts.R (mainManifest, cohortNames) and
+# R/steps/21_covariates.R (covSet -- the generated covariate cohort ids), so must
 # run after both.
 # ===========================================================================
 
-message("\n== (m) lab test coverage by comorbidity subgroup, Target 1A only ==")
+message("\n== lab test coverage by comorbidity subgroup, Target 1A only ==")
 
-mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
-cohortNames  <- loadState("cohortNames", "R/03_main_cohorts.R")
-covSet       <- loadState("covSet", "R/08_covariates.R")
+mainManifest <- loadState("mainManifest", "R/steps/12_main_cohorts.R")
+cohortNames  <- loadState("cohortNames", "R/steps/12_main_cohorts.R")
+covSet       <- loadState("covSet", "R/steps/21_covariates.R")
 
 targetCohortId <- cohortIdByName(mainManifest, cohortNames[["T1"]])
 
@@ -33,7 +33,7 @@ covariateIdFor <- function(name) {
   hit <- covSet$cohortId[covSet$cohortName == name]
   if (length(hit) == 0L)
     stop("Covariate cohort '", name, "' not found in covSet -- is its JSON present in ",
-         "cohorts/02_Comorbidity/ or 05_Lab_coverage/ and listed in R/08_covariates.R's comorbMap?", call. = FALSE)
+         "cohorts/02_Comorbidity/ or 05_Lab_coverage/ and listed in R/steps/21_covariates.R's comorbMap?", call. = FALSE)
   as.integer(hit[1])
 }
 

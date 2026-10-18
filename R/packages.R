@@ -1,11 +1,13 @@
-# Every package the pipeline uses. Each run script calls
-# loadRequiredPackages() before anything else: it loads every package (not just
-# checks it is installed) and stops listing all that are missing or fail to load,
-# so a run never starts with a package that would fail later.
+# Every package the pipeline uses. R/setup.R calls loadRequiredPackages()
+# before anything else: it loads every package (not just checks it is
+# installed) and stops listing all that are missing or fail to load, so a run
+# never starts with a package that would fail later. A diagnostics-only run
+# needs just diagnosticsPackages.
 requiredPackages <- c(
   "DatabaseConnector", "SqlRender", "CohortGenerator", "CirceR", "ARTEMIS", "DBI",
   "dplyr", "tibble", "readr", "cli", "rlang", "stringr", "jsonlite",
   "ggplot2", "scales", "survival", "broom")
+diagnosticsPackages <- c("DatabaseConnector", "SqlRender", "readr")
 
 loadRequiredPackages <- function(pkgs = requiredPackages) {
   failed <- character(0)

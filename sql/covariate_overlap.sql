@@ -11,7 +11,7 @@
 -- (age_group/sex/age_sex) -- same UNION-ALL-over-shared-aggregation pattern
 -- as eligibility_input_coverage.sql (see that file's header for the standard
 -- consumption recipe this follows). The matching n_cohort denominator per
--- (cohort, stratum) is added in R (R/08_covariates.R), from the same
+-- (cohort, stratum) is added in R (R/steps/21_covariates.R), from the same
 -- subject_strata.sql query, not duplicated here.
 --
 -- SqlRender parameters:

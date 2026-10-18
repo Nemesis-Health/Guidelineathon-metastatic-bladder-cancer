@@ -15,7 +15,7 @@
 --
 -- The `coh` CTE body below is sql/subject_strata.sql's own query text,
 -- already fully rendered (its own schema/table placeholders resolved) and
--- injected verbatim by R/07_demographics.R, so the age_group/sex bucketing
+-- injected verbatim by R/steps/20_demographics.R, so the age_group/sex bucketing
 -- has exactly one source of truth -- see subject_strata.sql's own header
 -- for the full list of consumers.
 --

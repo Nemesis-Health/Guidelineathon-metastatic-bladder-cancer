@@ -1,5 +1,5 @@
 # ===========================================================================
-# 15_rollups.R  —  (o) condition and drug roll-ups (protocol's concept-based
+# 23_rollups.R  —  condition and drug roll-ups (protocol's concept-based
 # baseline comorbidities: condition groups and drug era groups)
 # ===========================================================================
 # sql/condition_rollup.sql : conditions on/before index, in disease categories
@@ -25,10 +25,10 @@
 # n_subjects_2plus, n_records]), counts censored to -minCellCount.
 # ===========================================================================
 
-message("\n== (o) condition and drug roll-ups ==")
+message("\n== condition and drug roll-ups ==")
 
-mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
-cohortNames  <- loadState("cohortNames", "R/03_main_cohorts.R")
+mainManifest <- loadState("mainManifest", "R/steps/12_main_cohorts.R")
+cohortNames  <- loadState("cohortNames", "R/steps/12_main_cohorts.R")
 targetIds    <- setdiff(mainManifest$cohortId, reachedNodeCohortIds(mainManifest))
 
 strataFragment <- renderSqlFile("subject_strata.sql",

@@ -1,12 +1,12 @@
 # ===========================================================================
 # artemis_uncaptured.R  —  drill into ARTEMIS uncaptured exposures + view them
 # ===========================================================================
-# artemis_uncaptured_drugs.csv (step 06) is an aggregate: per ingredient, how
+# artemis_uncaptured_drugs.csv (step 40) is an aggregate: per ingredient, how
 # many anticancer exposures ARTEMIS did NOT fold into an aligned regimen episode.
 # These helpers drill that down to the *patient* level for one ingredient, and
 # open the ARTEMIS per-patient alignment viewer on those patients.
 #
-# CAPTURE RULE (shared with R/06_artemis_assessment.R via capturedExposureRids):
+# CAPTURE RULE (shared with R/steps/40_artemis_assessment.R via capturedExposureRids):
 # an exposure is captured when its start date falls within `graceDays` of an
 # episode window OF A REGIMEN THAT CONTAINS THAT INGREDIENT. Two refinements over
 # plain date-containment:
@@ -19,7 +19,7 @@
 # (There are no drug-exposure END dates to work with — see the step-06 header.)
 #
 # Both read the in-memory `artemisResult` from runArtemis() (still in scope after
-# a run.R session). Sourced by run.R so they are available after step (a).
+# a run.R session). Sourced by R/setup.R so they are available after step 10.
 # ===========================================================================
 
 .DEFAULT_GRACE_DAYS <- 30L
@@ -81,7 +81,7 @@ capturedExposureRids <- function(validExp, episodes, regIngredients,
 #' Restrict a person-keyed frame to records on or after each person's index date
 #'
 #' The "period of interest" filter behind the `target_1a_post_met` stratum in
-#' R/06_artemis_assessment.R. Target 1A indexes on the first metastasis
+#' R/steps/40_artemis_assessment.R. Target 1A indexes on the first metastasis
 #' measurement, so its `cohort_start_date` IS the metastasis date and this
 #' becomes an on-or-after-metastasis floor. Day 0 is KEPT (`>=`), matching the
 #' pre-study diagnostics convention (chunks 29/40).
@@ -111,7 +111,7 @@ restrictToOnOrAfter <- function(df, dateCol, indexDates, pcol = "person_id") {
 #' @param ingredient    filter — an RxNorm ingredient concept_id (numeric or
 #'   all-digit string, matched on `ancestor_concept_id`) or an ingredient name
 #'   (character, case-insensitive on `concept_name`). NULL returns all uncaptured.
-#' @param graceDays     capture grace window (default 30, same as step 06 uses).
+#' @param graceDays     capture grace window (default 30, same as step 40 uses).
 #' @return data.frame, one row per uncaptured exposure: person_id,
 #'   ingredient_concept_id, ingredient, drug_concept_id, exposure_start_date.
 uncapturedExposures <- function(artemisResult, ingredient = NULL,

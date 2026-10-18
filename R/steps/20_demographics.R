@@ -1,5 +1,5 @@
 # ===========================================================================
-# 07_demographics.R  —  per-cohort demographic strata (counts + continuous age)
+# 20_demographics.R  —  per-cohort demographic strata (counts + continuous age)
 # ===========================================================================
 # Two outputs alongside cohort_counts.csv:
 #   demographics.csv — every cohort in bc_cohort crossed with three strata:
@@ -13,12 +13,12 @@
 #     "continuous variables summarized as mean (SD), min, max, median, IQR."
 #
 # Cells < minCellCount are censored to -minCellCount — same privacy rule as
-# R/05_eligibility_coverage.R.
+# R/steps/31_eligibility_coverage.R.
 # ===========================================================================
 
 message("\n== demographics (age / sex / index year per cohort) ==")
 
-mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
+mainManifest <- loadState("mainManifest", "R/steps/12_main_cohorts.R")
 
 # subject_strata.sql is the single source of truth for age_group/sex
 # bucketing (see that file's own header for the full list of consumers) --
@@ -36,7 +36,7 @@ demo <- demo[!demo$cohort_definition_id %in% reachedNodeCohortIds(mainManifest),
 if (nrow(demo) == 0L) {
   message("  no cohort members found — skipping demographics.")
 } else {
-  # cohort_definition_id -> human name (from the main manifest built in step (c))
+  # cohort_definition_id -> human name (from the main manifest built in step 12)
   nmeMap <- data.frame(
     cohort_definition_id = as.integer(mainManifest$cohortId),
     cohort_name          = mainManifest$cohortName,
