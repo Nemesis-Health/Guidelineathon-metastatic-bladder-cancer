@@ -18,7 +18,7 @@
 # Per-cohort population size as a fraction of the base cohort (Cohort 1).
 # `cohortIds` is any vector of cohort_definition_ids (base included or not —
 # doesn't matter, it's just one more row).
-computeGuidelineRelevance <- function(membership, baseId, cohortIds, minCellCount = 5L) {
+computeGuidelineRelevance <- function(membership, baseId, cohortIds, minCellCount) {
   cohortIds <- as.integer(stats::na.omit(unique(cohortIds)))
   subjectsIn <- function(id)
     unique(membership$subject_id[membership$cohort_definition_id == id])
@@ -53,7 +53,7 @@ computeGuidelineRelevance <- function(membership, baseId, cohortIds, minCellCoun
 # from `c456[["eau:other"]]`, not `c456[["eau:other_recommended"]]`).
 computeAdherenceRollup <- function(membership, eligibleIds, adherentIds,
                                    altGuidelineIds, indicatedIds,
-                                   nonIndicatedIds, minCellCount = 5L) {
+                                   nonIndicatedIds, minCellCount) {
   leaves <- names(eligibleIds)
   subjectsIn <- function(id) {
     if (is.null(id) || is.na(id)) return(integer(0))
@@ -107,7 +107,7 @@ computeAdherenceRollup <- function(membership, eligibleIds, adherentIds,
 # `eligibleIds` is named by leaf ("a".."e"); `lensIds` is a named list (lens
 # -> ids named by category, a-f order); `treatedId` is the initiated base.
 computeAdherenceCrosstab <- function(membership, eligibleIds, lensIds, treatedId,
-                                     categories, minCellCount = 5L) {
+                                     categories, minCellCount) {
   subjectsIn <- function(id) {
     if (is.null(id) || is.na(id)) return(character(0))
     unique(membership$subject_id[membership$cohort_definition_id == id])
