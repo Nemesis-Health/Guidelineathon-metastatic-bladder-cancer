@@ -1220,12 +1220,13 @@ censoring" and "Stratification" above apply here too.
 only; OS runs on every main-tree cohort; TTNT/TTD/TTD-LoT2/TFI run only on
 the treatment-initiated cohorts (T3a–e, T4–6a–f), since they are defined
 relative to a line-of-therapy start or discontinuation. Every outcome is run
-once "overall" and once per protocol stratum (age group / sex / index year),
-plus the age × sex crossed view (`subject_strata.sql`'s `age_sex` column) —
-one dimension at a time, matching the protocol's stratification list, with
-age × sex the one crossed exception. Every file carries
-`cohort_definition_id`, `cohort_name` (Target 1A only for the DTI files), and
-`stratum_type` (`overall`/`age_group`/`sex`/`age_sex`/`index_year`) plus the
+once "overall", once per stratum in "Stratification" above (age group, sex,
+age band, index period, index period 2021+) and once per index year, plus
+the age × sex crossed view (`subject_strata.sql`'s `age_sex` column) — one
+dimension at a time, with age × sex the one crossed exception. Every file
+carries `cohort_definition_id`, `cohort_name` (Target 1A only for the DTI
+files), and `stratum_type` (`overall`, `age_group`, `age_band`, `sex`,
+`age_sex`, `index_period`, `index_period_2021` or `index_year`) plus the
 grouping column itself when `stratum_type` isn't `overall` (e.g. an
 `age_group` column holding `>65`/`<=65`). Time units are days throughout.
 
@@ -1642,18 +1643,16 @@ callable interactively, not run automatically for every combination.
   entering on a later record. The L01-initiated cohorts apply the date to
   that same metastasis record, while their 30-day prior-observation
   requirement is measured from treatment start.
-- **Eligibility uses the lab/ECOG value closest to index; the coverage and
-  overlap outputs still count any record in the window.** With the default
+- **Eligibility uses the lab/ECOG value closest to index; the PS overlap
+  output still counts any record in the window.** With the default
   `labValueSelection = "closest"`, Target 2a-2d and T1-CE score each lab
   (and ECOG) on the single result closest to index, so their bands are
-  mutually exclusive per patient.
-  `eligibility_input_coverage.sql`'s `n_passed` and `ps_overlap.sql`'s
-  PS-strata counts still treat any row in the window as a pass, so a subject
-  with two draws can fall in mutually exclusive bands at once (e.g. GFR >60
-  and GFR <30; ECOG 0 and ECOG 2). The excess grows with how often a
-  subject is drawn, so bands can sum to well over 100% of `n_tested`.
-  Ever-in-window remains the right reading for toxicity/safety.
-  The closest-value rule still needs PI sign-off.
+  mutually exclusive per patient. `eligibility_input_coverage.csv` reads the
+  same result (`eligibility_lab_rows.sql`), so a lab's mutually exclusive
+  bands add up to its `n_tested`. `ps_overlap.sql`'s PS-strata counts in `covariate_overlap.csv`
+  still treat any ECOG record in the window as a pass, so a patient with two
+  records can fall in more than one exclusive stratum (e.g. ECOG 0 and
+  ECOG 2).
 - **Lab unit resolution can still pick the wrong scale for Hb and GFR.**
   `lab_cohorts.sql` step 3 keeps a recorded unit that scores under 0.7
   decades; failing that it uses the unit the concept name states
