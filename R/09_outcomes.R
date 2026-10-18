@@ -16,13 +16,15 @@
 #              anchored initiated cohorts). Index -> death, KM.
 #   ttnt     — treated cohorts (T3a-e, T4-6a-f; indexed at LoT1 start). KM to
 #              LoT2 start (or death, whichever first).
-#   ttd      — treated cohorts. KM to LoT1 discontinuation (episode end, or
-#              death, whichever first).
+#   ttd      — treated cohorts. KM to LoT1 discontinuation (the line's end,
+#              which is at death at the latest).
 #   ttd_lot2 — treated cohorts, re-indexed at LoT2 start (subjects who
-#              reached a 2nd line only). KM to LoT2 discontinuation.
-#   tfi      — treated cohorts, re-indexed at LoT1 discontinuation. KM to
-#              LoT2 start (or death) — the protocol's "first to second LoT"
-#              scope; LoT3+ TFI/TTNT/TTD are out of scope (matches the
+#              started a 2nd line within follow-up only). KM to LoT2
+#              discontinuation.
+#   tfi      — treated cohorts, re-indexed at LoT1 discontinuation, leaving
+#              out subjects who died on LoT1 (no treatment-free interval).
+#              KM to LoT2 start (or death) — the protocol's "first to second
+#              LoT" scope; LoT3+ TFI/TTNT/TTD are out of scope (matches the
 #              protocol's own stated scope in the research questions).
 #
 # Every KM outcome also gets 1/2/3-year milestones. Every outcome is run
@@ -40,10 +42,12 @@
 # subject appears under, since they all derive their cohort_start_date from
 # the same base cohort row, and line 1 is the regimen that row was indexed on.
 #
-# TTNT/TTD/TFI are death-aware (combineEarliestEvent(), R/eventBuilders.R):
-# the protocol defines each as "... or death, whichever occurs first" —
-# ARTEMIS episode boundaries already encode the other discontinuation
-# reasons (next regimen start, >120-day gap) but know nothing about death.
+# TTNT/TTD/TFI are death-aware: the protocol defines each as "... or death,
+# whichever occurs first". ARTEMIS episode boundaries encode the other
+# discontinuation reasons (next regimen start, >120-day gap) but know nothing
+# about death, so treatedLines() ends every episode at death (dropping any
+# that start after it), and TTNT/TFI take death as their event when it comes
+# before the next line (combineEarliestEvent(), R/eventBuilders.R).
 #
 # Depends on cohort ids resolved via cohortIdByName(mainManifest, cohortNames[[...]])
 # (both built in R/03_main_cohorts.R) and the in-memory `episodes` tibble
@@ -133,39 +137,48 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     names(baseMembers) <- tolower(names(baseMembers))
     baseMembers$subject_id <- as.character(baseMembers$subject_id)
     t1Data    <- dplyr::filter(targetData, .data$cohort_definition_id == t1Id)
+    deathEvents <- fetchDeathEvents(connection, allTargetCohortIds)
     dtiStatus <- firstLineStatus(episodes, baseMembers, t1Data, regimenClass,
-        maintenance = settings$maintenanceMerge, maxGapDays = settings$maintenanceMaxGapDays)
+        maintenance = settings$maintenanceMerge, maxGapDays = settings$maintenanceMaxGapDays,
+        deaths = deathEvents)
     # lines of the base treated cohort, numbered once (treatedLines(),
     # R/eventBuilders.R): every T3-6 cohort is indexed on the base cohort's
-    # line 1, so these are the lines of each treated cohort member
+    # line 1, so these are the lines of each treated cohort member. Every
+    # episode ends at death at the latest, so a line's end is its
+    # discontinuation date (next regimen, >120-day gap or death).
     treatedLots <- treatedLines(episodes, baseMembers, t1Data, regimenClass,
-        maintenance = settings$maintenanceMerge, maxGapDays = settings$maintenanceMaxGapDays)
+        maintenance = settings$maintenanceMerge, maxGapDays = settings$maintenanceMaxGapDays,
+        deaths = deathEvents)
 
     # --- shared person-level / episode-level events ---------------------------
-    deathEvents <- fetchDeathEvents(connection, allTargetCohortIds)
-    ttntEvents  <- combineEarliestEvent(
-      buildLineOfTherapyEvents(treatedLots, 1L, "next_lot"), deathEvents)
-    ttdEvents   <- combineEarliestEvent(
-      buildLineOfTherapyEvents(treatedLots, 1L, "discontinuation"), deathEvents)
-    ttdLot2Events <- combineEarliestEvent(
-      buildLineOfTherapyEvents(treatedLots, 2L, "discontinuation"), deathEvents)
+    lot1End   <- buildLineOfTherapyEvents(treatedLots, 1L, "discontinuation")
+    lot2Start <- buildLineOfTherapyEvents(treatedLots, 1L, "next_lot")
+    ttntEvents    <- combineEarliestEvent(lot2Start, deathEvents)
+    ttdEvents     <- lot1End
+    ttdLot2Events <- buildLineOfTherapyEvents(treatedLots, 2L, "discontinuation")
     # TFI's terminal event ("next LoT start, or death before that") is
     # identical in construction to TTNT's — only the index date differs.
     tfiEvents <- ttntEvents
+    # TFI starts at LoT1's end; patients whose LoT1 ended at death (died on
+    # first-line treatment) had no treatment-free interval and are left out.
+    diedOnLot1 <- dplyr::inner_join(lot1End, dplyr::summarise(deathEvents,
+        death = min(as.Date(.data$cohort_start_date)), .by = "subject_id"), by = "subject_id") |>
+      dplyr::filter(.data$death <= .data$cohort_start_date)
+    tfiStart <- dplyr::anti_join(lot1End, diedOnLot1, by = "subject_id")
 
     # target/event pair per outcome: ttd_lot2 and tfi re-index the treated
-    # cohort's rows onto a different anchor date (LoT2 start / LoT1
-    # discontinuation) before running the same TTE engine.
+    # cohort's rows onto a different anchor date (LoT2 start / LoT1 end), and
+    # keep only subjects who reached it within follow-up, before running the
+    # same TTE engine. ttd_lot2 thus covers only patients who started LoT2.
+    reindex <- function(cohortData, starts)
+      dplyr::inner_join(dplyr::select(cohortData, -"cohort_start_date"),
+                        dplyr::select(starts, "subject_id", "cohort_start_date"),
+                        by = "subject_id") |>
+        dplyr::filter(.data$cohort_start_date <= .data$cohort_end_date)
     targetFor <- function(nm, cohortData) {
       switch(nm,
-        ttd_lot2 = dplyr::inner_join(
-                     dplyr::select(cohortData, -"cohort_start_date"),
-                     dplyr::select(ttntEvents, "subject_id", "cohort_start_date"),
-                     by = "subject_id"),
-        tfi      = dplyr::inner_join(
-                     dplyr::select(cohortData, -"cohort_start_date"),
-                     dplyr::select(ttdEvents, "subject_id", "cohort_start_date"),
-                     by = "subject_id"),
+        ttd_lot2 = reindex(cohortData, lot2Start),
+        tfi      = reindex(cohortData, tfiStart),
         cohortData)
     }
 

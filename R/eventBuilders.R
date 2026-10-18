@@ -69,8 +69,12 @@ anchorEpisodes <- function(episodes, anchorDates) {
 # treatment-start day, line 1 is the episode the cohort was indexed on: a
 # classified regimen still active after the Cohort 1 index, first by end date
 # and then name, as the SQL picks it. Returns the episodes with `lot_number`.
+# `deaths` (fetchDeathEvents() shape: subject_id, cohort_start_date = death
+# date), when given, ends every episode at death: episodes starting after
+# death are dropped and later end dates are set to the death date, before
+# lines are numbered.
 treatedLines <- function(episodes, base, t1, regimenClass,
-                         maintenance = TRUE, maxGapDays = 180L) {
+                         maintenance = TRUE, maxGapDays = 180L, deaths = NULL) {
   starts <- dplyr::inner_join(
     dplyr::distinct(dplyr::transmute(base, person_id = as.character(.data$subject_id),
                                      .start = as.Date(.data$cohort_start_date))),
@@ -80,6 +84,18 @@ treatedLines <- function(episodes, base, t1, regimenClass,
   ep <- episodes |>
     dplyr::mutate(person_id = as.character(.data$person_id)) |>
     dplyr::semi_join(starts, by = "person_id")
+  if (!is.null(deaths) && nrow(deaths) > 0L) {
+    d <- dplyr::summarise(deaths, .death = min(as.Date(.data$cohort_start_date)),
+                          .by = "subject_id") |>
+      dplyr::transmute(person_id = as.character(.data$subject_id), .data$.death)
+    ep <- ep |>
+      dplyr::left_join(d, by = "person_id") |>
+      dplyr::filter(is.na(.data$.death) | .data$episode_start_date <= .data$.death) |>
+      dplyr::mutate(episode_end_date = dplyr::if_else(
+        !is.na(.data$.death) & .data$episode_end_date > .data$.death,
+        .data$.death, .data$episode_end_date)) |>
+      dplyr::select(-".death")
+  }
   ep <- anchorEpisodes(ep, dplyr::transmute(starts, subject_id = .data$person_id,
                                             cohort_start_date = .data$.start))
   if (isTRUE(maintenance)) ep <- mergeMaintenance(ep, regimenClass, maxGapDays)
@@ -107,12 +123,12 @@ treatedLines <- function(episodes, base, t1, regimenClass,
 # checked in this order. `days` (start - index) and `regimen` are set for
 # treated and started_late. Mirrors sql/Target_1A_initiated_template.sql.
 firstLineStatus <- function(episodes, base, t1, regimenClass,
-                            maintenance = TRUE, maxGapDays = 180L) {
+                            maintenance = TRUE, maxGapDays = 180L, deaths = NULL) {
   idx <- dplyr::summarise(t1, .idx = min(as.Date(.data$cohort_start_date)),
                           .by = "subject_id") |>
     dplyr::mutate(subject_id = as.character(.data$subject_id))
   baseIds <- as.character(base$subject_id)
-  treated <- treatedLines(episodes, base, t1, regimenClass, maintenance, maxGapDays) |>
+  treated <- treatedLines(episodes, base, t1, regimenClass, maintenance, maxGapDays, deaths) |>
     dplyr::filter(.data$lot_number == 1L) |>
     dplyr::transmute(subject_id = .data$person_id, start = .data$episode_start_date,
                      regimen = .data$episode_source_value) |>
