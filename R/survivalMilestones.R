@@ -13,7 +13,7 @@
 # the first event, survival is 1.0.
 extractSurvivalMilestones <- function(kmData,
                                        milestones = c(365, 730, 1095),
-                                       minCellCount = 5L) {
+                                       minCellCount) {
 
   if (!is.data.frame(kmData))
     stop("`kmData` must be a data frame.", call. = FALSE)

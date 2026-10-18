@@ -38,7 +38,7 @@ computeTimeToEvent <- function(targetData,
                                 histogramBreaks = c(-Inf, -365, -180, -90,
                                                      -60, -30, 0, 30, 60,
                                                      90, 180, 365, Inf),
-                                minCellCount = 5L) {
+                                minCellCount) {
 
   priorOutcomeHandling <- match.arg(priorOutcomeHandling)
 
@@ -226,7 +226,7 @@ computeTimeDiffStats <- function(data,
                                   histogramBreaks = c(-Inf, -365, -180, -90,
                                                        -60, -30, 0, 30, 60,
                                                        90, 180, 365, Inf),
-                                  minCellCount = 5L) {
+                                  minCellCount) {
 
   if (!is.data.frame(data))
     stop("`data` must be a data frame.", call. = FALSE)
