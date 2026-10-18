@@ -31,6 +31,7 @@ strataFragment <- renderSqlFile("subject_strata.sql",
 demo <- querySqlFile(connection, "demographics.sql",
   subject_strata_sql = strataFragment)
 names(demo) <- tolower(names(demo))
+demo <- demo[!demo$cohort_definition_id %in% reachedNodeCohortIds(mainManifest), ]
 
 if (nrow(demo) == 0L) {
   message("  no cohort members found — skipping demographics.")
@@ -82,6 +83,7 @@ ageCont <- querySqlFile(connection, "demographics_continuous.sql",
   cdm_database_schema  = settings$cdmDatabaseSchema,
   subject_strata_sql   = strataFragment)
 names(ageCont) <- tolower(names(ageCont))
+ageCont <- ageCont[!ageCont$cohort_definition_id %in% reachedNodeCohortIds(mainManifest), ]
 
 if (nrow(ageCont) == 0L) {
   message("  no cohort members found — skipping continuous age summary.")

@@ -135,7 +135,7 @@ charlsonMap <- tibble::tribble(
   "Dementia",                     "dementia"
 )
 
-targetIds <- mainManifest$cohortId
+targetIds <- setdiff(mainManifest$cohortId, reachedNodeCohortIds(mainManifest))
 
 covSet <- tryCatch(loadState("covSet", "R/08_covariates.R"), error = function(e) NULL)
 

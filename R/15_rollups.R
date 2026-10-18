@@ -29,7 +29,7 @@ message("\n== (o) condition and drug roll-ups ==")
 
 mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
 cohortNames  <- loadState("cohortNames", "R/03_main_cohorts.R")
-targetIds    <- mainManifest$cohortId
+targetIds    <- setdiff(mainManifest$cohortId, reachedNodeCohortIds(mainManifest))
 
 strataFragment <- renderSqlFile("subject_strata.sql",
   work_database_schema = settings$workDatabaseSchema,
