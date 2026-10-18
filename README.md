@@ -298,7 +298,7 @@ ARTEMIS.
 | — per-cohort demographics | `R/07_demographics.R` | `demographics.csv`, `demographics_age_continuous.csv` |
 | — covariate overlap with the main tree | `R/08_covariates.R` | `covariate_overlap.csv`, `bc_covariate_cohort` |
 | — outcomes: DTI / OS / TTNT / TTD / TTD-LoT2 / TFI | `R/09_outcomes.R` | `outcomes/outcome_*_summary.csv`, `_histogram.csv`, `_km.csv`, `_median_survival.csv`, `_milestones.csv` |
-| — guideline relevance + adherence roll-up | `R/10_adherence.R` | `guideline/guideline_relevance.csv`, `guideline_adherence.csv` |
+| — guideline relevance + adherence | `R/10_adherence.R` | `guideline/guideline_relevance.csv`, `guideline_adherence_crosstab.csv`, `guideline_adherence.csv` |
 | — baseline body measurements + Charlson CCI | `R/11_baseline_characterization.R` | `characterization/baseline_body_measurements.csv`, `charlson_cci.csv` |
 | — treatment patterns by line of therapy | `R/12_treatment_patterns.R` | `treatment_patterns/treatment_pattern_untreated.csv`, `_regimen.csv`, `_category.csv`, `treatment_pathways.csv`, `treatment_pattern_by_year.csv`, `treatment_pattern_maintenance.csv` |
 | — lab coverage by comorbidity subgroup | `R/13_covariate_lab_coverage.R` | `labs/covariate_lab_coverage.csv` |
@@ -373,7 +373,7 @@ At the end of a run, results are packaged into two archives:
 | `07_demographics.R` | Per-cohort demographic strata (age group / sex / index year, with `pct`) + continuous age summary. |
 | `08_covariates.R` | Comorbidity + performance-status overlap with every cohort in the main tree; also generates the comorbidity cohorts step (k) scores as Charlson CCI components. |
 | `09_outcomes.R` | Outcomes: DTI (Target 1A), OS (every cohort), TTNT/TTD/TTD-LoT2/TFI (treatment-initiated cohorts) — KM + 1/2/3-yr milestones, stratified by age group / sex / index year. |
-| `10_adherence.R` | Guideline relevance (per-cohort % of Cohort 1) + adherence roll-up (per eligibility leaf: adherent / alt-guideline / indicated-other / non-indicated / no-treatment). |
+| `10_adherence.R` | Guideline relevance (per-cohort % of Cohort 1) + adherence: per eligibility leaf × lens, the first-line treatment category its patients started (cross-table), and the per-arm roll-up. |
 | `11_baseline_characterization.R` | Weight/height/BMI + Charlson Comorbidity Index, per cohort in the main tree. |
 | `12_treatment_patterns.R` | Regimen + classification-category distribution by line of therapy, % untreated, Sankey-ready LoT1→LoT2→LoT3 pathway counts, maintenance use (lines numbered after folding maintenance into its line). |
 | `13_covariate_lab_coverage.R` | (m) lab test coverage by comorbidity subgroup (Heme Disorders / Liver Disease / Renal Disease, with/without), Target 1A only. |
@@ -385,7 +385,7 @@ At the end of a run, results are packaged into two archives:
 | `timeToEvent.R` | Generic time-to-event engine (ported from `onco-study-modules`): `computeTimeToEvent()` (KM via `survival`/`broom`) + `computeTimeDiffStats()` (non-censored descriptive stats). Used by step 09. |
 | `survivalMilestones.R` | `extractSurvivalMilestones()` — reads KM survival probabilities at fixed day milestones (365/730/1095). Used by step 09. |
 | `eventBuilders.R` | Per-outcome event tibbles for step 09/12: `fetchDeathEvents()` (OS), `treatedLines()` (lines of therapy of the base treated cohort, numbered once for steps 09 and 12), `firstLineStatus()` (DTI), `buildLineOfTherapyEvents()` (TTNT/TTD/TTD-LoT2 events from those lines), `anchorEpisodes()` (restricts episode ranking to on/after each subject's own index — see Known gaps), `combineEarliestEvent()` (death-aware TTNT/TTD/TFI). |
-| `guidelineAdherence.R` | `computeGuidelineRelevance()` / `computeAdherenceRollup()` — pure set-math for step 10; see that file's header for why the set logic differs from `onco-study-modules`' original. |
+| `guidelineAdherence.R` | `computeGuidelineRelevance()` / `computeAdherenceCrosstab()` / `computeAdherenceRollup()` — pure set-math for step 10. |
 | `charlsonScore.R` | `computeCharlsonScore()` / `charlsonComponents()`, ported from `onco-study-modules` (pure math, no DB dependency). Used by step 11. |
 | `vendor_utils.R` | `.getDbms()` + `%||%` (helpers used by the ARTEMIS code). |
 | `study_settings.R` | **Do not edit.** The fixed study settings (work table names, time windows, ARTEMIS filters, maintenance merging, strata), with a comment on each. |
@@ -1329,14 +1329,15 @@ KM survival probability read off the step curve at fixed day milestones
 
 <!-- category:guideline -->
 ## `guideline/`
-Guideline relevance (per-cohort share of Cohort 1) and adherence roll-up
-(per eligibility leaf, partitioned into adherent / alt-guideline /
-indicated-other / non-indicated / no-treatment). "Privacy censoring" and
+Guideline relevance (per-cohort share of Cohort 1) and adherence: for each
+eligibility leaf, what the guideline recommended against the first-line
+treatment its patients actually started. "Privacy censoring" and
 "Stratification" above apply here too.
 
 | File | Written by | Population | Grain (one row per…) |
 |---|---|---|---|
 | `guideline_relevance.csv` | `10_adherence.R` | T1/T2a-e/T3a-e/T4-6a-f | stratum type × stratum value × cohort |
+| `guideline_adherence_crosstab.csv` | `10_adherence.R` | Eligible (T2) subjects per leaf | stratum type × stratum value × leaf × lens × category |
 | `guideline_adherence.csv` | `10_adherence.R` | Eligible (T2) subjects per leaf | stratum type × stratum value × leaf × category (adherent/alt-guideline/indicated-other/non-indicated/no-treatment) |
 
 ### `guideline_relevance.csv`
@@ -1355,23 +1356,78 @@ Cohort 1.
 | `n` | Subjects in that cohort, restricted to this stratum (censored). |
 | `pct_of_base` | % of Cohort 1's same-stratum members (blanked when `n` censored). |
 
+### `guideline_adherence_crosstab.csv`
+What the guideline recommended (eligibility leaf, Cohorts 2a–e) against the
+first-line treatment its patients started, under each classification lens.
+Counts only: every adherence statistic in the protocol is a sum or ratio of
+these rows.
+
+**First-line treatment** is a patient's regimen in the initiated base ("mBC
+initiated base"): their earliest regimen in
+`cohorts/extras/regimen_reference.csv` starting between 30 days before and 90
+days after their Cohort 1 index. Each lens gives it exactly one category, so
+a leaf × lens's seven rows add up to `eligible_n` (before censoring).
+
+| `lens` (cohorts) | `ev_pembro` … `pdl1_mono` | `other_recommended` | `other` |
+|---|---|---|---|
+| `eau` (T4) | The EAU guideline's regimens for that arm | Always 0 | Not an EAU guideline regimen |
+| `hemonc_mbc` (T5) | Regimens HemOnc indicates for mBC that contain the arm's drug | Indicated for mBC, none of the arms' drugs | Not indicated for mBC |
+| `any` (T6) | Any regimen containing the arm's drug | Always 0 | None of the arms' drugs |
+
+**`untreated`** is no first regimen in the initiated base, not "never
+treated": it includes treatment starting more than 90 days after index,
+regimens missing from the regimen reference, and anyone with a regimen in the
+year before index (so every previously treated patient in leaf e).
+
+**The protocol's adherence categories**, for leaf x (a–d):
+
+| Protocol | From this file |
+|---|---|
+| Adherent (Cohort 3x) | `eau`, category = `recommended` |
+| Other Guideline treatment (4 except 3) | `eau`, the other three arms |
+| mBC-indicated, not Guideline (Cohort 5) | `hemonc_mbc` total of the arms and `other_recommended`, minus the `eau` total of the arms |
+| Not indicated (Cohort 6) | `hemonc_mbc`, `other` |
+| No treatment | `untreated` |
+
+The subtraction for Cohort 5 holds because every EAU guideline regimen has the
+same category under `hemonc_mbc` in `regimen_reference.csv`; recheck that
+whenever the reference changes. The protocol's Cohorts 5 and 6 are therefore
+not T5 and T6, which also include the Guideline regimens. Leaf e has no
+recommendation (physician choice): its rows show what ineligible patients
+were given, and the protocol's 3e (any treatment) is `eligible_n` minus
+`untreated`.
+
+Reported overall and per `subject_strata.sql` stratum (see "Stratification").
+
+| Column | Meaning |
+|---|---|
+| `stratum_type`, `stratum_value` | `overall`, or a stratum (see "Stratification" above). |
+| `leaf` | `a`–`e` (Cohorts 2a–2e). |
+| `lens` | `eau`, `hemonc_mbc` or `any`. |
+| `recommended` | The leaf's recommended category; blank for leaf e. |
+| `category` | `ev_pembro`, `cisplatin`, `carboplatin`, `pdl1_mono`, `other_recommended`, `other` or `untreated`. |
+| `n` | Patients in this leaf, stratum and category (censored). |
+| `eligible_n` | Patients in this leaf and stratum (censored). |
+
 ### `guideline_adherence.csv`
-Per eligibility leaf (a–e), the eligible population partitioned into five
-disjoint categories via explicit set-differences (`computeAdherenceRollup()`,
-`R/guidelineAdherence.R` — see that file's header for why this repo can't use
-`onco-study-modules`' original set logic as-is). Reported once overall and
-once per `subject_strata.sql` stratum (see "Stratification") —
-`eligible_n` is that stratum's eligible population, not the leaf's whole
-eligible count.
+Per eligibility leaf (a–e), five disjoint categories (`computeAdherenceRollup()`,
+`R/guidelineAdherence.R`). Each leaf is compared only with the treatment
+cohorts of its own arm (leaf a with T3a/T4a/T5a/T6a; leaf e with
+T3e/T4f/T5f/T6f), so `alt_guideline` is always 0 and a patient whose first
+regimen belongs to a different arm is counted as `no_treatment`. Use
+`guideline_adherence_crosstab.csv` for the protocol's adherence categories.
+Reported once overall and once per `subject_strata.sql` stratum (see
+"Stratification") — `eligible_n` is that stratum's eligible population, not
+the leaf's whole eligible count.
 
 | Column | Meaning |
 |---|---|
 | `stratum_type` | `overall`, or a stratum (see "Stratification" above). |
 | `stratum_value` | `overall`, or the stratum's value. |
 | `leaf` | `a`–`e`. |
-| `category` | `adherent` (received the recommended regimen), `alt_guideline` (a different EAU-recommended regimen), `indicated_other` (a HemOnc mBC-indicated regimen), `non_indicated` (any other regimen), or `no_treatment`. |
+| `category` | `adherent` (in Cohort 3 of this leaf), `alt_guideline` (in Cohort 4 of this leaf's arm but not Cohort 3), `indicated_other` (in Cohort 5 of this leaf's arm, not above), `non_indicated` (in Cohort 6 of this leaf's arm, not above), or `no_treatment` (none of these). |
 | `n` | Subjects in that leaf × category × stratum (censored). |
-| `eligible_n` | Total eligible for that leaf, restricted to this stratum (censored; the denominator — the five categories' `n` sum to this). |
+| `eligible_n` | Total eligible for that leaf, restricted to this stratum (censored; the denominator — before censoring, the five categories' `n` sum to this). |
 | `pct_of_eligible` | % of `eligible_n` (blanked when `n` censored). |
 <!-- /category:guideline -->
 
@@ -1518,10 +1574,15 @@ callable interactively, not run automatically for every combination.
   at death if that comes first), so a death within 120 days of the last dose
   with no new regimen counts as a TFI event after a short interval, not as
   death on treatment. Both points await PI confirmation.
-- **Guideline adherence buckets are computed as non-overlapping residuals**,
-  since cohorts 4/5/6 are independent regimen-classification lenses rather
-  than mutually exclusive tiers (see below) — a patient can appear in more
-  than one.
+- **Guideline adherence is reported per lens, not as the protocol's single
+  roll-up.** `guideline_adherence_crosstab.csv` gives each eligibility leaf
+  × lens × first-line category; the protocol's categories (adherent, other
+  Guideline treatment, mBC-indicated, not indicated, untreated) are sums of
+  its cells. `guideline_adherence.csv` compares each leaf only with its own
+  arm's treatment cohorts, so it counts patients started on another arm's
+  regimen as `no_treatment`.
+- **Adherence covers the first regimen only, started within 90 days of the
+  Cohort 1 index**; later or unclassified treatment counts as untreated.
 - **Generalizability vs. trial populations (SMD) is not implemented** —
   `cohorts/extras/trial_reference.yaml` has no reference data yet.
 - **Charlson CCI covers 15 of 19 components** (Fortin/Reps/Ryan SNOMED
@@ -1607,9 +1668,11 @@ callable interactively, not run automatically for every combination.
   `value_as_number > 0`, so sentinel values survive into `bc_lab_cohort`.
   Check `lab_results_summary.csv` (`status`, per concept and unit) before
   using Hb or GFR strata.
-- **Cohorts 4/5/6(a–f) are three independent, non-exclusive regimen
-  classifications** (`class_eau` / `class_hemonc_mbc` / `class_any`), not
-  the protocol's exclusive tiers.
+- **Cohorts 4/5/6(a–f) are three independent regimen classifications**
+  (`class_eau` / `class_hemonc_mbc` / `class_any`), not the protocol's
+  exclusive tiers. Within a lens each treated patient is in exactly one
+  category (their first regimen's); across lenses the same patient appears
+  once in each of cohorts 4, 5 and 6.
 
 See `DEVELOPMENT.md` (gitignored, local) for the full reasoning behind each
 of these and other in-progress notes.
