@@ -3,11 +3,12 @@
 # ===========================================================================
 # Protocol's "Application of the Guideline to clinical practice" section:
 #   relevance  — per-cohort population size as a fraction of Cohort 1.
-#   adherence  — per eligibility leaf (a-e), the breakdown of eligible
-#                patients into adherent / alt-guideline / indicated-other /
-#                non-indicated / no-treatment (R/guidelineAdherence.R;
-#                see that file's header for why the set logic differs from
-#                onco-study-modules' original).
+#   adherence  — per eligibility leaf (a-e) x lens, the first-line
+#                category (a-f) or untreated of each eligible patient
+#                (guideline_adherence_crosstab.csv); plus the per-arm
+#                roll-up into adherent / alt-guideline / indicated-other /
+#                non-indicated / no-treatment (guideline_adherence.csv).
+#                Both in R/guidelineAdherence.R.
 #
 # Resolves its own cohort ids independently (cohortIdByName(mainManifest,
 # cohortNames[[...]]), both from R/03_main_cohorts.R) rather than reusing
@@ -38,7 +39,15 @@ t6Ids <- stats::setNames(idsByCodes(paste0("T6", armCode[leaves])), leaves)
 t456AllIds <- idsByCodes(c(paste0("T4", letters[1:6]), paste0("T5", letters[1:6]),
                            paste0("T6", letters[1:6])))
 
-relevantIds <- as.integer(c(t1Id, t2Ids, t3Ids, t456AllIds))
+# cross-table: each lens's six categories, in a-f order, and the initiated base
+lensCategories <- c(a = "ev_pembro", b = "cisplatin", c = "carboplatin", d = "pdl1_mono",
+                    e = "other_recommended", f = "other")
+lensIds <- list(eau        = idsByCodes(paste0("T4", letters[1:6])),
+                hemonc_mbc = idsByCodes(paste0("T5", letters[1:6])),
+                any        = idsByCodes(paste0("T6", letters[1:6])))
+baseId <- idsByCodes("Base")
+
+relevantIds <- as.integer(c(t1Id, t2Ids, t3Ids, t456AllIds, baseId))
 
 membership <- querySqlFile(connection, "outcome_target_data.sql",
   work_database_schema = settings$workDatabaseSchema,
@@ -83,7 +92,7 @@ if (nrow(membership) == 0L) {
   # age_group/sex/age_sex come from activeStrataSpecs() (settings$strataColumns,
   # R/study_settings.R) so a site can narrow/disable stratification in one place.
   stratumSpecs <- activeStrataSpecs()
-  relevanceList <- adherenceList <- list()
+  relevanceList <- adherenceList <- crosstabList <- list()
   for (stratumType in names(stratumSpecs)) {
     col  <- stratumSpecs[[stratumType]]
     vals <- if (is.null(col)) "overall" else sort(unique(stats::na.omit(membership[[col]])))
@@ -104,6 +113,11 @@ if (nrow(membership) == 0L) {
         minCellCount    = settings$minCellCount)
       adh$stratum_type <- stratumType; adh$stratum_value <- val
       adherenceList[[length(adherenceList) + 1L]] <- adh
+
+      xt <- computeAdherenceCrosstab(m, eligibleIds = t2Ids, lensIds = lensIds,
+        treatedId = baseId, categories = lensCategories, minCellCount = settings$minCellCount)
+      xt$stratum_type <- stratumType; xt$stratum_value <- val
+      crosstabList[[length(crosstabList) + 1L]] <- xt
     }
   }
 
@@ -116,6 +130,10 @@ if (nrow(membership) == 0L) {
   adherence <- dplyr::bind_rows(adherenceList) |>
     dplyr::relocate("stratum_type", "stratum_value", .before = "leaf")
   writeResultCsv(adherence, "guideline_adherence", "guideline")
+
+  crosstab <- dplyr::bind_rows(crosstabList) |>
+    dplyr::relocate("stratum_type", "stratum_value", .before = "leaf")
+  writeResultCsv(crosstab, "guideline_adherence_crosstab", "guideline")
 
   message("  relevance: ", nrow(relevance), " cohort(s); adherence: ",
           nrow(adherence), " leaf x category row(s)")
