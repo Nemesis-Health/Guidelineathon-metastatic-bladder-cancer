@@ -83,7 +83,7 @@ psLabels <- c("PS1" = "Performance status = 0", "PS2" = "Performance status = 1"
               "PS 0-1" = "Performance status 0-1")
 
 mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
-targetIds <- mainManifest$cohortId
+targetIds <- setdiff(mainManifest$cohortId, reachedNodeCohortIds(mainManifest))
 
 # subject_strata.sql is the single source of truth for age_group/sex/age_sex
 # bucketing (shared with demographics.sql, R/04/05/09/10/12) -- resolve it
@@ -101,6 +101,7 @@ strataTbl <- querySqlFile(connection, "subject_strata.sql",
   cdm_database_schema  = settings$cdmDatabaseSchema)
 names(strataTbl) <- tolower(names(strataTbl))
 strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
+strataTbl <- strataTbl[strataTbl$cohort_definition_id %in% targetIds, ]
 
 denomFor <- function(stratumType, col = NULL) {
   if (is.null(col)) {

@@ -40,7 +40,8 @@ addCustom <- function(name, sql) {
 # T1pt/T1npt/T1ce = attrition steps under T1 (previously treated / not
 # previously treated / combination-therapy eligible); Base = initiated base
 # (ARTEMIS episodes); BaseL01* = initiated on a raw L01 drug (or procedure),
-# with/without PC allowed; T2x = eligibility leaves; T3x = eligible &
+# with/without PC allowed; T2x = eligibility leaves; T2bR/T2cR/T2dR = the
+# patients who reach the 2b/2c/2d check (2a's are T1-CE); T3x = eligible &
 # initiated (EAU); T4x/T5x/T6x = initiated splits under the EAU /
 # HemOnc-mBC / any-regimen lens.
 cohortNames <- c(
@@ -61,6 +62,9 @@ cohortNames <- c(
   T2c = "T2c Carbo-eligible mBC",
   T2d = "T2d PD-L1-eligible mBC",
   T2e = "T2e Trt Ineligible mBC",
+  T2bR = "T2b-R Reached Cis node mBC",
+  T2cR = "T2c-R Reached Carbo node mBC",
+  T2dR = "T2d-R Reached PD-L1 node mBC",
   T3a = "T3a EV-Pembro eligible and initiated mBC_EAU",
   T3b = "T3b Cis eligible and initiated mBC_EAU",
   T3c = "T3c Carbo eligible and initiated mBC_EAU",
@@ -89,8 +93,8 @@ saveState("cohortNames", cohortNames)
 # The index event of every cohort above: its first metastasis, or treatment
 # start. Sets each cohort's lab window (labWindow* or treatedLabWindow*).
 cohortIndex <- c(
-  stats::setNames(rep("metastasis", 12), c("T1", "T1pc", "T1mb", "T1all", "T1pt", "T1npt", "T1ce",
-                                           paste0("T2", letters[1:5]))),
+  stats::setNames(rep("metastasis", 15), c("T1", "T1pc", "T1mb", "T1all", "T1pt", "T1npt", "T1ce",
+                                           paste0("T2", letters[1:5]), "T2bR", "T2cR", "T2dR")),
   stats::setNames(rep("treatment", 28), c("Base", "BaseL01", "BaseL01pc", "BaseL01proc",
                                           "BaseL01procpc", paste0("T3", letters[1:5]),
                                           paste0(rep(c("T4", "T5", "T6"), each = 6), letters[1:6]))))
@@ -231,6 +235,33 @@ for (lf in c("a","b","c","d"))
 addCustom(cohortNames[["T3e"]], SqlRender::render(intersectTemplate,
   cohort2_id = cohort2eId, cohort4_id = c456[["eau:other"]]))
 
+# --- patients reaching each eligibility check ------------------------------
+# The denominators for input coverage at each node of the tree
+# T1 -> NPT (washout) -> CE (combination panel) -> 2a -> 2b -> 2c, with 2d
+# taking NPT minus CE. Washout, panel and 2a are reached by T1, NPT and CE;
+# 2b-2d need their own: CE minus 2a, CE minus 2a/2b, NPT minus CE. Added
+# after T3e so no earlier cohort's id moves.
+reachTemplate <- "
+DELETE FROM @target_database_schema.@target_cohort_table
+ WHERE cohort_definition_id = @target_cohort_id;
+INSERT INTO @target_database_schema.@target_cohort_table
+  (cohort_definition_id, subject_id, cohort_start_date, cohort_end_date)
+SELECT @target_cohort_id, b.subject_id, b.cohort_start_date, b.cohort_end_date
+FROM @target_database_schema.@target_cohort_table b
+LEFT JOIN (SELECT DISTINCT subject_id FROM @target_database_schema.@target_cohort_table
+            WHERE cohort_definition_id IN (@exclude_ids)) x
+  ON x.subject_id = b.subject_id
+WHERE b.cohort_definition_id = @base_id
+  AND x.subject_id IS NULL;
+"
+reachIds <- c(
+  T2bR = addCustom(cohortNames[["T2bR"]], SqlRender::render(reachTemplate,
+    base_id = attritionIds[["T1ce"]], exclude_ids = elig2$a)),
+  T2cR = addCustom(cohortNames[["T2cR"]], SqlRender::render(reachTemplate,
+    base_id = attritionIds[["T1ce"]], exclude_ids = paste(elig2$a, elig2$b, sep = ", "))),
+  T2dR = addCustom(cohortNames[["T2dR"]], SqlRender::render(reachTemplate,
+    base_id = attritionIds[["T1npt"]], exclude_ids = attritionIds[["T1ce"]])))
+
 # --- generate everything ----------------------------------------------------
 customSet <- dplyr::bind_rows(customRows)
 fullSet   <- dplyr::bind_rows(jsonSet, customSet)
@@ -242,7 +273,8 @@ mainManifest <<- fullSet
 saveState("mainManifest", mainManifest)
 
 # Attrition steps must nest with the eligibility leaves: PT and NPT split T1
-# exactly, CE sits inside NPT, T2a-T2c inside CE, and T2d outside it.
+# exactly, CE sits inside NPT, T2a-T2c inside CE, and T2d outside it; T2b-T2d
+# each sit inside the cohort reaching their check.
 nest <- DatabaseConnector::renderTranslateQuerySql(connection, "
   SELECT
     (SELECT COUNT(DISTINCT subject_id) FROM @work_schema.@cohort_tbl WHERE cohort_definition_id = @t1_id) AS n_t1,
@@ -254,15 +286,23 @@ nest <- DatabaseConnector::renderTranslateQuerySql(connection, "
     (SELECT COUNT(DISTINCT c.subject_id) FROM @work_schema.@cohort_tbl c WHERE c.cohort_definition_id IN (@c2a_id, @c2b_id, @c2c_id)
        AND c.subject_id NOT IN (SELECT subject_id FROM @work_schema.@cohort_tbl WHERE cohort_definition_id = @ce_id)) AS n_2abc_not_ce,
     (SELECT COUNT(DISTINCT c.subject_id) FROM @work_schema.@cohort_tbl c WHERE c.cohort_definition_id = @c2d_id
-       AND c.subject_id IN (SELECT subject_id FROM @work_schema.@cohort_tbl WHERE cohort_definition_id = @ce_id)) AS n_2d_in_ce;",
+       AND c.subject_id IN (SELECT subject_id FROM @work_schema.@cohort_tbl WHERE cohort_definition_id = @ce_id)) AS n_2d_in_ce,
+    (SELECT COUNT(DISTINCT c.subject_id) FROM @work_schema.@cohort_tbl c WHERE c.cohort_definition_id = @c2b_id
+       AND c.subject_id NOT IN (SELECT subject_id FROM @work_schema.@cohort_tbl WHERE cohort_definition_id = @r2b_id)) AS n_2b_not_reached,
+    (SELECT COUNT(DISTINCT c.subject_id) FROM @work_schema.@cohort_tbl c WHERE c.cohort_definition_id = @c2c_id
+       AND c.subject_id NOT IN (SELECT subject_id FROM @work_schema.@cohort_tbl WHERE cohort_definition_id = @r2c_id)) AS n_2c_not_reached,
+    (SELECT COUNT(DISTINCT c.subject_id) FROM @work_schema.@cohort_tbl c WHERE c.cohort_definition_id = @c2d_id
+       AND c.subject_id NOT IN (SELECT subject_id FROM @work_schema.@cohort_tbl WHERE cohort_definition_id = @r2d_id)) AS n_2d_not_reached;",
   work_schema = settings$workDatabaseSchema, cohort_tbl = settings$cohortTable, t1_id = cohort1Id,
   pt_id = attritionIds[["T1pt"]], npt_id = attritionIds[["T1npt"]], ce_id = attritionIds[["T1ce"]],
-  c2a_id = elig2$a, c2b_id = elig2$b, c2c_id = elig2$c, c2d_id = elig2$d)
+  c2a_id = elig2$a, c2b_id = elig2$b, c2c_id = elig2$c, c2d_id = elig2$d,
+  r2b_id = reachIds[["T2bR"]], r2c_id = reachIds[["T2cR"]], r2d_id = reachIds[["T2dR"]])
 names(nest) <- tolower(names(nest))
 nestOk <- nest$n_pt_npt == nest$n_t1 && nest$n_pt_and_npt == 0 && nest$n_ce_not_npt == 0 &&
-          nest$n_2abc_not_ce == 0 && nest$n_2d_in_ce == 0
+          nest$n_2abc_not_ce == 0 && nest$n_2d_in_ce == 0 && nest$n_2b_not_reached == 0 &&
+          nest$n_2c_not_reached == 0 && nest$n_2d_not_reached == 0
 if (nestOk) {
-  message("  attrition cohorts nest correctly with T1 and T2a-T2d.")
+  message("  attrition and reached-node cohorts nest correctly with T1 and T2a-T2d.")
 } else {
   warning("Attrition cohorts don't nest as expected: ",
           paste(names(nest), unlist(nest), sep = "=", collapse = ", "), call. = FALSE)

@@ -27,9 +27,10 @@
 message("\n== (d) lab test ranges on main cohorts ==")
 
 # The manifest holds only the main cohort tree (T1-T6 + the Target 1A JSON
-# leaves), so take every cohort in it. (Was a "^Target 1A" name-prefix match,
-# which the T1-T6 rename would otherwise miss.)
-targetIds <- mainManifest$cohortId
+# leaves), so take every cohort in it but the reached-node denominators.
+# (Was a "^Target 1A" name-prefix match, which the T1-T6 rename would
+# otherwise miss.)
+targetIds <- setdiff(mainManifest$cohortId, reachedNodeCohortIds(mainManifest))
 message("Target cohorts for lab distribution: ", length(targetIds))
 
 # subject_strata.sql is the single source of truth for age_group/sex/age_sex

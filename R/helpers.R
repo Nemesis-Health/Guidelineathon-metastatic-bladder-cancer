@@ -326,6 +326,14 @@ idsByCodes <- function(codes, manifest = mainManifest, names = cohortNames)
 treatedCohortIds <- function(index = cohortIndex)
   idsByCodes(names(index)[index == "treatment"])
 
+# Cohorts of patients reaching the 2b/2c/2d check (R/03_main_cohorts.R). They
+# exist as input-coverage denominators, so they appear in cohort counts and
+# input coverage only; every other per-cohort output leaves them out.
+reachedNodeCohortIds <- function(manifest = mainManifest) {
+  names <- loadState("cohortNames", "R/03_main_cohorts.R")
+  as.integer(manifest$cohortId[manifest$cohortName %in% names[c("T2bR", "T2cR", "T2dR")]])
+}
+
 # Lab window of each cohort as days around its index, e.g. "-30..0".
 labWindowLabel <- function(cohortIds, treatedIds = treatedCohortIds()) {
   treated <- cohortIds %in% treatedIds
