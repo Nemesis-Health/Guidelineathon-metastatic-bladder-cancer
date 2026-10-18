@@ -371,7 +371,7 @@ At the end of a run, results are packaged into two archives:
 | `00_diagnostics.R` | Runs `sql/prestudy/chunks/00_setup.sql`, then every other chunk, writing one CSV per chunk to `results/diagnostics/`. |
 | `10_artemis.R` | Generate the ARTEMIS scan cohort, run regimen alignment, write episodes, load `regimen_reference.csv`. |
 | `11_eligibility_inputs.R` | Run `lab_cohorts.sql`; generate ECOG + condition cohorts; insert them into `bc_lab_cohort` under test-id slots. |
-| `12_main_cohorts.R` | Build the full manifest (Target 1A, covariates, ARTEMIS + SQL templates: initiated base, 4/5/6, 2a–2e, the attrition cohorts T1-PT/T1-NPT/T1-CE, 3a–3e) and generate it; checks the attrition cohorts nest with 2a–2d. |
+| `12_main_cohorts.R` | Build the full manifest (Target 1A, covariates, ARTEMIS + SQL templates: initiated base, 4/5/6, 2a–2e, the attrition cohorts T1-PT/T1-NPT/T1-CE, 3a–3e) and generate it; adds the reached-node cohorts T2b-R/T2c-R/T2d-R; checks the attrition and reached-node cohorts nest with 2a–2d. |
 | `20_demographics.R` | Per-cohort demographic strata (age group / sex / index year, with `pct`) + continuous age summary. |
 | `21_covariates.R` | Comorbidity + performance-status overlap with every cohort in the main tree; also generates the comorbidity cohorts step 22 scores as Charlson CCI components. |
 | `22_baseline_characterization.R` | Weight/height/BMI + Charlson Comorbidity Index, per cohort in the main tree. |
@@ -380,7 +380,7 @@ At the end of a run, results are packaged into two archives:
 | `31_eligibility_coverage.R` | Eligibility-table counts, each input crossed with every main cohort (tested / passed), and Target 1A agreement between lab tests (pass/fail) and between labs (tested or not). |
 | `32_covariate_lab_coverage.R` | Lab test coverage by comorbidity subgroup (Heme Disorders / Liver Disease / Renal Disease, with/without), Target 1A only. |
 | `40_artemis_assessment.R` | ARTEMIS assessment: alignment stats, patient/exposure coverage, per-drug and per-regimen frequencies, uncaptured exposures — all from the in-memory `artemisResult`. |
-| `50_outcomes.R` | Outcomes: DTI (Target 1A), OS (every cohort), TTNT/TTD/TTD-LoT2/TFI (treatment-initiated cohorts) — KM + 1/2/3-yr milestones, stratified by age group / sex / index year. |
+| `50_outcomes.R` | Outcomes: DTI (Target 1A), OS (every cohort), TTNT/TTD/TTD-LoT2/TFI (treatment-initiated cohorts) — KM + 1/2/3-yr milestones, overall and per stratum. |
 | `60_adherence.R` | Guideline relevance (per-cohort % of Cohort 1) + adherence: per eligibility leaf × lens, the first-line treatment category its patients started (cross-table), and the per-arm roll-up. |
 | `70_treatment_patterns.R` | Regimen + classification-category distribution by line of therapy, % untreated, Sankey-ready LoT1→LoT2→LoT3 pathway counts, maintenance use (lines numbered after folding maintenance into its line). |
 
@@ -418,7 +418,7 @@ At the end of a run, results are packaged into two archives:
 | `eligibility_input_coverage.sql` | Each input × cohort × stratum (every cohort in the main tree): `n_tested` (measured) + `n_passed` (criterion met), from the rows eligibility uses (`eligibility_lab_rows.sql`). |
 | `cohort_counts_stratified.sql` | Per cohort × stratum (see "Stratification") distinct-subject counts; the `overall` view comes from `CohortGenerator::getCohortCounts()` instead, reshaped in R. Used by step 12. |
 | `outcome_target_data.sql` | Cohort membership + index/end dates for a given cohort-id list. Used by steps 50, 60, 22 and 70 (generic — the `@target_cohort_ids` list is whatever the caller needs). |
-| `subject_strata.sql` | Per-subject age group / sex / age × sex / index year — single source of truth for this bucketing. See that file's own header for the full list of consumers. |
+| `subject_strata.sql` | Per-subject strata (age group, sex, age × sex, age band, index period, index period 2021+, index year) — single source of truth for this bucketing. See that file's own header for the full list of consumers. |
 | `fetch_death_events.sql` | Death dates for subjects in a set of cohorts. Used by `fetchDeathEvents()` (step 50, OS outcome). |
 | `demographics.sql` | Per-cohort demographic strata counts (age group / sex / index year), long/tidy. Used by step 20. |
 | `demographics_continuous.sql` | Per-cohort × stratum continuous age summary, portable percentile technique + stratification same as `lab_value_distribution_portable.sql`. Used by step 20. |
@@ -574,7 +574,7 @@ labs/ARTEMIS/outcomes/treatment content. "Privacy censoring" and
 
 | File | Written by | Population | Grain (one row per…) |
 |---|---|---|---|
-| `cohort_counts.csv` | `12_main_cohorts.R` | Each cohort (the tree) | generated cohort × stratum type × stratum value |
+| `cohort_counts.csv` | `12_main_cohorts.R` | Each cohort (the tree), incl. the reached-node cohorts | generated cohort × stratum type × stratum value |
 | `attrition_target_1a.csv` | `12_main_cohorts.R` | Target 1A tree JSON cohorts | cohort × inclusion-rule sequence |
 | `demographics.csv` | `20_demographics.R` | Per cohort | cohort × characteristic × stratum |
 | `demographics_age_continuous.csv` | `20_demographics.R` | Per cohort | cohort × stratum type × stratum value |
@@ -585,13 +585,25 @@ labs/ARTEMIS/outcomes/treatment content. "Privacy censoring" and
 | `other_cancer_rollup.csv` | `23_rollups.R` | Target 1A, mixed bag, all mBC (`Target_1mBC`) | cohort × stratum type × stratum value × cancer site |
 
 ### `cohort_counts.csv`
-Row per generated cohort × stratum — the whole main tree plus covariates
-(Target 1A / T1 mBC, the treatment-initiation arms 4/5/6, eligibility leaves
-2a–2e, the intersections 3a–3e, and the ECOG + condition covariates), each
-reported once overall and once per `subject_strata.sql` stratum (see "Stratification"). The `overall` rows are `CohortGenerator::getCohortCounts()`'s
-own result reshaped into this long format, not re-derived, so they can't
-drift from the trusted library count; `age_group`/`sex`/`age_sex` come from a
-companion query (`cohort_counts_stratified.sql`).
+Row per generated cohort × stratum — the whole main tree: Target 1A (T1 mBC)
+and its PC-allowed, mixed-bag and all-cancers variants, the attrition cohorts
+T1-PT / T1-NPT / T1-CE, the eligibility leaves 2a–2e, the reached-node cohorts
+T2b-R / T2c-R / T2d-R, the initiated bases (ARTEMIS, L01, L01 or procedure,
+each with a PC-allowed variant), the intersections 3a–3e and the
+treatment-initiation arms 4/5/6 — each reported once overall and once per
+`subject_strata.sql` stratum (see "Stratification"). The `overall` rows are
+`CohortGenerator::getCohortCounts()`'s own result reshaped into this long
+format, not re-derived, so they can't drift from the trusted library count;
+the stratified rows come from a companion query
+(`cohort_counts_stratified.sql`).
+
+The reached-node cohorts are the patients who arrive at each eligibility
+check: T2b-R is T1-CE minus T2a, T2c-R is T1-CE minus T2a and T2b, and T2d-R
+is T1-NPT minus T1-CE (the washout, combination panel and EV checks are
+reached by T1, T1-NPT and T1-CE). With them, every check's reached, passed
+and failed counts are in this file. They appear only here and in
+`eligibility_input_coverage.csv`; the other per-cohort outputs leave them
+out.
 
 | Column | Meaning |
 |---|---|
@@ -815,7 +827,7 @@ cohorts, plus unit-resolution QC on the raw normalised measurement table
 | File | Written by | Population | Grain (one row per…) |
 |---|---|---|---|
 | `lab_cohort_counts.csv` | `31_eligibility_coverage.R` | **Whole population** | eligibility test-id |
-| `eligibility_input_coverage.csv` | `31_eligibility_coverage.R` | Per main cohort | cohort × stratum type × stratum value × eligibility test-id |
+| `eligibility_input_coverage.csv` | `31_eligibility_coverage.R` | Per main cohort, incl. the reached-node cohorts | cohort × stratum type × stratum value × eligibility test-id |
 | `eligibility_test_kappa.csv` | `31_eligibility_coverage.R` | Target 1A | stratum type × stratum value × pair of lab tests |
 | `eligibility_lab_coverage_kappa.csv` | `31_eligibility_coverage.R` | Target 1A | stratum type × stratum value × pair of labs (ECOG as one) |
 | `lab_value_distribution.csv` | `30_lab_ranges.R` | Per main cohort | cohort × lab (cat) × stratum type × stratum value |
@@ -839,7 +851,9 @@ labs; 24–27 ECOG; 28–40 conditions (all declared in `cohorts/extras/eligibil
 
 ### `eligibility_input_coverage.csv`
 Row per eligibility test-id **crossed with every cohort in the main tree**
-(same scope as `lab_value_distribution.csv` — not just Target 1A), once
+(the cohorts in `lab_value_distribution.csv` plus the reached-node cohorts
+T2b-R / T2c-R / T2d-R, so each of the 2b–2d checks gets tested and passed
+per test among the patients who reach it — not just Target 1A), once
 overall and once per `subject_strata.sql` stratum (see "Stratification") — how many members of that cohort had each input measured vs.
 passed it, within the window (`lab_window`) around *that cohort's own* index
 date: `labWindowBeforeDays` / `labWindowAfterDays` (default 30 / 30) for
@@ -888,6 +902,8 @@ each patient is scored on one result per lab.
 
 | Column | Meaning |
 |---|---|
+| `cohort_definition_id`, `cohort_name` | Target 1A. |
+| `stratum_type`, `stratum_value` | `overall`, or a stratum (see "Stratification" above). |
 | `test_id_1`, `label_1`, `test_id_2`, `label_2` | The two tests (eligibility test ids). |
 | `same_lab` | Both tests are on the same lab. |
 | `n_both` | Members with a result for both tests (censored). |
@@ -905,6 +921,8 @@ ECOG records shows it as never tested.
 
 | Column | Meaning |
 |---|---|
+| `cohort_definition_id`, `cohort_name` | Target 1A. |
+| `stratum_type`, `stratum_value` | `overall`, or a stratum (see "Stratification" above). |
 | `lab_1`, `lab_2` | The two labs (`cat`, or `ECOG`). |
 | `n_cohort` | Target 1A members in this stratum (censored). |
 | `n_tested_both`, `n_tested_1_only`, `n_tested_2_only`, `n_tested_neither` | The 2×2 counts (censored). |
@@ -1283,6 +1301,7 @@ Tidy Kaplan-Meier step curve (one row per event/censoring time), from
 |---|---|
 | `time` | Days since index. |
 | `estimate`, `conf.low`, `conf.high` | KM survival probability + 95% CI at that step. |
+| `std.error` | Standard error of `estimate`, as `broom::tidy()` reports it. |
 | `n.risk`, `n.event`, `n.censor` | At-risk / event / censoring counts at that step (censored). |
 | `strata` | `survival`'s own stratum label for the fit (e.g. `age_group=>65`, or `All` when unstratified). |
 
@@ -1422,8 +1441,8 @@ untreated, Sankey-ready LoT pathway counts, and regimen-category share by
 calendar year, and maintenance use. Lines of therapy are numbered after
 maintenance is folded into the line it maintains (`maintenanceMerge`, see the
 settings table), so e.g. avelumab after platinum-based chemotherapy is part of
-line 1. All six files are stratified one dimension at a time
-(overall / age_group / sex), plus the age × sex crossed view, via
+line 1. All six files are stratified one dimension at a time (overall plus
+each stratum in "Stratification" above), via
 `sql/subject_strata.sql` anchored to each subject's Cohort 1 index — same
 marginal convention as the outcome files. Which stratum views are populated
 is controlled centrally by `settings$strataColumns` (see "Stratification"
@@ -1509,8 +1528,8 @@ patterns... with the introduction of enfortumab" over time. Includes
 only slice here that can show a real regimen *mix*, since every single-arm
 T4/T5/T6 cohort is 100% one category by construction and T3a-e are further
 restricted to eligible-and-adherent), plus T3a-e and T4-6a-f individually.
-Stratified one dimension at a time (overall / age_group / sex), plus the
-age × sex crossed view, same marginal convention as the outcome files, via
+Stratified one dimension at a time (overall plus each stratum in
+"Stratification" above), same marginal convention as the outcome files, via
 `sql/subject_strata.sql` (the same per-subject lookup `R/steps/50_outcomes.R`
 uses) — not crossed with `treatment_year`, which is always its own axis
 regardless of `stratum_type`.
@@ -1525,7 +1544,7 @@ callable interactively, not run automatically for every combination.
 | `cohort_definition_id`, `cohort_name` | The specific treated cohort. |
 | `lot_number` | Line of therapy (no cap). |
 | `treatment_year` | Calendar year of that line's `episode_start_date`. |
-| `age_group`, `sex`, `age_sex` | Present only on the matching `stratum_type`'s rows (`NA` otherwise). |
+| `age_group`, `sex`, `age_sex`, `age_band`, `index_period`, `index_period_2021` | The stratum's value, present only on the matching `stratum_type`'s rows (`NA` otherwise). |
 | `category` | Lens category (a–f). |
 | `n_patients` | Subjects on that category, in that cohort × lot × year × stratum level (censored). |
 | `year_lot_n` | Denominator — total subjects in that cohort × lot × year × stratum level (censored). |
