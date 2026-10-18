@@ -49,7 +49,7 @@ computeGuidelineRelevance <- function(membership, baseId, cohortIds, minCellCoun
 # `eligibleIds`/`adherentIds`/... are named-by-leaf vectors (names "a".."e");
 # all must share the same leaf names. Leaf "e" (ineligible) pairs with each
 # lens's "other" (f) category, not "e"/other_recommended — the caller resolves
-# that when building the id vectors (matches how 03_main_cohorts.R builds T3e
+# that when building the id vectors (matches how 12_main_cohorts.R builds T3e
 # from `c456[["eau:other"]]`, not `c456[["eau:other_recommended"]]`).
 computeAdherenceRollup <- function(membership, eligibleIds, adherentIds,
                                    altGuidelineIds, indicatedIds,

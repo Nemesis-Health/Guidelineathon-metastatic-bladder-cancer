@@ -9,7 +9,7 @@
 -- conditional aggregation (MAX(CASE WHEN ...)), not pulled subject-level and
 -- pivoted/joined in R: this keeps the row-scanning/joining work (which
 -- scales with data volume) in the database. R
--- (R/11_baseline_characterization.R) only runs the final Charlson scoring
+-- (R/steps/22_baseline_characterization.R) only runs the final Charlson scoring
 -- math (computeCharlsonScore(), a small weighted-sum + hierarchy adjustment
 -- over this already-compact, already-joined table) and the per-stratum
 -- count.

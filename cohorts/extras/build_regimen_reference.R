@@ -3,16 +3,16 @@
 # ===========================================================================
 # Regenerates cohorts/extras/regimen_reference.csv: one row per regimen ARTEMIS
 # can emit (ARTEMIS::loadRegimens("all"), blacklist OFF), carrying BOTH the
-# reference-filter columns (used by R/01_artemis.R to keep only anticancer
+# reference-filter columns (used by R/steps/10_artemis.R to keep only anticancer
 # regimens) and the cohort-split lens columns (loaded into the work schema for
-# the 4/5/6 splits in R/03_main_cohorts.R). One file, one generator, so the two
+# the 4/5/6 splits in R/steps/12_main_cohorts.R). One file, one generator, so the two
 # roles cannot drift out of sync and a reviewer sees every regimen whole.
 # Re-run when ARTEMIS or the HemOnc/ATC vocabulary is upgraded.
 #
 # Columns
 #   regName, regCode
 #   source            hemonc | atc | none  — how the row was classified
-#   -- reference filter (R/01_artemis.R) --
+#   -- reference filter (R/steps/10_artemis.R) --
 #   is_chemo, is_immuno, is_targeted, is_supportive
 #                     HemOnc `Has modality` groups (blank for source != hemonc)
 #   is_endocrine      hormonal ANTICANCER therapy: a HemOnc `Has endocrine tx Rx`
@@ -24,10 +24,10 @@
 #   anticancer        1 if the regimen delivers cancer-directed therapy. HemOnc:
 #                     any cancer-directed modality except pure endocrine. ATC
 #                     fallback (no HemOnc concept): a component in ATC L01/L03/L04.
-#                     R/01_artemis.R keeps anticancer==1, plus is_endocrine==1
+#                     R/steps/10_artemis.R keeps anticancer==1, plus is_endocrine==1
 #                     unless settings$stripEndocrineTherapy is TRUE (default).
 #   hemonc_modalities "; "-joined raw HemOnc modalities (transparency)
-#   -- cohort-split lenses (R/03_main_cohorts.R) --
+#   -- cohort-split lenses (R/steps/12_main_cohorts.R) --
 #   class_eau         EAU first-line lens. HAND-CURATED: carried forward verbatim
 #                     from the existing CSV by regCode; new regimens default to
 #                     "other" (status="new").
@@ -46,7 +46,7 @@
 # (none).
 #
 # NOTE anticancer==0 rows are kept for completeness but never become episodes
-# (R/01_artemis.R drops them), so their class_* values are moot.
+# (R/steps/10_artemis.R drops them), so their class_* values are moot.
 #
 # Usage (edit CONFIG: connectionDetails + vocabDatabaseSchema):
 #   ARTEMIS_PYTHON=/path/to/py PYTHONUTF8=1 LC_ALL=en_US.UTF-8 \

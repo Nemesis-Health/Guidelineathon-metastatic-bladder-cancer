@@ -1,21 +1,21 @@
 # ===========================================================================
-# 11_baseline_characterization.R  —  (k) weight/height/BMI + Charlson CCI
+# 22_baseline_characterization.R  —  weight/height/BMI + Charlson CCI
 # ===========================================================================
 # Two protocol-required baseline covariates not covered by
-# R/07_demographics.R (age/sex/index year) or R/08_covariates.R (individual
+# R/steps/20_demographics.R (age/sex/index year) or R/steps/21_covariates.R (individual
 # comorbidity flags + PS strata):
 #
 #   baseline_body_measurements.csv — per-cohort weight (kg) / height (cm) /
 #     BMI, closest measurement to index within
 #     +/- settings$bodyMeasurementsWindowDays (sql/baseline_body_measurements.sql).
-#     Every cohort in bc_cohort, same scope as R/07_demographics.R.
+#     Every cohort in bc_cohort, same scope as R/steps/20_demographics.R.
 #
 #   charlson_cci.csv — Charlson Comorbidity Index category distribution in
 #     three versions (cci_version): calculated (below), reported (a recorded
 #     Charlson index within +/-30 days of index, sql/charlson_recorded.sql;
 #     subjects with one only) and max (the higher of the two per subject),
 #     every cohort in the main tree x subject_strata.sql stratum (matches
-#     R/08_covariates.R's own scope). Each cohort's components are anchored
+#     R/steps/21_covariates.R's own scope). Each cohort's components are anchored
 #     to THAT COHORT'S OWN index date via sql/charlson_components.sql (same
 #     unbounded on/before-index look-back as covariate_overlap.csv -- fixed
 #     from an earlier version of this file, which flagged a component
@@ -27,7 +27,7 @@
 #     sourced from Fortin/Reps/Ryan 2022 (BMC Med Inform Decis
 #     Mak 22:261; 2023 correction 23:109) — the standard OHDSI-authored
 #     SNOMED translation of the Quan 2005 Charlson coding algorithm — via
-#     comorbidity cohorts wired into R/08_covariates.R's `comorbMap`
+#     comorbidity cohorts wired into R/steps/21_covariates.R's `comorbMap`
 #     (Myocardial_Infarction.json -- the exception: OHDSI PhenotypeLibrary
 #     cohort 510, acute MI only, see README "Known gaps" --
 #     Congestive_Heart_Failure.json,
@@ -52,12 +52,12 @@
 #     malignancy. See README "Known gaps".
 #
 # Depends on `covSet` (the generated comorbidity-cohort id/name map) from
-# R/08_covariates.R — run this step after it.
+# R/steps/21_covariates.R — run this step after it.
 # ===========================================================================
 
-message("\n== (k) baseline characterization: body measurements + Charlson CCI ==")
+message("\n== baseline characterization: body measurements + Charlson CCI ==")
 
-mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
+mainManifest <- loadState("mainManifest", "R/steps/12_main_cohorts.R")
 
 nameMap <- dplyr::select(mainManifest, cohort_definition_id = "cohortId",
                          cohort_name = "cohortName")
@@ -137,11 +137,11 @@ charlsonMap <- tibble::tribble(
 
 targetIds <- setdiff(mainManifest$cohortId, reachedNodeCohortIds(mainManifest))
 
-covSet <- tryCatch(loadState("covSet", "R/08_covariates.R"), error = function(e) NULL)
+covSet <- tryCatch(loadState("covSet", "R/steps/21_covariates.R"), error = function(e) NULL)
 
 if (is.null(covSet) || nrow(covSet) == 0L) {
 
-  message("  no comorbidity cohorts generated (see step (h)) — skipping Charlson CCI.")
+  message("  no comorbidity cohorts generated (see step 21) — skipping Charlson CCI.")
 
 } else {
 

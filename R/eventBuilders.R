@@ -9,7 +9,7 @@
 # OncoStudyModules' SQL directory.
 #
 # anchorEpisodes() and combineEarliestEvent() are new (not in the reference):
-# see R/09_outcomes.R for why line-of-therapy ranking needs an anchor, and
+# see R/steps/50_outcomes.R for why line-of-therapy ranking needs an anchor, and
 # why TTNT/TTD/TFI's event dates need to be death-aware.
 # ===========================================================================
 
@@ -41,8 +41,8 @@ anchorEpisodes <- function(episodes, anchorDates) {
   # before the join ever runs. A double avoids that specific overflow but
   # still has its own precision ceiling (2^53); character has none, so it's
   # used throughout this file and every subject_id it meets in
-  # R/09_outcomes.R/R/10_adherence.R/R/11_baseline_characterization.R/
-  # R/12_treatment_patterns.R -- matching how R/artemis.R's buildEpisodeTable()
+  # R/steps/50_outcomes.R/R/steps/60_adherence.R/R/steps/22_baseline_characterization.R/
+  # R/steps/70_treatment_patterns.R -- matching how R/artemis.R's buildEpisodeTable()
   # already carries person_id. dplyr does NOT auto-coerce character<->numeric
   # in a join or bind_rows(), so every side needs this cast, not just this one.
   anchors <- anchorDates |>

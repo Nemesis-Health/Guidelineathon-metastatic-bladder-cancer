@@ -12,7 +12,7 @@
 --
 -- Changes from the roll-up this is based on:
 --   * precedence 0 'Bladder cancer' (197508 +desc) is taken out first, so
---     'Neoplasm' counts other neoplasms. R/15_rollups.R doesn't report
+--     'Neoplasm' counts other neoplasms. R/steps/23_rollups.R doesn't report
 --     'Neoplasm': metastases recorded as conditions map to the primary-site
 --     malignancy, so it mixes other primaries with metastases. It stays here
 --     so neoplasm codes don't fall into the organ categories;

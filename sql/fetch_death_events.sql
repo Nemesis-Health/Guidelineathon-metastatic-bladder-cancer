@@ -4,7 +4,7 @@
 -- One row per subject with a death record who is a member of at least one of
 -- @target_cohort_ids. Shape matches the event-tibble convention used by
 -- computeTimeToEvent() / the outcomes step: subject_id, cohort_start_date
--- (here: the death date). Powers the OS outcome (R/09_outcomes.R).
+-- (here: the death date). Powers the OS outcome (R/steps/50_outcomes.R).
 --
 -- SqlRender parameters:
 --   @work_database_schema @cohort_table @cdm_database_schema

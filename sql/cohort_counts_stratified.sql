@@ -1,7 +1,7 @@
 -- For every cohort in @cohort_table, distinct-subject counts split by
 -- subject_strata.sql's age_group / sex / age_sex (subject_strata.sql --
 -- see that file's header for the standard consumption pattern this
--- follows). The "overall" view is NOT computed here -- R/03_main_cohorts.R
+-- follows). The "overall" view is NOT computed here -- R/steps/12_main_cohorts.R
 -- already has it from CohortGenerator::getCohortCounts() and reshapes that
 -- into the same long format instead of re-deriving it, so the two stay
 -- consistent by construction rather than by cross-checking two counts.

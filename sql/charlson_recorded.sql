@@ -7,7 +7,7 @@
 -- index + 30d]. Equal distance: the record before index wins, then the
 -- higher value. Values outside 0-40 are ignored. The age-adjusted index
 -- (concept 715970) is not used: it is not comparable with the calculated
--- score. Used by R/11_baseline_characterization.R.
+-- score. Used by R/steps/22_baseline_characterization.R.
 --
 -- Output: cohort_definition_id, subject_id, cci_reported
 --

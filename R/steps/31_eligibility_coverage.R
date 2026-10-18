@@ -1,5 +1,5 @@
 # ===========================================================================
-# 05_eligibility_coverage.R  —  eligibility-input counts & cohort coverage
+# 31_eligibility_coverage.R  —  eligibility-input counts & cohort coverage
 # ===========================================================================
 # Two outputs alongside cohort_counts.csv:
 #   lab_cohort_counts.csv         — raw content of the unified eligibility table
@@ -45,8 +45,8 @@ message("  lab_cohort_counts: ", nrow(labCohortCounts), " test-id slots")
 targetIds <- mainManifest$cohortId
 
 # subject_strata.sql is the single source of truth for age_group/sex/age_sex
-# bucketing (shared with demographics.sql, R/04_lab_ranges.R,
-# R/09_outcomes.R, R/12_treatment_patterns.R). Reused here both to
+# bucketing (shared with demographics.sql, R/steps/30_lab_ranges.R,
+# R/steps/50_outcomes.R, R/steps/70_treatment_patterns.R). Reused here both to
 # stratify the coverage query itself and to build the matching per-(cohort,
 # stratum) denominators (a stratum's "n_cohort" is that cohort's members in
 # that stratum, not the cohort's whole N).

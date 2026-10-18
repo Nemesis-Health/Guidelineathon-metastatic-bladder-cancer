@@ -1,5 +1,5 @@
 # ===========================================================================
-# 08_covariates.R  —  covariate overlap, every main cohort x stratum
+# 21_covariates.R  —  covariate overlap, every main cohort x stratum
 # ===========================================================================
 # Descriptive covariate counts NOT used by the main cohort tree, reported as an
 # overlap with every cohort in the main tree (same scope as
@@ -22,7 +22,7 @@
 #
 # One output: covariate_overlap.csv (cohort_definition_id, cohort_name,
 # stratum_type, stratum_value, code, label, n_cohort, n_overlap), small cells
-# censored to -minCellCount (same rule as step 05). Every (cohort, stratum,
+# censored to -minCellCount (same rule as step 31). Every (cohort, stratum,
 # code) combination gets an explicit row, zero-filled where there's no
 # overlap at all -- not silently absent. No derived % column: it is
 # n_overlap / n_cohort, computable downstream.
@@ -44,7 +44,7 @@ message("\n== covariate overlap with the main cohort tree (comorbidities + perfo
 # code -> covariate cohort name (filename with "_"->" ") -> human label
 #
 # The last 10 rows (MI onward) exist for Charlson CCI scoring
-# (R/11_baseline_characterization.R, R/charlsonScore.R) — sourced from
+# (R/steps/22_baseline_characterization.R, R/charlsonScore.R) — sourced from
 # Fortin/Reps/Ryan 2022 (BMC Med Inform Decis Mak 22:261, 2023 correction
 # 23:109), the standard OHDSI-authored SNOMED translation of the Quan 2005
 # Charlson coding algorithm. MI is the exception: Myocardial_Infarction.json is OHDSI
@@ -82,7 +82,7 @@ psLabels <- c("PS1" = "Performance status = 0", "PS2" = "Performance status = 1"
               "PS2+" = "Performance status >= 2", "PS 0-2" = "Performance status 0-2",
               "PS 0-1" = "Performance status 0-1")
 
-mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
+mainManifest <- loadState("mainManifest", "R/steps/12_main_cohorts.R")
 targetIds <- setdiff(mainManifest$cohortId, reachedNodeCohortIds(mainManifest))
 
 # subject_strata.sql is the single source of truth for age_group/sex/age_sex

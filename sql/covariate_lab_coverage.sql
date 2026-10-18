@@ -26,7 +26,7 @@
 --   @heme_covariate_id @liver_covariate_id @renal_covariate_id
 --                             cohort_definition_id of each covariate in
 --                             @covariate_cohort_table (assigned per-run by
---                             buildCohortSet(), see R/08_covariates.R's covSet)
+--                             buildCohortSet(), see R/steps/21_covariates.R's covSet)
 --   @lab_window_before_days @lab_window_after_days
 -- =============================================================================
 

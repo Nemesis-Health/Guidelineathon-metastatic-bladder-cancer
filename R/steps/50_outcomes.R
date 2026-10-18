@@ -1,5 +1,5 @@
 # ===========================================================================
-# 09_outcomes.R  —  (i) outcomes: DTI / OS / TTNT / TTD / TFI
+# 50_outcomes.R  —  outcomes: DTI / OS / TTNT / TTD / TFI
 # ===========================================================================
 # Protocol outcomes via computeTimeToEvent()/computeTimeDiffStats()
 # (R/timeToEvent.R) + extractSurvivalMilestones() (R/survivalMilestones.R),
@@ -50,16 +50,16 @@
 # before the next line (combineEarliestEvent(), R/eventBuilders.R).
 #
 # Depends on cohort ids resolved via cohortIdByName(mainManifest, cohortNames[[...]])
-# (both built in R/03_main_cohorts.R) and the in-memory `episodes` tibble
-# (built in R/01_artemis.R).
+# (both built in R/steps/12_main_cohorts.R) and the in-memory `episodes` tibble
+# (built in R/steps/10_artemis.R).
 # ===========================================================================
 
-message("\n== (i) outcomes (DTI / OS / TTNT / TTD / TFI) ==")
+message("\n== outcomes (DTI / OS / TTNT / TTD / TFI) ==")
 
-mainManifest <- loadState("mainManifest", "R/03_main_cohorts.R")
-cohortNames  <- loadState("cohortNames", "R/03_main_cohorts.R")
-episodes     <- loadState("episodes", "R/01_artemis.R")
-regimenClass <- loadState("regimenClass", "R/01_artemis.R")
+mainManifest <- loadState("mainManifest", "R/steps/12_main_cohorts.R")
+cohortNames  <- loadState("cohortNames", "R/steps/12_main_cohorts.R")
+episodes     <- loadState("episodes", "R/steps/10_artemis.R")
+regimenClass <- loadState("regimenClass", "R/steps/10_artemis.R")
 
 if (is.null(episodes) || nrow(episodes) == 0L) {
 

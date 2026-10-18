@@ -7,7 +7,7 @@
 # Weights: the original Charlson 1987 weights.
 #
 # Wiring (which cohorts supply which component flag) lives in
-# R/11_baseline_characterization.R, not here — this file is just the scoring
+# R/steps/22_baseline_characterization.R, not here — this file is just the scoring
 # math, reusable regardless of how many of the 19 components are available.
 # ===========================================================================
 

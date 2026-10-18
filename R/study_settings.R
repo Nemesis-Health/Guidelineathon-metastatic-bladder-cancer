@@ -6,10 +6,10 @@
 # reported strata. They are part of the study design, so results stay
 # comparable across sites only if nobody changes them.
 #
-# R/setup.R merges these under the site's `settings` list from run.R /
-# run_study_only.R. If the study team asks a site to change one, add that
-# field to the site's own `settings` list in the run script rather than
-# editing this file; a field there takes precedence over the value here.
+# R/setup.R merges these under the site's `settings` list from run.R. If the
+# study team asks a site to change one, add that field to the site's own
+# `settings` list in run.R rather than editing this file; a field there takes
+# precedence over the value here.
 # README.md's "CONFIG settings reference" has the full detail on each.
 # ===========================================================================
 

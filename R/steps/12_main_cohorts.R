@@ -1,21 +1,21 @@
 # ===========================================================================
-# 03_main_cohorts.R  —  (c) main cohort tree
+# 12_main_cohorts.R  —  main cohort tree
 # ===========================================================================
 # Target 1A (Cohort 1), drug leaves, covariates, ARTEMIS scan (JSON) + the
 # SQL-templated cohorts: initiated base, 4/5/6 a-f, eligibility 2a-2e, 3a-3e.
 # Eligibility reads the unified @labCohortTable (labs + ECOG + conditions from
-# step (b)). Generated in one pass; JSON cohorts precede the custom SQL, and
+# step 11). Generated in one pass; JSON cohorts precede the custom SQL, and
 # custom ids are assigned in dependency order (2e after 2a-2d, 3x after 2x/4x).
 # ===========================================================================
 
-message("\n== (c) main cohorts ==")
+message("\n== main cohorts ==")
 
 # --- JSON cohorts (Target only) ---------------------------------------------
 # We deliberately do NOT regenerate 00_ARTEMIS or the covariate folders here:
-#   * the ARTEMIS scan cohort is only needed by runArtemis() in step (a);
+#   * the ARTEMIS scan cohort is only needed by runArtemis() in step 10;
 #   * the eligibility-input covariates are already materialised in bc_lab_cohort
-#     by step (b) (under their test-id slots).
-# Nothing in steps (c)–(e) reads those cohorts from bc_cohort, so regenerating
+#     by step 11 (under their test-id slots).
+# Nothing in steps 12, 30 and 31 reads those cohorts from bc_cohort, so regenerating
 # them would just be a throwaway duplicate. Only Target 1A + the drug-comparison
 # leaves go into the final bc_cohort.
 jsonCohorts <- readJsonCohorts(file.path(cohortsDir, "01_Target"))
@@ -310,8 +310,8 @@ if (nestOk) {
 
 # Stratified counts: subject_strata.sql is the single source of truth for
 # age_group/sex/age_sex bucketing (shared with demographics.sql,
-# R/04_lab_ranges.R, R/05_eligibility_coverage.R, R/09_outcomes.R,
-# R/12_treatment_patterns.R). The "overall" view is CohortGenerator's own
+# R/steps/30_lab_ranges.R, R/steps/31_eligibility_coverage.R, R/steps/50_outcomes.R,
+# R/steps/70_treatment_patterns.R). The "overall" view is CohortGenerator's own
 # getCohortCounts() result (above), reshaped into the same long format
 # rather than re-derived, so it can't drift from the trusted library count.
 strataFragment <- renderSqlFile("subject_strata.sql",
@@ -344,7 +344,7 @@ cohortCountsOut <- dplyr::bind_rows(overallCounts, strataCounts) |>
                    by = "cohort_definition_id") |>
   dplyr::relocate("cohort_name", .after = "cohort_definition_id")
 
-# Censor small cells (same rule as steps 05/06): subject counts of 1..(minCell-1)
+# Censor small cells (same rule as steps 31/40): subject counts of 1..(minCell-1)
 # -> -minCell, and blank the paired entry count. A true 0 stays 0.
 .small <- cohortCountsOut$n_subjects > 0 &
           cohortCountsOut$n_subjects < settings$minCellCount
