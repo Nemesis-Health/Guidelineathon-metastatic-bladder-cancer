@@ -1244,8 +1244,14 @@ adding patients whose first classified regimen started after day 90; the
 washout still applies) — and buckets covering every Target 1A member,
 including those who did not start and why. Negative times are kept as they
 are (a median or percentile floored at 0 is the raw one floored at 0). TTNT, TTD,
-TTD-LoT2, and TFI are all death-aware (`combineEarliestEvent()`): the
-protocol defines each as "... or death, whichever occurs first."
+TTD-LoT2, and TFI are all death-aware: the protocol defines each as "... or
+death, whichever occurs first." `treatedLines()` ends every treatment episode
+at death (episodes starting after death are dropped), so a line's end is its
+discontinuation date; TTNT and TFI also take death as their event when it
+comes before the next line (`combineEarliestEvent()`). TTD-LoT2 covers only
+patients who started a second line within follow-up, timed from that start.
+TFI is timed from the end of the first line and leaves out patients who died
+on it, who had no treatment-free interval.
 
 ### `outcome_dti_summary.csv`, `outcome_{os,ttnt,ttd,ttd_lot2,tfi}_summary.csv`
 Descriptive statistics of time-to-event, among those with the event (DTI: time
@@ -1504,6 +1510,14 @@ callable interactively, not run automatically for every combination.
   are out of scope**, matching the protocol's stated first/second-line
   focus. TTNT/TTD/TFI/DTI events are anchored to the relevant cohort's own
   index before ranking, and are death-aware.
+- **TFI leaves out patients who died on first-line treatment.** The protocol's
+  definitions (discontinuation includes "death while on the regimen"; TFI runs
+  from discontinuation to the next line "or date of death") would give them a
+  TFI of 0 ending in death; they are left out instead, as they had no
+  treatment-free interval. A first line ends at the last administration (or
+  at death if that comes first), so a death within 120 days of the last dose
+  with no new regimen counts as a TFI event after a short interval, not as
+  death on treatment. Both points await PI confirmation.
 - **Guideline adherence buckets are computed as non-overlapping residuals**,
   since cohorts 4/5/6 are independent regimen-classification lenses rather
   than mutually exclusive tiers (see below) — a patient can appear in more

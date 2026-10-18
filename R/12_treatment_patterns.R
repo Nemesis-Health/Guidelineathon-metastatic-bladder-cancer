@@ -91,9 +91,10 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     baseMembers$subject_id <- as.character(baseMembers$subject_id)
 
     # lines of therapy by the base cohort's rules; maintenance folded in
-    # (mergeMaintenance())
+    # (mergeMaintenance()); every episode ends at death, as in R/09
     treatedPatients <- treatedLines(episodes, baseMembers, t1Members, regimenClass,
-        maintenance = settings$maintenanceMerge, maxGapDays = settings$maintenanceMaxGapDays) |>
+        maintenance = settings$maintenanceMerge, maxGapDays = settings$maintenanceMaxGapDays,
+        deaths = fetchDeathEvents(connection, idsByCodes("Base"))) |>
       dplyr::left_join(regimenClass, by = c(episode_source_value = "regName"))
 
 
