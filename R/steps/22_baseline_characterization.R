@@ -88,9 +88,13 @@ if (nrow(bodyMeasurementsOut) == 0L) {
 } else {
 
   bodyMeasurementsOut$cohort_definition_id <- as.integer(bodyMeasurementsOut$cohort_definition_id)
+  # The SQL reads every cohort in the cohort table; the reached-node cohorts
+  # are left out here, as in the other characterization outputs.
+  bodyMeasurementsOut <- bodyMeasurementsOut[!bodyMeasurementsOut$cohort_definition_id %in%
+                                               reachedNodeCohortIds(mainManifest), ]
   # settings$strataColumns (R/study_settings.R, via activeStrataTypes()) controls
-  # which stratum views actually reach the CSV -- the SQL always computes all
-  # four (cheap), a site that wants fewer/none just filters here.
+  # which stratum views actually reach the CSV -- the SQL always computes every
+  # view (cheap), a site that wants fewer/none just filters here.
   bodyMeasurementsOut <- bodyMeasurementsOut[bodyMeasurementsOut$stratum_type %in% activeStrataTypes(), ]
 
   small <- bodyMeasurementsOut$n > 0 & bodyMeasurementsOut$n < settings$minCellCount

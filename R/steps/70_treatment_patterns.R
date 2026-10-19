@@ -17,7 +17,7 @@
 #   treatment_pattern_untreated.csv — Cohort 1 n, treated (base cohort) n,
 #                                      untreated n/pct. Why untreated, and
 #                                      when late starters started:
-#                                      outcome_dti_buckets.csv (R/09).
+#                                      outcome_dti_buckets.csv (step 50).
 #   treatment_pattern_regimen.csv   — lot_number x regimen name, n + pct-of-LoT.
 #   treatment_pattern_category.csv  — lot_number x lens category (class_eau /
 #                                      class_hemonc_mbc / class_any x a-f).
@@ -91,7 +91,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     baseMembers$subject_id <- as.character(baseMembers$subject_id)
 
     # lines of therapy by the base cohort's rules; maintenance folded in
-    # (mergeMaintenance()); every episode ends at death, as in R/09
+    # (mergeMaintenance()); every episode ends at death, as in step 50
     treatedPatients <- treatedLines(episodes, baseMembers, t1Members, regimenClass,
         maintenance = settings$maintenanceMerge, maxGapDays = settings$maintenanceMaxGapDays,
         deaths = fetchDeathEvents(connection, idsByCodes("Base"))) |>

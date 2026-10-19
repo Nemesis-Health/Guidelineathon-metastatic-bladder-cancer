@@ -28,8 +28,8 @@ studySettings <- list(
 
   # --- Eligibility windows ----------------------------------------------------
   # Near-index eligibility inputs (labs, ECOG/PS) for Target 2a-2d, the
-  # covariate PS overlap (step h), eligibility-input coverage (step e) and lab
-  # value distributions (step d): days before / after index a record may fall.
+  # covariate PS overlap (step 21), eligibility-input coverage (step 31) and lab
+  # value distributions (step 30): days before / after index a record may fall.
   labWindowBeforeDays = 30L,
   labWindowAfterDays  = 30L,
 
@@ -54,7 +54,7 @@ studySettings <- list(
   conditionFlagWindowBeforeDays = 30L,
   conditionFlagWindowAfterDays  = 30L,
 
-  # Baseline weight/height/BMI (step k): days before/after index. Wider than
+  # Baseline weight/height/BMI (step 22): days before/after index. Wider than
   # the lab window, following onco-study-modules' convention.
   bodyMeasurementsWindowDays = 90L,
 
@@ -76,7 +76,7 @@ studySettings <- list(
   # and are dropped from the reference (logged).
   validDrugsAtcClasses = c("L01", "L02", "L03", "L04"),
 
-  # ATC classes kept in the exposure assessment (step f: drug_exposures,
+  # ATC classes kept in the exposure assessment (step 40: drug_exposures,
   # uncaptured, coverage). NULL mirrors the regimen anticancer filter (L01,
   # L03, L04, plus L02 when stripEndocrineTherapy is FALSE); character(0)
   # keeps every recognised ingredient, for debugging coverage numbers.

@@ -906,7 +906,7 @@ DROP TABLE IF EXISTS @work_database_schema.@criteria_table;
 -- basis: 'ULN' => bound = mult * upper-normal ;  'ABS' => bound is a fixed value already in standard units
 --
 -- test_id: the @t_<key> slots declared in cohorts/extras/eligibility_test_ids.csv
--- (kind = lab); add a new test there first. R/02 checks this table's ids match.
+-- (kind = lab); add a new test there first. Step 11 checks this table's ids match.
 CREATE TABLE @work_database_schema.@criteria_table (test_id int, cat varchar(40), basis char(3),
    min_op varchar(2), min_val float, max_op varchar(2), max_val float, note varchar(120));
 INSERT INTO @work_database_schema.@criteria_table (test_id, cat, basis, min_op, min_val, max_op, max_val, note) VALUES

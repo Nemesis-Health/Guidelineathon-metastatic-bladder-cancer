@@ -34,8 +34,8 @@
 # with a filename whose "_"->" " form matches a `cohortName` in comorbMap below
 # (e.g. Renal_Disease.json -> "Renal Disease"). Missing entries are skipped with
 # a message, so the file is all that is needed once its row is listed here.
-# Every listed cohort is generated (covSet, reused by R/11 for Charlson and
-# R/13 for the lab-coverage cross); only rows with `show = TRUE` are written to
+# Every listed cohort is generated (covSet, reused by step 22 for Charlson and
+# step 32 for the lab-coverage cross); only rows with `show = TRUE` are written to
 # covariate_overlap.csv.
 # ===========================================================================
 
@@ -52,9 +52,9 @@ message("\n== covariate overlap with the main cohort tree (comorbidities + perfo
 #
 # show = TRUE only for the protocol's covariate list (T2DM, hypertension,
 # cardiovascular disease, stroke, VTE, liver disease, renal disease,
-# dementia; CCI itself is reported by R/11). Everything else is generated for
+# dementia; CCI itself is reported by step 22). Everything else is generated for
 # another analysis and not reported as a comorbidity: the Charlson-only
-# components (R/11) and Heme Disorders (lab-coverage cross, R/13).
+# components (step 22) and Heme Disorders (lab-coverage cross, step 32).
 comorbMap <- tibble::tribble(
   ~code,          ~cohortName,                   ~label,                                 ~show,
   "T2DM",         "Type 2 Diabetes",             "Type 2 diabetes mellitus",             TRUE,
@@ -86,7 +86,7 @@ mainManifest <- loadState("mainManifest", "R/steps/12_main_cohorts.R")
 targetIds <- setdiff(mainManifest$cohortId, reachedNodeCohortIds(mainManifest))
 
 # subject_strata.sql is the single source of truth for age_group/sex/age_sex
-# bucketing (shared with demographics.sql, R/04/05/09/10/12) -- resolve it
+# bucketing (shared with demographics.sql, steps 30, 31, 50, 60 and 70) -- resolve it
 # once, reused both to stratify the two overlap queries below and to build
 # the matching per-(cohort, stratum) denominators (a stratum's "n_cohort" is
 # that cohort's members in that stratum, not the cohort's whole N).
