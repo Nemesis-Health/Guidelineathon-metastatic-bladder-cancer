@@ -32,7 +32,9 @@ computeGuidelineRelevance <- function(membership, baseId, cohortIds, minCellCoun
 
   out <- dplyr::bind_rows(rows)
   small <- out$n > 0L & out$n < minCellCount
-  out$pct_of_base <- dplyr::if_else(small, NA_real_, out$pct_of_base)
+  # a small base would be recoverable as n / pct_of_base from any row
+  smallBase <- baseSize > 0L && baseSize < minCellCount
+  out$pct_of_base <- dplyr::if_else(small | smallBase, NA_real_, out$pct_of_base)
   out$n <- dplyr::if_else(small, -as.integer(minCellCount), out$n)
   out
 }

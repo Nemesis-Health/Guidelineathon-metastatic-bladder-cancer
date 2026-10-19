@@ -23,7 +23,10 @@
 -- measurements whose recorded unit was overridden or could not be verified.
 --
 -- Privacy: cells with fewer than @min_cell_count DISTINCT patients are censored
--- — n_patients -> -@min_cell_count and all counts/stats -> NULL.
+-- — n_patients -> -@min_cell_count and all counts/stats -> NULL. pct_overridden
+-- and pct_unverified are also NULL when fewer than @min_cell_count patients
+-- have an overridden / unverified measurement, since the percentage times
+-- n_measurements gives the record count back.
 --
 -- NOTE: @raw_lab_results_table holds one row per (measurement x test_id), the
 -- `meas` CTE collapses that to one row per physical measurement before counting
@@ -61,6 +64,8 @@ agg AS (
          COUNT(DISTINCT unit_concept_id)                              AS n_units,
          SUM(CASE WHEN status IN ('overridden', 'concept') THEN 1 ELSE 0 END)       AS n_overridden,
          SUM(CASE WHEN status = 'unverified' THEN 1 ELSE 0 END)       AS n_unverified,
+         COUNT(DISTINCT CASE WHEN status IN ('overridden', 'concept') THEN person_id END) AS n_patients_overridden,
+         COUNT(DISTINCT CASE WHEN status = 'unverified' THEN person_id END)         AS n_patients_unverified,
          AVG(CAST(std_value AS FLOAT))                                AS mean_value,
          STDEV(CAST(std_value AS FLOAT))                              AS sd_value,
          MIN(std_value)                                               AS min_value,
@@ -90,8 +95,12 @@ SELECT a.cat,
        CASE WHEN a.n_patients < @min_cell_count THEN NULL ELSE a.n_measurements END                    AS n_measurements,
        CASE WHEN a.n_patients < @min_cell_count THEN NULL ELSE a.n_concepts END                        AS n_concepts,
        CASE WHEN a.n_patients < @min_cell_count THEN NULL ELSE a.n_units END                           AS n_units,
-       CASE WHEN a.n_patients < @min_cell_count THEN NULL ELSE 100.0 * a.n_overridden / a.n_measurements END AS pct_overridden,
-       CASE WHEN a.n_patients < @min_cell_count THEN NULL ELSE 100.0 * a.n_unverified / a.n_measurements END AS pct_unverified,
+       CASE WHEN a.n_patients < @min_cell_count
+              OR (a.n_patients_overridden > 0 AND a.n_patients_overridden < @min_cell_count)
+            THEN NULL ELSE 100.0 * a.n_overridden / a.n_measurements END                       AS pct_overridden,
+       CASE WHEN a.n_patients < @min_cell_count
+              OR (a.n_patients_unverified > 0 AND a.n_patients_unverified < @min_cell_count)
+            THEN NULL ELSE 100.0 * a.n_unverified / a.n_measurements END                       AS pct_unverified,
        CASE WHEN a.n_patients < @min_cell_count THEN NULL ELSE a.mean_value END                        AS mean_value,
        CASE WHEN a.n_patients < @min_cell_count THEN NULL ELSE a.sd_value END                          AS sd_value,
        CASE WHEN a.n_patients < @min_cell_count THEN NULL ELSE a.min_value END                         AS min_value,
