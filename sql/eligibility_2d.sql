@@ -13,7 +13,7 @@
 -- "NOT combination-therapy eligible" is just NOT (combo_eligible_expression)
 -- — no manual De Morgan expansion needed.
 --
--- Not yet encoded: comorbidities grade > 2; PD-L1 CPS >= 10 or TIC >= 5%.
+-- Not yet encoded: comorbidities grade > 2, PD-L1 CPS >= 10 or TIC >= 5%.
 -- =============================================================================
 
 DELETE FROM @target_database_schema.@target_cohort_table
@@ -111,8 +111,8 @@ SELECT subject_id, cohort_start_date, cohort_end_date
          -- TODO second pass: [41] comorbidities grade > 2
        )
 
-   /* ----- PD-L1 biomarker (required; not yet encoded) ----- */
-   -- PD-L1 (tests 42/43) IGNORED for now; template kept, set always-true
+   /* ----- PD-L1 biomarker (required, not yet encoded) ----- */
+   -- PD-L1 (tests 42/43) IGNORED for now, template kept, set always-true
    -- (was 1 = 0) so 2d is not forced empty. Restore when PD-L1 is encoded.
    AND 1 = 1
 ;

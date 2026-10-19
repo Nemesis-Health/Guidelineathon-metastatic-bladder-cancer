@@ -5,9 +5,9 @@
    per-analyte reference table, these are consistently coded enough across
    sites that a small fixed concept list is sufficient — no unit-resolution
    engine needed):
-     body weight  3025315 (LOINC 29463-7); units kg=9529, lb=8739
-     body height  3036277 (LOINC 8302-2);  units cm=8582, in=9330
-     BMI          3038553 (LOINC 39156-5); assumed kg/m^2 as recorded
+     body weight  3025315 (LOINC 29463-7), units kg=9529, lb=8739
+     body height  3036277 (LOINC 8302-2),  units cm=8582, in=9330
+     BMI          3038553 (LOINC 39156-5), assumed kg/m^2 as recorded
 
    Weight and height are each independently picked as the single closest
    measurement to cohort_start_date within +/- @body_measurements_window_days
@@ -20,7 +20,7 @@
    the standard consumption pattern this follows). Same UNION-ALL-of-shared-percentile-formula shape as
    lab_value_distribution.sql -- see that file's header for the
    interpolation formula (reproduces PERCENTILE_CONT exactly, R quantile
-   type 7); median/quartiles use ROW_NUMBER()/COUNT()/FLOOR rather than
+   type 7), median/quartiles use ROW_NUMBER()/COUNT()/FLOOR rather than
    PERCENTILE_CONT, which SqlRender leaves untranslated. All computed here in
    SQL, not pulled per-subject and aggregated in R.
 

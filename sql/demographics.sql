@@ -10,7 +10,7 @@
 --
 -- Emitted long/tidy so one template covers all of them:
 --   (cohort_definition_id, characteristic, stratum, sort_key, n_subjects)
--- Percentages are computed in R (within cohort x characteristic; denominator =
+-- Percentages are computed in R (within cohort x characteristic, denominator =
 -- cohort N) and small cells are censored there.
 --
 -- The `coh` CTE body below is sql/subject_strata.sql's own query text,

@@ -24,7 +24,7 @@
 --     DISTINCT specific-DX DAYS, not raw records: two same-day administrative
 --     duplicates should not count as a confirmed repeated anchor. This matches the
 --     distinct-day treatment in chunk 19. To count raw records instead, change
---     COUNT(DISTINCT event_date) to COUNT(*) in dx_all; that would move some
+--     COUNT(DISTINCT event_date) to COUNT(*) in dx_all, that would move some
 --     same-day-duplicate patients from SPECIFIC_DX_SINGLE_DAY into
 --     SPECIFIC_DX_2PLUS_DAYS.
 --

@@ -12,19 +12,19 @@
 --
 --     Denominators (n_patients, repeated on the row):
 --       DX  = cohort patients carrying the anchor Diagnosis (#dx_summary, one row per
---             cohort patient; every cohort patient has >= 1 DX record). Full cohort.
+--             cohort patient, every cohort patient has >= 1 DX record). Full cohort.
 --       MET = the metastasis subset: cohort patients carrying an anchor Metastasis
 --             (#met_summary, one row per cohort patient with a MET). This is the
 --             DX-cohort-gated metastasis subset, NOT the ungated
 --             all-metastasis population.
 --
 --     Percentile method: the framework's portable ordered-set percentile (ROW_NUMBER
---     + COUNT windows, then MIN(CASE WHEN 100.0*rn >= P*cnt ...)); identical to the
+--     + COUNT windows, then MIN(CASE WHEN 100.0*rn >= P*cnt ...)), identical to the
 --     percentile logic in 00_setup.sql and chunk 11. No PERCENTILE_CONT, so it
 --     translates cleanly to every dialect (SQLite included).
 --
 --     Small-cell suppression: n_patients is an aggregate denominator and is not
---     suppressed; the percentile / min / max / mean values are counts of records
+--     suppressed, the percentile / min / max / mean values are counts of records
 --     (not patient-identifying) and are set to NULL only when the family's whole
 --     denominator is <= @min_cell_count.
 --     Source: #dx_summary.n_dx_records, #met_summary.n_met_records (00_setup.sql).

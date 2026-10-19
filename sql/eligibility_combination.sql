@@ -8,7 +8,7 @@
 -- no arm.
 --
 -- The washout, windows and panel are eligibility_2a.sql's, with the
--- enfortumab criteria (HbA1c, neuropathy, skin) removed; keep the two in step.
+-- enfortumab criteria (HbA1c, neuropathy, skin) removed, keep the two in step.
 -- See eligibility_2a.sql's header for where test ids are declared and the notes on
 -- query shape.
 --
@@ -105,7 +105,7 @@ SELECT f.subject_id, f.cohort_start_date, f.cohort_end_date
    AND (f_alt_le25 = 1 OR (f_alt_le5 = 1 AND f_livermet = 1))
 
    -- Coag: protocol (INR <= 1.5 ULN OR PT <= 1.5 ULN), aPTT <= 1.5 ULN
-   -- separately; anticoagulant therapy (test 31) waives either limb.
+   -- separately, anticoagulant therapy (test 31) waives either limb.
    AND (f_inr = 1 OR f_pt = 1 OR f_anticoag = 1)
    AND (f_aptt = 1 OR f_anticoag = 1)
 ;

@@ -7,7 +7,7 @@
 --
 --       n_arrived_by_30d, _45d, _60d, _90d, _180d, _365d
 --
---     Thresholds 30/45/60/90 are the candidate cutoffs; 180/365 give the longer
+--     Thresholds 30/45/60/90 are the candidate cutoffs, 180/365 give the longer
 --     shape. All time is AFTER the first MET by construction, so there is no before
 --     side and no day-0 mass. Patients whose specific DX arrives after 365 days are
 --     the >1-year tail, derivable as n_patients_reaching_dx_total - n_arrived_by_365d.
@@ -26,7 +26,7 @@
 --     #anchor_person, no observation-period gate).
 --
 --     Small-cell suppression: each cumulative count in (0, @min_cell_count] set to
---     -@min_cell_count; median set to NULL when its denominator is suppressed.
+--     -@min_cell_count, median set to NULL when its denominator is suppressed.
 --     n_patients_reaching_dx_total is an aggregate denominator, not suppressed.
 
 WITH met_all AS (

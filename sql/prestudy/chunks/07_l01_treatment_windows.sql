@@ -5,17 +5,17 @@
 --    that window, as a fraction of the eligible denominator.
 --
 --    Two anchors:
---      INDEX    : all DX cohort patients; windows -12 to +48 (3 yr post-DX)
---      FIRST_MET: all patients with first_met_date; windows -6 to +24 (2 yr post-MET)
+--      INDEX    : all DX cohort patients, windows -12 to +48 (3 yr post-DX)
+--      FIRST_MET: all patients with first_met_date, windows -6 to +24 (2 yr post-MET)
 --
 --    The denominator for each window is the number of patients whose
 --    observation period covers the window midpoint (anchor + 30*k + 15 days).
 --    This avoids deflating late windows due to censoring.
 --    If observation_period data is unavailable, denominator = all anchor patients
---    (conservative; may underestimate late-window rates).
+--    (conservative, may underestimate late-window rates).
 --
 --    Output: one row per (anchor_event, window_index).
---    window_index: integer; window covers [anchor + 30*k, anchor + 30*(k+1) - 1].
+--    window_index: integer, window covers [anchor + 30*k, anchor + 30*(k+1) - 1].
 --    Small-cell suppression on n_patients_with_l01.
 
 WITH window_bounds AS (

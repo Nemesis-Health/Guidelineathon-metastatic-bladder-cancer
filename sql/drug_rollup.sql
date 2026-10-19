@@ -6,16 +6,16 @@
 -- era starting on or before their own index date (no lower bound) in each
 -- ATC 1st-level group (the 14 anatomical main groups, read from the
 -- vocabulary). The protocol counts drug eras overlapping the baseline
--- interval; with an unbounded look-back that is any era starting on or before
+-- interval, with an unbounded look-back that is any era starting on or before
 -- index. @use_drug_era = 0 reads drug_exposure start dates instead, for CDMs
 -- without a populated drug_era (the R step decides).
 --
 -- A drug counts in EVERY ATC group it belongs to (e.g. aspirin in B and N),
 -- so groups overlap and don't sum to the cohort. Drugs with no ATC ancestor
--- are 'No ATC group'; unmapped records (concept 0) are not counted.
+-- are 'No ATC group', unmapped records (concept 0) are not counted.
 --
 -- Output: cohort_definition_id, stratum_type, stratum_value, category_order,
---         category, n_subjects; plus one category_order = -1 row per
+--         category, n_subjects, plus one category_order = -1 row per
 --         cohort x stratum carrying the denominator in n_subjects.
 --
 -- SqlRender parameters: @work_database_schema @cohort_table

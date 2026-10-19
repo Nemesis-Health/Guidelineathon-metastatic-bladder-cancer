@@ -7,7 +7,7 @@
 --
 --     JUDGMENT CALL (identical to chunk 19). The gap is measured between DISTINCT
 --     Diagnosis DAYS, not raw records: same-day duplicate DX records are collapsed
---     first (SELECT DISTINCT person_id, event_date). Every gap is therefore >= 1 day;
+--     first (SELECT DISTINCT person_id, event_date). Every gap is therefore >= 1 day,
 --     the distribution is one-sided and starts at the origin (first Diagnosis).
 --
 --     Strata (cohort_stratum):
@@ -28,7 +28,7 @@
 --     MIN(CASE WHEN 100.0*rn >= P*cnt ...)), identical to 00_setup.sql / chunk 11.
 --
 --     Small-cell suppression: n_patients_with_gap in (0, @min_cell_count] set to
---     -@min_cell_count; percentile / min / max / mean set to NULL when
+--     -@min_cell_count, percentile / min / max / mean set to NULL when
 --     n_patients_with_gap <= @min_cell_count. n_cohort_stratum is an aggregate
 --     denominator, not suppressed.
 --     Source: #dx_events, #cohort, #met_summary (00_setup.sql).

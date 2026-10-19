@@ -2,7 +2,7 @@
 -- charlson_recorded.sql — recorded Charlson Comorbidity Index per (cohort, subject)
 -- =============================================================================
 -- For each member of @cohort_definition_ids, the recorded Charlson
--- Comorbidity Index (SNOMED 762713009, concept 42538860; measurement or
+-- Comorbidity Index (SNOMED 762713009, concept 42538860, measurement or
 -- observation) closest to that cohort's index within [index - 30d,
 -- index + 30d]. Equal distance: the record before index wins, then the
 -- higher value. Values outside 0-40 are ignored. The age-adjusted index

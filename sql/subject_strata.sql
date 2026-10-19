@@ -4,15 +4,15 @@
 -- ===========================================================================
 -- One row per (cohort_definition_id, subject_id) in @cohort_table, carrying
 -- the protocol stratification columns:
---   age_group   >65 / <=65   (age = year(index) - year_of_birth; protocol:
+--   age_group   >65 / <=65   (age = year(index) - year_of_birth, protocol:
 --               "age groups (<=65 and >65 years old)")
 --   sex         Male / Female / Other-Unknown
 --   age_sex     age_group and sex combined ('<=65|Male', '>65|Female', ...)
 --               -- a ready-made crossed grouping column, so a caller wanting
 --               the age x sex view doesn't need its own CASE/concat logic.
---   age_band    <=65 / 66-80 / >80 (same age as age_group; the protocol's
+--   age_band    <=65 / 66-80 / >80 (same age as age_group, the protocol's
 --               <=65/>65 split stays in age_group, this adds the >80 band)
---   index_period       2015-2020 / 2021-2023 / 2024+ (year of index;
+--   index_period       2015-2020 / 2021-2023 / 2024+ (year of index,
 --                      <2015 only for cohorts that can index earlier)
 --   index_period_2021  2015-2020 / 2021+ -- a separate column because 2021+
 --                      overlaps 2021-2023 and 2024+, and each column holds

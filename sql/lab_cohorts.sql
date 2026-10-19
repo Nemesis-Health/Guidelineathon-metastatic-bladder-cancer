@@ -7,7 +7,7 @@
    SqlRender PARAMETERS (all rendered before execution):
      @cdm_database_schema   -- OMOP CDM tables (measurement, person, ...)
      @work_database_schema  -- schema that holds every table written below
-     @raw_lab_results_table -- persisted normalised evaluations (was @work_database_schema.@raw_lab_results_table);
+     @raw_lab_results_table -- persisted normalised evaluations (was @work_database_schema.@raw_lab_results_table),
                                feeds Section 5 lab-value distributions
      @lab_cohort_table      -- persisted pass/fail rows (cohort_definition_id =
                                test_id) consumed by eligibility_2*.sql
@@ -19,7 +19,7 @@
 
    All work tables are DROP TABLE IF EXISTS'd first, so the script is
    re-runnable. The scratch/reference tables are left in @work_database_schema
-   for auditing; drop them manually once results are validated.
+   for auditing, drop them manually once results are validated.
 
    PORTABILITY: logic is ANSI SQL only (window fns, CASE) -- no GREATEST(),
      no VALUES-clause tricks, no dialect-specific functions besides LOG10().
@@ -724,7 +724,7 @@ INSERT INTO @work_database_schema.@cat_concept_table (cat, measurement_concept_i
 -- table for unit conversion, including non-UCUM units
 DROP TABLE IF EXISTS @work_database_schema.@unit_factor_table;
 -- standard_value = value_as_number * factor + val_offset   (val_offset<>0 only for HbA1c mmol/mol, which is affine)
--- is_std: 'bit' isn't a portable ANSI type (unsupported on Snowflake); using int since every
+-- is_std: 'bit' isn't a portable ANSI type (unsupported on Snowflake), using int since every
 -- reference to this column compares against literal 1 (see is_std=1 in the comment below).
 CREATE TABLE @work_database_schema.@unit_factor_table (cat varchar(40), unit_concept_id int, factor float, val_offset float, is_std int);
 INSERT INTO @work_database_schema.@unit_factor_table (cat, unit_concept_id, factor, val_offset, is_std) VALUES
@@ -903,10 +903,10 @@ INSERT INTO @work_database_schema.@unit_class_table (cat, unit_class, factor) VA
 
 
 DROP TABLE IF EXISTS @work_database_schema.@criteria_table;
--- basis: 'ULN' => bound = mult * upper-normal ;  'ABS' => bound is a fixed value already in standard units
+-- basis: 'ULN' => bound = mult * upper-normal ,  'ABS' => bound is a fixed value already in standard units
 --
 -- test_id: the @t_<key> slots declared in cohorts/extras/eligibility_test_ids.csv
--- (kind = lab); add a new test there first. Step 11 checks this table's ids match.
+-- (kind = lab), add a new test there first. Step 11 checks this table's ids match.
 CREATE TABLE @work_database_schema.@criteria_table (test_id int, cat varchar(40), basis char(3),
    min_op varchar(2), min_val float, max_op varchar(2), max_val float, note varchar(120));
 INSERT INTO @work_database_schema.@criteria_table (test_id, cat, basis, min_op, min_val, max_op, max_val, note) VALUES
@@ -972,7 +972,7 @@ WITH grp_base AS (
          -- of type FLOAT64 is not allowed") -- rlo/rhi (measurement.range_low/
          -- range_high) are FLOAT, which every other dialect here happily
          -- partitions by directly. Casting to VARCHAR only changes the
-         -- partition KEY's representation, not any value returned; two
+         -- partition KEY's representation, not any value returned, two
          -- floats partition together under this cast exactly when they
          -- would have partitioned together as floats (same value -> same
          -- string), so this is a no-op on every dialect's actual grouping.
@@ -1095,11 +1095,11 @@ JOIN @work_database_schema.@normals_table n ON n.cat = g.cat;
 
 /* ---------------------------------------------------------------------------
    3.  RESOLVE the unit/factor per group.
-       The single best scale wins (ORDER BY score, rn=1); 0.7 is only a floor.
-       Policy: verify the recorded unit first -> if it passes use it;
+       The single best scale wins (ORDER BY score, rn=1), 0.7 is only a floor.
+       Policy: verify the recorded unit first -> if it passes use it,
                else the best scale the concept name allows (@concept_unit_table),
-               if it passes ('concept');
-               else override with the best; else (no signal) trust recorded;
+               if it passes ('concept'),
+               else override with the best, else (no signal) trust recorded,
                else unresolved.  Equal scores go to the factor closest to 1.
                is_ambiguous = more than one scale cleared 0.7
                (e.g. Hb g/dL vs mmol/L are ~0.21 decades apart).
@@ -1120,7 +1120,7 @@ SELECT m_id, u_id, rlo, rhi, cat,
         ELSE NULL END AS val_offset,
 -- assessement for match:
 -- verified if provided unit=best match unit, concept if the concept name's unit
--- matches, overridden with best if neither; unverified if unit provided but no
+-- matches, overridden with best if neither, unverified if unit provided but no
 -- match, unresolved if nothing
    CASE WHEN prov_score < 0.7 THEN 'verified'
         WHEN con_best   < 0.7 THEN 'concept'
@@ -1243,7 +1243,7 @@ FROM (
 GROUP BY test_id, cat, measurement_concept_id, unit_concept_id, reason;
 
 -- Audit helpers:
---   SELECT * FROM @work_database_schema.@resolved_table WHERE status IN ('concept','overridden','unresolved','unverified') OR is_ambiguous = 1;
---   SELECT * FROM @work_database_schema.@debug_table ORDER BY record_count DESC;
+--   SELECT * FROM @work_database_schema.@resolved_table WHERE status IN ('concept','overridden','unresolved','unverified') OR is_ambiguous = 1,
+--   SELECT * FROM @work_database_schema.@debug_table ORDER BY record_count DESC,
 
 

@@ -10,7 +10,7 @@
 --
 -- For each target cohort and lab (cat), among subjects with a scorable result
 -- in the window, the one result eligibility uses (lab_rows_sql:
--- eligibility_lab_rows.sql rendered by labRowsSql() with the closest rule;
+-- eligibility_lab_rows.sql rendered by labRowsSql() with the closest rule,
 -- same window and tie-breaks) -- one value per subject x cat, summarised.
 --
 -- Also stratified: every (cohort, cat) row is computed four times --

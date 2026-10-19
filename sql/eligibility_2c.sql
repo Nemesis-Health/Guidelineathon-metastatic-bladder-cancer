@@ -32,7 +32,7 @@ WITH base AS (
      AND ev.cohort_definition_id = @cohort2a_id
 
     /* ----- NOT cisplatin-eligible: exact anti-join on cohort 2b ----- */
-    -- 2a/2b are generated before this cohort; each anti-join excludes anyone
+    -- 2a/2b are generated before this cohort, each anti-join excludes anyone
     -- already claimed by that arm's full definition (not just its distinguishing
     -- criteria). Plain anti-joins, no correlated subqueries.
     LEFT JOIN @target_database_schema.@target_cohort_table cis

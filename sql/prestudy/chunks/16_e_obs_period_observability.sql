@@ -3,7 +3,7 @@
 --     AFTER the index (follow-up), reported as cumulative day-threshold counts:
 --     the number of patients with fewer than 30 / 90 / 180 / 365 days of
 --     observation on each side of the index. Look-back and follow-up are kept
---     strictly separate (one row per side); day 0 sits on the follow-up side
+--     strictly separate (one row per side), day 0 sits on the follow-up side
 --     (follow-up = days from the index to the observation-period end, >= 0).
 --
 --     Observable time is measured inside the single observation period that
@@ -12,14 +12,14 @@
 --       follow-up_days = observation_period_end_date - index_date
 --     A patient contributes only if the anchor date falls within one of their
 --     observation periods. For INDEX this holds for every cohort patient by
---     construction (see #cohort in 00_setup.sql); for FIRST_MET it holds only
+--     construction (see #cohort in 00_setup.sql), for FIRST_MET it holds only
 --     for patients whose first metastasis date is inside an observation period.
 --
 --     Two anchors: INDEX (first qualifying DX = cohort index date) and FIRST_MET
 --     (first metastasis date). Source: #cohort, #met_summary (00_setup.sql) and
 --     @cdm_database_schema.observation_period.
 --     Small-cell suppression: threshold counts in (0, @min_cell_count] are set to
---     -@min_cell_count; median set to NULL when the group denominator is suppressed.
+--     -@min_cell_count, median set to NULL when the group denominator is suppressed.
 --     n_patients is an aggregate cohort denominator and is not suppressed, matching
 --     the existing death/prevalence chunks.
 

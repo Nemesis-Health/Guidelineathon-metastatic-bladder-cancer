@@ -24,11 +24,11 @@
 --
 --     POPULATION. Built from #met_events (00_setup.sql, section F):
 --     @cdm_database_schema.measurement JOIN #met_concepts JOIN #anchor_person, so
---     every patient carries an anchor DX code. The cohort is DX-anchored; a MET code
+--     every patient carries an anchor DX code. The cohort is DX-anchored, a MET code
 --     is observed WITHIN that cohort, never as a separate entry point. There is no
 --     "MET-only, no DX" patient: the MET concept set is generic across cancer types,
 --     so a MET code without an anchor DX gives no evidence of the cancer of interest.
---     #anchor_person carries no observation-period-at-index gate (that is #cohort);
+--     #anchor_person carries no observation-period-at-index gate (that is #cohort),
 --     see the observation-period flag below. Identical DX-anchored population to
 --     Analysis D (chunks 20-23).
 --

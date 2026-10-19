@@ -24,7 +24,7 @@
 --     before any of their procedures of that root (via the closest such record).
 --     The before / day-0 / after columns can overlap for a patient, so they need not
 --     sum. A high share means the procedure is corroborated by the drug table and
---     adds little new capture; a low share means the procedure is largely the only
+--     adds little new capture, a low share means the procedure is largely the only
 --     record that treatment happened for that concept.
 --
 --     Denominator (n_patients_with_procedure, per row):
@@ -46,11 +46,11 @@
 --     Restricting to #anchor_person makes G-part-3 consistent with that principle.
 --     Note this does change the per-concept denominators versus the earlier ungated
 --     output: they are now smaller (cohort-only). This chunk does NOT use the MET
---     population; MET-scoping would be wrong for a general procedure/drug redundancy
+--     population, MET-scoping would be wrong for a general procedure/drug redundancy
 --     check, so the correct anchoring here is the DX cohort, not the MET subset. If
 --     the intent is instead a cohort-independent instrument check (redundancy of the
 --     procedure concept itself across the whole database), revert the three
---     #anchor_person joins below; flagged for AA rather than assumed.
+--     #anchor_person joins below, flagged for AA rather than assumed.
 --
 --     JUDGMENT CALL / FLAG (observation period). Not restricted to an observation
 --     period, consistent with the rest of Analyses D, G and H. Anchored on
@@ -123,7 +123,7 @@ per_patient AS (
     GROUP BY person_id, root_concept_id
 ),
 joined AS (
-    -- All procedure carriers; co-occurrence attributes NULL when the patient has
+    -- All procedure carriers, co-occurrence attributes NULL when the patient has
     -- no L01 record at all (still counted in the denominator, contributes 0).
     SELECT
         c.person_id,

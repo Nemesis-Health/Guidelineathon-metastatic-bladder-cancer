@@ -7,7 +7,7 @@
 -- treatment-naive part of T2e.
 --
 -- The washout is eligibility_2a.sql's (an ARTEMIS regimen episode overlapping
--- [index - 365d, index - 30d)); keep the two in step.
+-- [index - 365d, index - 30d)), keep the two in step.
 --
 -- SqlRender params: @target_database_schema @target_cohort_table
 --   @target_cohort_id @cohort1_id @regimen_episode_table

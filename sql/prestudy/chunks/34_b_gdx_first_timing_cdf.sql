@@ -7,7 +7,7 @@
 --       signed_days = first_general_code_date - first_specific_diagnosis_date
 --
 --     negative = the first general code precedes the first specific Diagnosis
---     (pre-diagnostic / workup coding); zero = same calendar day; positive = the
+--     (pre-diagnostic / workup coding), zero = same calendar day, positive = the
 --     first general code follows the first specific Diagnosis.
 --
 --     Three directional masses (mutually exclusive, sum to n_with_general_code):
@@ -27,14 +27,14 @@
 --         tail later than 1 year after = n_first_general_after - within_365d_after
 --
 --     median_signed_days_first_general: median of signed_days over all patients with
---     a general code (single value; positive means the first general code typically
+--     a general code (single value, positive means the first general code typically
 --     follows the first specific Diagnosis). Framework ordered-set median convention
 --     (lower-middle value for even n, as in chunks 16-17, 23, 27 and 00_setup.sql).
 --     Validation reference: the approved V3 mock reports a positive first-general-
 --     to-first-Diagnosis median with a long pre-diagnostic (before) tail.
 --
 --     NOTE (direction). Before and after use their own outward-cumulative counts and
---     are never combined into a symmetric window; day 0 is its own mass, not folded
+--     are never combined into a symmetric window, day 0 is its own mass, not folded
 --     into the after side.
 --
 --     Denominator (n_with_general_code, repeated on the single row):
@@ -47,7 +47,7 @@
 --     an observation period, matching the mock.
 --
 --     Small-cell suppression: each directional/cumulative count in (0, @min_cell_count]
---     set to -@min_cell_count; median set to NULL when its denominator
+--     set to -@min_cell_count, median set to NULL when its denominator
 --     (n_with_general_code) is suppressed. n_with_general_code is an aggregate
 --     denominator, not suppressed.
 

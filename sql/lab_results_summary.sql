@@ -17,14 +17,14 @@
 -- Privacy: cells with fewer than @min_cell_count DISTINCT patients are censored
 -- — n_patients -> -@min_cell_count and all counts/stats -> NULL.
 --
--- NOTE: @raw_lab_results_table holds one row per (measurement x test_id); the
+-- NOTE: @raw_lab_results_table holds one row per (measurement x test_id), the
 -- `meas` CTE collapses that to one row per physical measurement before counting
 -- so a lab with N test_ids (e.g. GFR) is not counted N times.
 --
 -- SqlRender parameters:
 --   @work_database_schema
 --   @raw_lab_results_table
---   @vocabulary_database_schema   (for concept names; LEFT JOIN, optional)
+--   @vocabulary_database_schema   (for concept names, LEFT JOIN, optional)
 --   @min_cell_count               integer (e.g. 5)
 -- =============================================================================
 
@@ -32,7 +32,7 @@ WITH meas AS (
   SELECT DISTINCT
          cat, measurement_concept_id, unit_concept_id, factor, status, is_ambiguous,
          person_id, measurement_date, std_value,
-         -- factor is FLOAT, which BigQuery cannot PARTITION BY; the string key
+         -- factor is FLOAT, which BigQuery cannot PARTITION BY, the string key
          -- partitions identically on every dialect.
          CAST(factor AS VARCHAR(50)) AS factor_key
     FROM @work_database_schema.@raw_lab_results_table

@@ -9,7 +9,7 @@
 --     Quantity: days_past_death = (last observation_period_end_date) - (death_date),
 --     among decedents whose last observation period ends strictly AFTER their death
 --     date (period runs past death). Same population and same definition as chunk 17's
---     DECEDENTS_PERIOD_ENDS_AFTER_DEATH / MEDIAN_DAYS_PERIOD_ENDS_PAST_DEATH metrics;
+--     DECEDENTS_PERIOD_ENDS_AFTER_DEATH / MEDIAN_DAYS_PERIOD_ENDS_PAST_DEATH metrics,
 --     the p50_days emitted here reconciles to chunk 17's median by construction (both
 --     use the framework lower-middle ordered-set convention: 100.0*rn >= 50*cnt).
 --
@@ -17,7 +17,7 @@
 --       INDEX     = full DX cohort decedents with death on/after the index date
 --       FIRST_MET = metastasis-subset decedents with death on/after the first MET
 --                   date. The metastasis subset is #cohort joined to #met_summary
---                   (the DX-cohort-gated subset; NOT the ungated
+--                   (the DX-cohort-gated subset, NOT the ungated
 --                   all-metastasis population).
 --     Only decedents whose period ends after death (days_past_death IS NOT NULL) are
 --     ranked, matching chunk 17's decedent_days_ranked (ranking the full decedent set
@@ -28,7 +28,7 @@
 --     MIN(CASE WHEN 100.0*rn >= P*cnt ...)), identical to 00_setup.sql / chunk 17.
 --
 --     Small-cell suppression: n_decedents_period_past_death in (0, @min_cell_count]
---     set to -@min_cell_count; percentile / min / max / mean set to NULL when that
+--     set to -@min_cell_count, percentile / min / max / mean set to NULL when that
 --     count <= @min_cell_count.
 --     Source: #cohort, #met_summary, #death_obs_status (00_setup.sql),
 --     @cdm_database_schema.observation_period.
@@ -42,7 +42,7 @@ WITH patient_obs AS (
     GROUP BY person_id
 ),
 decedent_anchor AS (
-    -- INDEX anchor: full cohort decedents; days the period runs past death.
+    -- INDEX anchor: full cohort decedents, days the period runs past death.
     SELECT
         'INDEX' AS anchor_event,
         CASE WHEN po.last_obs_end > dos.death_date

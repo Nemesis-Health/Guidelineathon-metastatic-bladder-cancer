@@ -13,7 +13,7 @@
 --
 --    Anchors (framework two-anchor convention, both surfaced):
 --      INDEX     : DX index_date (full DX cohort, #cohort)
---      FIRST_MET : first_met_date (MET subgroup only; patients with a first MET)
+--      FIRST_MET : first_met_date (MET subgroup only, patients with a first MET)
 --
 --    Event families:
 --      ODX : other specific cancer diagnoses (competing-cancer exclusion codes)
@@ -41,9 +41,9 @@
 --    n_ever is NOT the sum of the columns: one patient may have events before,
 --    on, and after the anchor and so appear in a before band, in n_day0, and in
 --    an after band. Within a single side the bands ARE a clean partition
---    (n_before_ever = sum of before bands; n_after_ever = sum of after bands).
+--    (n_before_ever = sum of before bands, n_after_ever = sum of after bands).
 --
---    Covers ODX and GDX. All concepts are reported; the report builder limits to
+--    Covers ODX and GDX. All concepts are reported, the report builder limits to
 --    top N by n_ever.
 --
 --    Small-cell suppression: each count in (0, @min_cell_count] set to
@@ -82,8 +82,8 @@ WITH events AS (
 ),
 per_person AS (
     -- One row per (anchor, family, concept, person): day-0 flag, and the days
-    -- offset of the closest event on each side (MAX of negatives = nearest before;
-    -- MIN of positives = nearest after; NULL when that side has no event).
+    -- offset of the closest event on each side (MAX of negatives = nearest before,
+    -- MIN of positives = nearest after, NULL when that side has no event).
     SELECT
         anchor_event,
         event_family,

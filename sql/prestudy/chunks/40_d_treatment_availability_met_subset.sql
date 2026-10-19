@@ -14,7 +14,7 @@
 --              #l01_concepts, 00_setup.sql section E).
 --       DTP  = a Drug Therapy procedure (procedure_occurrence joined to #dtp_concepts,
 --              the four roots: chemotherapy 4273629, immunological therapy 4295112,
---              targeted chemotherapy for cancer 37158316, hormone therapy 4061650;
+--              targeted chemotherapy for cancer 37158316, hormone therapy 4061650,
 --              00_setup.sql section E2). Labelled "drug-therapy procedure," not
 --              "chemotherapy," in the report.
 --
@@ -25,7 +25,7 @@
 --                         side, matching chunk 29's convention.
 --
 --     Four categories per window (these are FOUR availability measures shown side by
---     side, NOT a partition — EITHER overlaps the two ONLY categories; only
+--     side, NOT a partition — EITHER overlaps the two ONLY categories, only
 --     EITHER + NEITHER = n_met_subset):
 --       L01_ONLY   has L01, no DTP
 --       DTP_ONLY   has DTP, no L01

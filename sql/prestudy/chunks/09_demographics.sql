@@ -42,7 +42,7 @@ ages AS (
     FROM base
 )
 -- Small-cell suppression: n_patients/n_male/n_female in (0, @min_cell_count]
--- set to -@min_cell_count, independently; pct_male/pct_female and the age
+-- set to -@min_cell_count, independently, pct_male/pct_female and the age
 -- quartiles blanked whenever their underlying count is censored (a raw
 -- pct alongside a censored n would let the true small count be recomputed).
 SELECT

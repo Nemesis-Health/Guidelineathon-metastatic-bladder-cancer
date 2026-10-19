@@ -7,7 +7,7 @@
 --
 --       days = general_code_date - first_specific_diagnosis_date
 --
---     Columns (distinct patients holding >= 1 code of the concept in the region;
+--     Columns (distinct patients holding >= 1 code of the concept in the region,
 --     the three regions overlap, so before + at day 0 + after can exceed n_patients
 --     because one patient may hold codes on more than one side):
 --       n_patients        any time (the concept's overall patient count)
@@ -23,7 +23,7 @@
 --
 --     Purpose: exclusion-criteria safety at the concept level. Concepts carried
 --     mostly BEFORE the first specific Diagnosis (high n_ever_before) are the ones a
---     naive "any malignant neoplasm" exclusion would wrongly remove; the report
+--     naive "any malignant neoplasm" exclusion would wrongly remove, the report
 --     builds an adjustable capture window from these directional counts.
 --
 --     JUDGMENT CALL / FLAG (directional vs the mock's modelled split). The approved
@@ -38,7 +38,7 @@
 --     neoplasm of urinary system 57) and n_ever_before matches the mock ever-before
 --     (kidney 164, urinary system 14). n_ever_after here is strictly after (days > 0)
 --     with day 0 carved out into n_at_day0, so it is <= the mock's ever-after, which
---     used days >= 0; this is the intended day-0-explicit correction.
+--     used days >= 0, this is the intended day-0-explicit correction.
 --
 --     JUDGMENT CALL / FLAG (concept coverage and the >10 filter). All general
 --     cancer diagnosis concepts present in the cohort are emitted, each cell
@@ -51,12 +51,12 @@
 --     Analysis B's spec and the approved mock. General-code prevalence around the
 --     first Metastasis is covered generically by chunk 06.
 --
---     Denominator: n_patients per concept (on the row); the anchor-cohort total
+--     Denominator: n_patients per concept (on the row), the anchor-cohort total
 --     (chunk 33 n_cohort_total) is the population base for the report's
 --     percent-of-cohort figures.
 --
 --     Population note. #gen_cancer_events is restricted to anchor-cohort persons in
---     00_setup.sql and joined to #cohort here; general-code dates are not restricted
+--     00_setup.sql and joined to #cohort here, general-code dates are not restricted
 --     to an observation period, matching the mock.
 --
 --     Small-cell suppression: every count in (0, @min_cell_count] set to
