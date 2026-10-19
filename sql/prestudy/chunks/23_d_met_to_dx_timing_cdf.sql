@@ -27,7 +27,7 @@
 --
 --     Small-cell suppression: each cumulative count in (0, @min_cell_count] set to
 --     -@min_cell_count, median set to NULL when its denominator is suppressed.
---     n_patients_reaching_dx_total is an aggregate denominator, not suppressed.
+--     n_patients_reaching_dx_total is censored the same way.
 
 WITH met_all AS (
     SELECT
@@ -74,7 +74,7 @@ agg AS (
     FROM gap
 )
 SELECT
-    a.n_total AS n_patients_reaching_dx_total,
+    CASE WHEN a.n_total > 0 AND a.n_total <= @min_cell_count THEN -@min_cell_count ELSE a.n_total END AS n_patients_reaching_dx_total,
     CASE WHEN a.n_by_30  > 0 AND a.n_by_30  <= @min_cell_count THEN -@min_cell_count ELSE a.n_by_30  END AS n_arrived_by_30d,
     CASE WHEN a.n_by_45  > 0 AND a.n_by_45  <= @min_cell_count THEN -@min_cell_count ELSE a.n_by_45  END AS n_arrived_by_45d,
     CASE WHEN a.n_by_60  > 0 AND a.n_by_60  <= @min_cell_count THEN -@min_cell_count ELSE a.n_by_60  END AS n_arrived_by_60d,

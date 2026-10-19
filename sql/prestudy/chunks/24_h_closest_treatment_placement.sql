@@ -105,7 +105,7 @@ SELECT
     c.placement_category,
     CASE WHEN COUNT(*) > 0 AND COUNT(*) <= @min_cell_count THEN -@min_cell_count
          ELSE COUNT(*) END AS n_patients,
-    t.n_patients_met_total
+    CASE WHEN t.n_patients_met_total > 0 AND t.n_patients_met_total <= @min_cell_count THEN -@min_cell_count ELSE t.n_patients_met_total END AS n_patients_met_total
 FROM classified c
 CROSS JOIN totals t
 GROUP BY c.placement_category, t.n_patients_met_total

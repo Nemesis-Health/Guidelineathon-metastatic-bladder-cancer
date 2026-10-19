@@ -35,7 +35,7 @@
 --     and EITHER + NEITHER = n_met_subset. The report reads the four directly.
 --
 --     Small-cell suppression: n_patients in (0, @min_cell_count] set to
---     -@min_cell_count. n_met_subset is an aggregate denominator, not suppressed.
+--     -@min_cell_count. n_met_subset is censored the same way.
 --     Source: #met_summary, #l01_events (00_setup.sql), #dtp_concepts (00_setup.sql),
 --     @cdm_database_schema.procedure_occurrence.
 
@@ -127,7 +127,7 @@ SELECT
     c.category,
     CASE WHEN c.n_patients > 0 AND c.n_patients <= @min_cell_count
          THEN -@min_cell_count ELSE c.n_patients END AS n_patients,
-    t.n_met_subset
+    CASE WHEN t.n_met_subset > 0 AND t.n_met_subset <= @min_cell_count THEN -@min_cell_count ELSE t.n_met_subset END AS n_met_subset
 FROM counts c
 CROSS JOIN total t
 ORDER BY

@@ -14,7 +14,7 @@
 --     A patient falls in exactly one bucket per family.
 --     Source: #dx_summary.n_dx_records, #met_summary.n_met_records (00_setup.sql).
 --     Small-cell suppression: n_patients in (0, @min_cell_count] set to
---     -@min_cell_count. n_patients_total is an aggregate denominator, not suppressed.
+--     -@min_cell_count. n_patients_total is censored the same way.
 
 WITH family_counts AS (
     SELECT 'DX'  AS event_family, person_id, n_dx_records  AS n_records FROM #dx_summary
@@ -50,7 +50,7 @@ SELECT
     b.event_family,
     b.record_count_bucket,
     CASE WHEN COUNT(*) > 0 AND COUNT(*) <= @min_cell_count THEN -@min_cell_count ELSE COUNT(*) END AS n_patients,
-    t.n_patients_total
+    CASE WHEN t.n_patients_total > 0 AND t.n_patients_total <= @min_cell_count THEN -@min_cell_count ELSE t.n_patients_total END AS n_patients_total
 FROM bucketed b
 JOIN totals t ON t.event_family = b.event_family
 GROUP BY b.event_family, b.record_count_bucket, t.n_patients_total

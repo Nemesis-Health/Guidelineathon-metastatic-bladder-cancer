@@ -30,8 +30,7 @@
 --
 --     Small-cell suppression: n_patients_with_gap in (0, @min_cell_count] set to
 --     -@min_cell_count, percentile / min / max / mean values set to NULL when
---     n_patients_with_gap <= @min_cell_count. n_met_subset is an aggregate
---     denominator, not suppressed.
+--     n_patients_with_gap <= @min_cell_count. n_met_subset is censored the same way.
 --     Source: #met_events, #met_summary (00_setup.sql).
 
 WITH met_days AS (
@@ -90,7 +89,7 @@ pct AS (
 )
 SELECT
     'MET_1_TO_2' AS transition,
-    st.n_met_subset,
+    CASE WHEN st.n_met_subset > 0 AND st.n_met_subset <= @min_cell_count THEN -@min_cell_count ELSE st.n_met_subset END AS n_met_subset,
     CASE WHEN p.n_patients_with_gap > 0 AND p.n_patients_with_gap <= @min_cell_count
          THEN -@min_cell_count ELSE p.n_patients_with_gap END AS n_patients_with_gap,
     CASE WHEN p.n_patients_with_gap <= @min_cell_count THEN NULL ELSE p.min_days  END AS min_days,

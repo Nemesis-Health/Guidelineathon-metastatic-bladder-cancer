@@ -12,9 +12,9 @@ SELECT
     CASE WHEN s.n_patients <= @min_cell_count OR s.n_deaths <= @min_cell_count THEN NULL ELSE q.lq_days END AS lq_days,
     CASE WHEN s.n_patients <= @min_cell_count OR s.n_deaths <= @min_cell_count THEN NULL ELSE q.median_days END AS median_days,
     CASE WHEN s.n_patients <= @min_cell_count OR s.n_deaths <= @min_cell_count THEN NULL ELSE q.uq_days END AS uq_days,
-    CASE WHEN s.n_patients <= @min_cell_count THEN NULL ELSE f.lq_followup_days END AS lq_followup_days,
-    CASE WHEN s.n_patients <= @min_cell_count THEN NULL ELSE f.median_followup_days END AS median_followup_days,
-    CASE WHEN s.n_patients <= @min_cell_count THEN NULL ELSE f.uq_followup_days END AS uq_followup_days
+    CASE WHEN COALESCE(f.n_followup, 0) <= @min_cell_count THEN NULL ELSE f.lq_followup_days END AS lq_followup_days,
+    CASE WHEN COALESCE(f.n_followup, 0) <= @min_cell_count THEN NULL ELSE f.median_followup_days END AS median_followup_days,
+    CASE WHEN COALESCE(f.n_followup, 0) <= @min_cell_count THEN NULL ELSE f.uq_followup_days END AS uq_followup_days
 FROM #death_stratum_counts s
 LEFT JOIN #death_timing_quantiles q
   ON s.prevalence_year = q.prevalence_year

@@ -48,8 +48,7 @@
 --
 --     Small-cell suppression: each directional/cumulative count in (0, @min_cell_count]
 --     set to -@min_cell_count, median set to NULL when its denominator
---     (n_with_general_code) is suppressed. n_with_general_code is an aggregate
---     denominator, not suppressed.
+--     (n_with_general_code) is suppressed. n_with_general_code is censored the same way.
 
 WITH first_general AS (
     -- Signed gap from the first specific Diagnosis to the patient's first general
@@ -89,7 +88,7 @@ agg AS (
     FROM first_general
 )
 SELECT
-    a.n_total AS n_with_general_code,
+    CASE WHEN a.n_total > 0 AND a.n_total <= @min_cell_count THEN -@min_cell_count ELSE a.n_total END AS n_with_general_code,
     CASE WHEN a.n_before > 0 AND a.n_before <= @min_cell_count THEN -@min_cell_count ELSE a.n_before END AS n_first_general_before,
     CASE WHEN a.n_b30    > 0 AND a.n_b30    <= @min_cell_count THEN -@min_cell_count ELSE a.n_b30    END AS n_first_general_within_30d_before,
     CASE WHEN a.n_b90    > 0 AND a.n_b90    <= @min_cell_count THEN -@min_cell_count ELSE a.n_b90    END AS n_first_general_within_90d_before,

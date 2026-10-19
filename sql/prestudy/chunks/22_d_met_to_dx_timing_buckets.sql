@@ -22,8 +22,8 @@
 --     #anchor_person, no observation-period gate).
 --
 --     Small-cell suppression: n_patients in (0, @min_cell_count] set to
---     -@min_cell_count. n_patients_reaching_dx_total is an aggregate denominator,
---     not suppressed. A bucket with zero patients is absent (as in chunks 18-19).
+--     -@min_cell_count. n_patients_reaching_dx_total is censored the same way. A bucket
+--     with zero patients is absent (as in chunks 18-19).
 
 WITH met_all AS (
     SELECT
@@ -77,7 +77,7 @@ SELECT
     b.timing_bucket,
     CASE WHEN COUNT(*) > 0 AND COUNT(*) <= @min_cell_count THEN -@min_cell_count
          ELSE COUNT(*) END AS n_patients,
-    t.n_patients_reaching_dx_total
+    CASE WHEN t.n_patients_reaching_dx_total > 0 AND t.n_patients_reaching_dx_total <= @min_cell_count THEN -@min_cell_count ELSE t.n_patients_reaching_dx_total END AS n_patients_reaching_dx_total
 FROM bucketed b
 CROSS JOIN totals t
 GROUP BY b.timing_bucket, t.n_patients_reaching_dx_total

@@ -25,7 +25,7 @@
 --     Drug Therapy procedures from procedure_occurrence + #dtp_concepts restricted to
 --     the same cohort by the join to met_all, no observation-period gate). Per-root
 --     n_patients in (0, @min_cell_count] set to -@min_cell_count, n_procedure_only_total
---     is an aggregate denominator, not suppressed. A root carried by zero
+--     is censored the same way. A root carried by zero
 --     procedure-only patients is absent.
 
 WITH met_all AS (
@@ -70,7 +70,7 @@ SELECT
     CASE WHEN COUNT(DISTINCT po.person_id) > 0
           AND COUNT(DISTINCT po.person_id) <= @min_cell_count THEN -@min_cell_count
          ELSE COUNT(DISTINCT po.person_id) END AS n_patients,
-    t.n_procedure_only_total
+    CASE WHEN t.n_procedure_only_total > 0 AND t.n_procedure_only_total <= @min_cell_count THEN -@min_cell_count ELSE t.n_procedure_only_total END AS n_procedure_only_total
 FROM proc_only po
 CROSS JOIN totals t
 GROUP BY po.root_concept_id, t.n_procedure_only_total

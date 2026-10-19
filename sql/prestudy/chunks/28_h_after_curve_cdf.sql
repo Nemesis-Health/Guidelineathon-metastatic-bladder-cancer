@@ -49,7 +49,7 @@
 --
 --     Small-cell suppression: each cumulative count in (0, @min_cell_count] set to
 --     -@min_cell_count, median set to NULL when its denominator is suppressed.
---     n_after_any_total is an aggregate denominator, not suppressed.
+--     n_after_any_total is censored the same way.
 
 WITH met_all AS (
     SELECT
@@ -102,7 +102,7 @@ agg AS (
     FROM after_first
 )
 SELECT
-    a.n_total AS n_after_any_total,
+    CASE WHEN a.n_total > 0 AND a.n_total <= @min_cell_count THEN -@min_cell_count ELSE a.n_total END AS n_after_any_total,
     CASE WHEN a.n_30  > 0 AND a.n_30  <= @min_cell_count THEN -@min_cell_count ELSE a.n_30  END AS n_within_30d_after,
     CASE WHEN a.n_60  > 0 AND a.n_60  <= @min_cell_count THEN -@min_cell_count ELSE a.n_60  END AS n_within_60d_after,
     CASE WHEN a.n_90  > 0 AND a.n_90  <= @min_cell_count THEN -@min_cell_count ELSE a.n_90  END AS n_within_90d_after,

@@ -69,7 +69,7 @@ pct AS (
 )
 SELECT
     event_family,
-    n_patients,
+    CASE WHEN n_patients > 0 AND n_patients <= @min_cell_count THEN -@min_cell_count ELSE n_patients END AS n_patients,
     CASE WHEN n_patients <= @min_cell_count THEN NULL ELSE min_records  END AS min_records,
     CASE WHEN n_patients <= @min_cell_count THEN NULL ELSE max_records  END AS max_records,
     CASE WHEN n_patients <= @min_cell_count THEN NULL ELSE mean_records END AS mean_records,

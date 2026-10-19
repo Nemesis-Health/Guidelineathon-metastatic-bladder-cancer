@@ -29,8 +29,7 @@
 --
 --     Small-cell suppression: n_patients_with_gap in (0, @min_cell_count] set to
 --     -@min_cell_count, percentile / min / max / mean set to NULL when
---     n_patients_with_gap <= @min_cell_count. n_cohort_stratum is an aggregate
---     denominator, not suppressed.
+--     n_patients_with_gap <= @min_cell_count. n_cohort_stratum is censored the same way.
 --     Source: #dx_events, #cohort, #met_summary (00_setup.sql).
 
 WITH dx_days AS (
@@ -103,7 +102,7 @@ pct AS (
 SELECT
     st.cohort_stratum,
     'DX_1_TO_2' AS transition,
-    st.n_cohort_stratum,
+    CASE WHEN st.n_cohort_stratum > 0 AND st.n_cohort_stratum <= @min_cell_count THEN -@min_cell_count ELSE st.n_cohort_stratum END AS n_cohort_stratum,
     CASE WHEN p.n_patients_with_gap > 0 AND p.n_patients_with_gap <= @min_cell_count
          THEN -@min_cell_count ELSE COALESCE(p.n_patients_with_gap, 0) END AS n_patients_with_gap,
     CASE WHEN p.n_patients_with_gap <= @min_cell_count THEN NULL ELSE p.min_days  END AS min_days,

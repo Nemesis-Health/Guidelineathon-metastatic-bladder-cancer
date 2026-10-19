@@ -94,7 +94,7 @@ SELECT
          THEN -@min_cell_count ELSE COUNT(*) END AS n_patients,
     CASE WHEN SUM(c.at_day0) > 0 AND SUM(c.at_day0) <= @min_cell_count
          THEN -@min_cell_count ELSE SUM(c.at_day0) END AS n_general_at_day0,
-    t.n_cohort_total
+    CASE WHEN t.n_cohort_total > 0 AND t.n_cohort_total <= @min_cell_count THEN -@min_cell_count ELSE t.n_cohort_total END AS n_cohort_total
 FROM classified c
 CROSS JOIN totals t
 GROUP BY c.trajectory_category, t.n_cohort_total

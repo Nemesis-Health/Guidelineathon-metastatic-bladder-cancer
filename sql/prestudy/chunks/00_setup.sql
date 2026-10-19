@@ -1879,6 +1879,7 @@ DROP TABLE IF EXISTS #followup_quantiles;
 CREATE TABLE #followup_quantiles (
     prevalence_year VARCHAR(20),
     anchor_event VARCHAR(20),
+    n_followup INT,
     lq_followup_days FLOAT,
     median_followup_days FLOAT,
     uq_followup_days FLOAT
@@ -1887,6 +1888,7 @@ CREATE TABLE #followup_quantiles (
 INSERT INTO #followup_quantiles (
     prevalence_year,
     anchor_event,
+    n_followup,
     lq_followup_days,
     median_followup_days,
     uq_followup_days
@@ -1894,6 +1896,7 @@ INSERT INTO #followup_quantiles (
 SELECT
     prevalence_year,
     anchor_event,
+    COUNT(*) AS n_followup,
     MIN(CASE WHEN 4.0 * rn >= cnt THEN CAST(followup_days AS FLOAT) END) AS lq_followup_days,
     MIN(CASE WHEN 2.0 * rn >= cnt THEN CAST(followup_days AS FLOAT) END) AS median_followup_days,
     MIN(CASE WHEN 4.0 * rn >= 3 * cnt THEN CAST(followup_days AS FLOAT) END) AS uq_followup_days
