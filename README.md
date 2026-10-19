@@ -253,6 +253,9 @@ those indexed on treatment start, so a patient falls in the same band in
 every cohort. Age is that year minus birth year. Periods use that year; a
 boundary year goes to the later band. The date is the patient's start in T1
 (all, incl. other cancers), the superset the rest of the tree is drawn from.
+The BaseL01 cohorts are defined on their own and check bladder cancer and
+observation around the drug date, so some of their members are not in T1
+(all); those are stratified at their own (treatment-start) index.
 Overlapping strata can reveal a censored cell by subtraction (e.g. `>80` =
 `>65` − `66-80`); a site can narrow `strataColumns` to avoid that.
 <!-- /shared -->
