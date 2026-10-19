@@ -29,14 +29,26 @@ connectionDetails <- NULL   # <-- REPLACE with your connection
 Sys.setenv(DATABASE_CONNECTOR_BULK_UPLOAD = FALSE)
 
 # --- Site + OMOP CDM schemas ------------------------------------------------
-# Work table names, time windows, ARTEMIS filters and strata are fixed for
-# every site and live in R/study_settings.R; don't change them unless the
-# study team asks (see that file for how).
+# Time windows, ARTEMIS filters and strata are fixed for every site and live
+# in R/study_settings.R; don't change them unless the study team asks (see
+# that file for how).
 settings <- list(
   databaseId          = "",   # short site id, e.g. "HUS"
   cdmDatabaseSchema   = "",
   vocabDatabaseSchema = "",    # defaults to cdmDatabaseSchema if blank
   workDatabaseSchema  = "",    # where cohort + lab + episode tables are written
+
+  # --- Work tables ----------------------------------------------------------
+  # Written to workDatabaseSchema and dropped/recreated on each run. Rename
+  # only if these names clash with tables already in that schema.
+  cohortTable          = "bc_cohort",                  # main cohort tree (JSON + SQL-built cohorts)
+  labCohortTable       = "bc_lab_cohort",              # unified eligibility table (labs + ECOG + conditions)
+  rawLabResultsTable   = "bc_raw_lab_results",         # every normalised lab result, pass or fail
+  covariateCohortTable = "bc_covariate_cohort",        # descriptive covariates (comorbidities); NOT part of the main tree
+  artemisCohortName    = "ARTEMIS bladder cohort",     # cohort name ARTEMIS aligns against
+  episodeTable         = "bc_artemis_episodes",        # ARTEMIS treatment episodes
+  regimenClassTable    = "bc_regimen_classifications", # regimen -> treatment category lookup
+
   minCellCount        = 5L,    # counts below this are censored in every output
   outputFolder        = file.path("results")
 )

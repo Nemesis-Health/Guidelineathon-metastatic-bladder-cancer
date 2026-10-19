@@ -53,6 +53,16 @@ if (runStudy) {
   source("R/study_settings.R")
   settings <- utils::modifyList(studySettings, settings)
 
+  # work table names come from the run script's own settings list
+  workTables <- c("cohortTable", "labCohortTable", "rawLabResultsTable",
+                  "covariateCohortTable", "artemisCohortName", "episodeTable",
+                  "regimenClassTable")
+  missingTables <- workTables[!vapply(workTables, function(f)
+    is.character(settings[[f]]) && nzchar(settings[[f]]), logical(1))]
+  if (length(missingTables))
+    stop("Set these work table names in the settings list in run.R: ",
+         paste(missingTables, collapse = ", "), call. = FALSE)
+
   stopifnot(settings$labValueSelection %in% c("closest", "any"))
 
   cohortsDir <- file.path(projectRoot, "cohorts")
