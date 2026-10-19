@@ -54,8 +54,8 @@ projectRoot <- normalizePath(".", mustWork = FALSE)
 cohortsDir  <- file.path(projectRoot, "cohorts")
 dir.create(settings$outputFolder, recursive = TRUE, showWarnings = FALSE)
 
-source("R/vendor_utils.R")   # .getDbms, %||%, upstream-bug patches
-source("R/helpers.R")        # readJsonCohorts(), buildCohortSet(), generateCohorts(), runCohortDiagnostics()
+source("R/db_compat.R")    # .getDbms(), %||%, checkConnection(), upstream-bug patches
+source("R/cohorts.R")      # readJsonCohorts(), buildCohortSet(), generateCohorts(), runCohortDiagnostics()
 
 connection <- DatabaseConnector::connect(connectionDetails)
 checkConnection(connection)

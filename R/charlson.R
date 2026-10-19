@@ -1,5 +1,5 @@
 # ===========================================================================
-# charlsonScore.R  —  Charlson Comorbidity Index scoring (pure math)
+# charlson.R  —  Charlson Comorbidity Index scoring (pure math)
 # ===========================================================================
 # Ported verbatim from onco-study-modules R/comorbidities.R
 # (computeCharlsonScore() / .charlsonWeights) — pure dplyr over a per-subject

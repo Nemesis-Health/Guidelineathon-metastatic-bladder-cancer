@@ -22,7 +22,7 @@
 #     whenever a subject was EVER a member of the comorbidity cohort, with
 #     no date bound at all). Flags + strata are computed entirely in SQL via
 #     conditional aggregation, not pulled per-subject and joined/pivoted in R.
-#     15 of 19 canonical components are wired (R/charlsonScore.R for the
+#     15 of 19 canonical components are wired (R/charlson.R for the
 #     full list), 10 of them
 #     sourced from Fortin/Reps/Ryan 2022 (BMC Med Inform Decis
 #     Mak 22:261; 2023 correction 23:109) — the standard OHDSI-authored
@@ -47,7 +47,7 @@
 #     other non-hematologic tumors) into one 716-concept "malignancy except
 #     skin neoplasms" bucket with no leukemia-only/lymphoma-only split
 #     available from a citable source, so computeCharlsonScore()
-#     (R/charlsonScore.R) silently omits both and the score is a (small)
+#     (R/charlson.R) silently omits both and the score is a (small)
 #     UNDERSTATEMENT of the true CCI for anyone with a hematologic
 #     malignancy. See README "Known gaps".
 #
@@ -107,7 +107,7 @@ if (nrow(bodyMeasurementsOut) == 0L) {
 }
 
 # --- Charlson CCI, every cohort in the main tree ----------------------------
-# code -> canonical Charlson component name (R/charlsonScore.R). Hypertension
+# code -> canonical Charlson component name (R/charlson.R). Hypertension
 # and Venous Thrombotic Events are NOT Charlson components, so they're not
 # listed here — they stay as their own standalone rows in covariate_overlap.csv.
 # `metastatic_solid_tumor` and `any_malignancy` are deliberately absent from
@@ -186,7 +186,7 @@ if (is.null(covSet) || nrow(covSet) == 0L) {
       subject_strata_sql     = strataFragment)
     names(components) <- tolower(names(components))
     components$cohort_definition_id <- as.integer(components$cohort_definition_id)
-    # subject_id kept as character, not as.integer() -- see R/eventBuilders.R's
+    # subject_id kept as character, not as.integer() -- see R/treatment_lines.R's
     # anchorEpisodes() comment: some sites' person_id exceeds int32.
     # charlson_components.sql already CASTs to VARCHAR, so this is defense in
     # depth, not the actual fix -- see that file's comment.

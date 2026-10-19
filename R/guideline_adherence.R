@@ -1,5 +1,5 @@
 # ===========================================================================
-# guidelineAdherence.R  —  relevance + adherence roll-up (pure set-math)
+# guideline_adherence.R  —  relevance + adherence roll-up (pure set-math)
 # ===========================================================================
 # Implements the protocol's "Application of the Guideline to clinical
 # practice" section. Adapted from onco-study-modules' computeGuidelineAdherence()

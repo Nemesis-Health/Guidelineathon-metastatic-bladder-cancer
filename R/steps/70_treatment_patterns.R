@@ -8,7 +8,7 @@
 #
 # The treated population is the base treated cohort ("mBC initiated base"),
 # the same patients T3-T6 are built from, and its lines come from
-# treatedLines() (R/eventBuilders.R): line 1 is the regimen the cohort was
+# treatedLines() (R/treatment_lines.R): line 1 is the regimen the cohort was
 # indexed on, later lines follow from treatment start. So line-1 categories
 # reproduce the T4/T5/T6 arms. Lines are joined to the in-memory
 # `regimenClass` (R/steps/10_artemis.R) by episode_source_value = regName.
@@ -70,7 +70,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     cohort_table         = settings$cohortTable,
     target_cohort_ids    = as.character(t1Id))
   names(t1Members) <- tolower(names(t1Members))
-  # subject_id kept as character, not as.integer() -- see R/eventBuilders.R's
+  # subject_id kept as character, not as.integer() -- see R/treatment_lines.R's
   # anchorEpisodes() comment: some sites' person_id exceeds int32.
   # outcome_target_data.sql already CASTs to VARCHAR, so this is defense in
   # depth, not the actual fix -- see that file's comment.

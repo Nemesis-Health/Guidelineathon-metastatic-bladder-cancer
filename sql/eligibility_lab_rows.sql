@@ -2,7 +2,7 @@
 -- eligibility_lab_rows.sql -- the lab/ECOG rows eligibility is decided on
 -- =============================================================================
 -- A SELECT fragment (no trailing semicolon), rendered by labRowsSql()
--- (R/helpers.R). One source for the T2 eligibility files, the attrition
+-- (R/cohorts.R). One source for the T2 eligibility files, the attrition
 -- steps, eligibility_input_coverage.sql and lab_value_distribution_portable.sql,
 -- so all of them read the same result per patient and lab.
 --

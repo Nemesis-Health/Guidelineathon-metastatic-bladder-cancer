@@ -8,7 +8,7 @@
 #                (guideline_adherence_crosstab.csv); plus the per-arm
 #                roll-up into adherent / alt-guideline / indicated-other /
 #                non-indicated / no-treatment (guideline_adherence.csv).
-#                Both in R/guidelineAdherence.R.
+#                Both in R/guideline_adherence.R.
 #
 # Resolves its own cohort ids independently (cohortIdByName(mainManifest,
 # cohortNames[[...]]), both from R/steps/12_main_cohorts.R) rather than reusing
@@ -55,7 +55,7 @@ membership <- querySqlFile(connection, "outcome_target_data.sql",
   target_cohort_ids    = paste(relevantIds, collapse = ", "))
 names(membership) <- tolower(names(membership))
 membership$cohort_definition_id <- as.integer(membership$cohort_definition_id)
-# subject_id kept as character, not as.integer() -- see R/eventBuilders.R's
+# subject_id kept as character, not as.integer() -- see R/treatment_lines.R's
 # anchorEpisodes() comment: some sites' person_id exceeds int32.
 # outcome_target_data.sql already CASTs to VARCHAR, so this is defense in
 # depth, not the actual fix -- see that file's comment.
@@ -66,7 +66,7 @@ membership$subject_id           <- as.character(membership$subject_id)
 # computeGuidelineRelevance()/computeAdherenceRollup() work purely off
 # subject-id sets filtered from `membership`, so stratifying just means
 # pre-filtering membership to a stratum's subjects before calling them --
-# no change needed in guidelineAdherence.R itself.
+# no change needed in guideline_adherence.R itself.
 strataTbl <- querySqlFile(connection, "subject_strata.sql",
   work_database_schema = settings$workDatabaseSchema,
   cohort_table         = settings$cohortTable,

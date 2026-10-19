@@ -4,7 +4,7 @@
 # Each step is a script in R/steps/, sourced at global scope in the order
 # listed. Its number gives its stage: 00 diagnostics, 1x cohorts, then one
 # stage per results/eligibility/ subfolder. A step that needs an earlier
-# step's result reads it with loadState() (R/helpers.R), so a step can run on
+# step's result reads it with loadState() (R/pipeline.R), so a step can run on
 # its own after a crash once the steps it reads from have run.
 #
 #   diagnostics         pre-study queries on the CDM -> results/diagnostics/
@@ -35,6 +35,32 @@ pipelineStages <- list(
   treatment_patterns = "70_treatment_patterns.R"
 )
 studyStages <- setdiff(names(pipelineStages), "diagnostics")
+
+# --- resumable state checkpoints --------------------------------------------
+# Several steps build an expensive/derived R object (mainManifest, covSet,
+# episodes, regimenClass, ...) that lives only in memory. If the R session
+# crashes after that step ran, re-sourcing a later step used to fail with a
+# bare "object not found" — forcing you to reconstruct it by hand. These two
+# helpers checkpoint such objects to disk as they're built, and transparently
+# reload them if a later step is sourced standalone without the object
+# already in memory (falling back to `producedBy` in the error message when
+# neither the in-memory object nor a checkpoint exists, e.g. an early crash).
+saveState <- function(name, obj, path = NULL) {
+  path <- path %||% file.path(settings$stateFolder, paste0(name, ".rds"))
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  saveRDS(obj, path)
+}
+
+loadState <- function(name, producedBy, path = NULL) {
+  if (exists(name, envir = .GlobalEnv, inherits = FALSE))
+    return(get(name, envir = .GlobalEnv))
+  path <- path %||% file.path(settings$stateFolder, paste0(name, ".rds"))
+  if (!file.exists(path))
+    stop("`", name, "` isn't in memory and no checkpoint was found at ", path,
+         " — make sure ", producedBy, " has been run first.", call. = FALSE)
+  message("  (resuming) loaded `", name, "` from ", path)
+  readRDS(path)
+}
 
 runStage <- function(stage) {
   message("\n=== Stage: ", stage, " ===")

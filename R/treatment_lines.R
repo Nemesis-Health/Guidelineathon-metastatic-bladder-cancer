@@ -1,8 +1,8 @@
 # ===========================================================================
-# eventBuilders.R  —  per-outcome event tibbles for computeTimeToEvent()
+# treatment_lines.R  —  per-outcome event tibbles for computeTimeToEvent()
 # ===========================================================================
 # buildLineOfTherapyEvents() is adapted from onco-study-modules
-# R/eventBuilders.R; it reads lines numbered by treatedLines() instead of
+# R/treatment_lines.R; it reads lines numbered by treatedLines() instead of
 # numbering episodes itself. fetchDeathEvents() is reimplemented against this
 # repo's own conventions (querySqlFile() + sql/fetch_death_events.sql) instead
 # of the OsmExecutionSettings-typed original, since this repo does not vendor

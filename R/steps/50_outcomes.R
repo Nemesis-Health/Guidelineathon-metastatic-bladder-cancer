@@ -2,8 +2,8 @@
 # 50_outcomes.R  —  outcomes: DTI / OS / TTNT / TTD / TFI
 # ===========================================================================
 # Protocol outcomes via computeTimeToEvent()/computeTimeDiffStats()
-# (R/timeToEvent.R) + extractSurvivalMilestones() (R/survivalMilestones.R),
-# fed by the event builders in R/eventBuilders.R:
+# (R/time_to_event.R) + extractSurvivalMilestones() (R/time_to_event.R),
+# fed by the event builders in R/treatment_lines.R:
 #
 #   dti      — T1 only.       treatment start - Cohort 1 index for the base
 #              treated cohort's members, i.e. by its rules (first classified
@@ -32,7 +32,7 @@
 # one at a time, matching the protocol's stratification list -- plus the
 # age x sex crossed view (subject_strata.sql's age_sex column).
 #
-# Lines of therapy are numbered once, by treatedLines() (R/eventBuilders.R),
+# Lines of therapy are numbered once, by treatedLines() (R/treatment_lines.R),
 # the same numbering R/12 and the DTI use. Episodes are ANCHORED on the
 # treatment start first: the protocol allows a patient into a treated cohort
 # with prior systemic therapy as long as it was >12 months before the mBC
@@ -47,7 +47,7 @@
 # discontinuation reasons (next regimen start, >120-day gap) but know nothing
 # about death, so treatedLines() ends every episode at death (dropping any
 # that start after it), and TTNT/TFI take death as their event when it comes
-# before the next line (combineEarliestEvent(), R/eventBuilders.R).
+# before the next line (combineEarliestEvent(), R/treatment_lines.R).
 #
 # Depends on cohort ids resolved via cohortIdByName(mainManifest, cohortNames[[...]])
 # (both built in R/steps/12_main_cohorts.R) and the in-memory `episodes` tibble
@@ -97,7 +97,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     target_cohort_ids    = paste(allTargetCohortIds, collapse = ", "))
   names(targetData) <- tolower(names(targetData))
   targetData$cohort_definition_id <- as.integer(targetData$cohort_definition_id)
-  # subject_id kept as character, not as.integer() -- see R/eventBuilders.R's
+  # subject_id kept as character, not as.integer() -- see R/treatment_lines.R's
   # anchorEpisodes() comment: some sites' person_id exceeds int32, and this
   # column has to join against ARTEMIS-episode-derived ids (also character).
   # outcome_target_data.sql already CASTs to VARCHAR, so this is defense in
@@ -142,7 +142,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
         maintenance = settings$maintenanceMerge, maxGapDays = settings$maintenanceMaxGapDays,
         deaths = deathEvents)
     # lines of the base treated cohort, numbered once (treatedLines(),
-    # R/eventBuilders.R): every T3-6 cohort is indexed on the base cohort's
+    # R/treatment_lines.R): every T3-6 cohort is indexed on the base cohort's
     # line 1, so these are the lines of each treated cohort member. Every
     # episode ends at death at the latest, so a line's end is its
     # discontinuation date (next regimen, >120-day gap or death).

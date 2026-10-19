@@ -1,36 +1,11 @@
 # ===========================================================================
-# helpers.R  —  self-contained cohort-generation + SQL utilities
+# cohorts.R  —  cohort generation, cohort ids and eligibility test ids
 # ===========================================================================
 # Thin reimplementations of the OncoStudyModules orchestration using the OHDSI
-# packages directly (CirceR, CohortGenerator, SqlRender, DatabaseConnector), so
-# this project has no dependency on OncoStudyModules.
+# packages directly (CirceR, CohortGenerator), so this project has no
+# dependency on OncoStudyModules. Also the id lookups for the generated
+# cohorts and the eligibility test-id slots.
 # ===========================================================================
-
-# --- resumable state checkpoints --------------------------------------------
-# Several steps build an expensive/derived R object (mainManifest, covSet,
-# episodes, regimenClass, ...) that lives only in memory. If the R session
-# crashes after that step ran, re-sourcing a later step used to fail with a
-# bare "object not found" — forcing you to reconstruct it by hand. These two
-# helpers checkpoint such objects to disk as they're built, and transparently
-# reload them if a later step is sourced standalone without the object
-# already in memory (falling back to `producedBy` in the error message when
-# neither the in-memory object nor a checkpoint exists, e.g. an early crash).
-saveState <- function(name, obj, path = NULL) {
-  path <- path %||% file.path(settings$stateFolder, paste0(name, ".rds"))
-  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
-  saveRDS(obj, path)
-}
-
-loadState <- function(name, producedBy, path = NULL) {
-  if (exists(name, envir = .GlobalEnv, inherits = FALSE))
-    return(get(name, envir = .GlobalEnv))
-  path <- path %||% file.path(settings$stateFolder, paste0(name, ".rds"))
-  if (!file.exists(path))
-    stop("`", name, "` isn't in memory and no checkpoint was found at ", path,
-         " — make sure ", producedBy, " has been run first.", call. = FALSE)
-  message("  (resuming) loaded `", name, "` from ", path)
-  readRDS(path)
-}
 
 # --- read JSON cohort definitions from a directory tree --------------------
 # Manifest name = filename with "_" -> " " (matches the study convention).
@@ -132,7 +107,7 @@ generateCohorts <- function(connection, cohortDefinitionSet, dropTables = TRUE,
 
 # --- CohortDiagnostics::executeDiagnostics() with upstream-bug patches -----
 # Same arguments as CohortDiagnostics::executeDiagnostics(). Applies the
-# patches in R/vendor_utils.R that this connection's dialect/driver needs
+# patches in R/db_compat.R that this connection's dialect/driver needs
 # (each is a no-op otherwise) for the duration of the call only, restoring
 # the original functions on exit -- also on error -- so anything run later
 # in the same session gets stock DatabaseConnector/CohortGenerator.
@@ -142,18 +117,6 @@ runCohortDiagnostics <- function(connection, ...) {
   patches[[1]] <- .patchDbiTempTableInsert(connection)
   patches[[2]] <- .patchBigQueryInclusionRuleIds(connection)
   CohortDiagnostics::executeDiagnostics(connection = connection, ...)
-}
-
-# --- fail loudly on a NULL/missing SqlRender parameter, instead of letting
-# SqlRender silently substitute it as an empty string (e.g. a NULL
-# `settings$someKey` turning `-@some_param` into a bare `-`, which only
-# surfaces later as a cryptic DBMS-specific syntax error) ------------------
-.checkSqlRenderParams <- function(file, params) {
-  bad <- names(params)[vapply(params, function(x) length(x) == 0L || is.na(x)[1], logical(1))]
-  if (length(bad) > 0L)
-    stop("querySqlFile/runSqlFile(\"", file, "\"): parameter(s) ",
-         paste(bad, collapse = ", "), " are NULL/NA — check that `settings` ",
-         "defines them (see run.R and R/study_settings.R) before sourcing this step.", call. = FALSE)
 }
 
 # --- eligibility test ids ----------------------------------------------------
@@ -192,120 +155,6 @@ testIdParams <- function() {
          condition_window_ids = of("condition"),
          passthrough_ids      = of(c("condition", "drug", "symptom")),
          ecog_grade_cases     = paste("WHEN", ecog$test_id, "THEN", ecog$ecog_grade, collapse = " ")))
-}
-
-# Stop if rendered SQL still holds a test-id placeholder (param not passed).
-.checkTestIdsRendered <- function(sql, file) {
-  left <- regmatches(sql, gregexpr(
-    "@(t_[a-z0-9_]+|ecog_ids|condition_window_ids|passthrough_ids|ecog_grade_cases)\\b",
-    sql, perl = TRUE))[[1]]
-  if (length(left))
-    stop(file, ": unfilled test-id parameter(s) ", paste(unique(left), collapse = ", "),
-         " (pass testIdParams() when rendering).", call. = FALSE)
-  sql
-}
-
-# --- render + translate + execute a .sql file ------------------------------
-runSqlFile <- function(connection, file, ...) {
-  .checkSqlRenderParams(file, list(...))
-  sql <- paste(readLines(file.path(sqlDir, file), warn = FALSE), collapse = "\n")
-  sql <- SqlRender::render(sql, ..., warnOnMissingParameters = FALSE)
-  .checkTestIdsRendered(sql, file)
-  sql <- SqlRender::translate(sql, targetDialect = .getDbms(connection))
-  DatabaseConnector::executeSql(connection, sql)
-}
-
-# --- render + translate + query a .sql file --------------------------------
-querySqlFile <- function(connection, file, ...) {
-  .checkSqlRenderParams(file, list(...))
-  sql <- paste(readLines(file.path(sqlDir, file), warn = FALSE), collapse = "\n")
-  sql <- SqlRender::render(sql, ..., warnOnMissingParameters = FALSE)
-  .checkTestIdsRendered(sql, file)
-  sql <- SqlRender::translate(sql, targetDialect = .getDbms(connection))
-  DatabaseConnector::querySql(connection, sql)
-}
-
-# --- render (no translate, no execute) a .sql file --------------------------
-# For assembling one file's fully-resolved text as a fragment injected into
-# another template (e.g. subject_strata.sql's body becomes demographics.sql's
-# `coh` CTE, or a stratifyTemplate's strata subquery) -- resolve the source
-# fragment's own placeholders here FIRST, so the two files' parameters can't
-# collide when the outer template is rendered.
-renderSqlFile <- function(file, ...) {
-  .checkSqlRenderParams(file, list(...))
-  sql <- paste(readLines(file.path(sqlDir, file), warn = FALSE), collapse = "\n")
-  .checkTestIdsRendered(SqlRender::render(sql, ..., warnOnMissingParameters = FALSE), file)
-}
-
-# --- which subject_strata.sql breakdowns are active --------------------------
-# Single control point for settings$strataColumns (R/study_settings.R), so every
-# stratified output reads the same setting instead of hardcoding its own
-# on/off list. Two shapes, for the two ways stratified outputs consume
-# subject_strata.sql:
-#   activeStrataTypes() -- "overall" + whichever of settings$strataColumns
-#     are enabled, e.g. c("overall", "age_group", "sex"). SQL-side outputs
-#     (lab_value_distribution_portable.sql, lab_timing_to_index_portable.sql,
-#     eligibility_input_coverage.sql, cohort_counts_stratified.sql) always
-#     compute all four views (cheap -- a single extra GROUP BY column each);
-#     the caller filters its result to `stratum_type %in% activeStrataTypes()`
-#     before writing, so disabled views never reach the CSV.
-#   activeStrataSpecs() -- named list, stratum_type -> column name to group
-#     by (NULL for "overall"), filtered to the active types. R-side outputs
-#     that loop over stratum columns themselves (R/steps/50_outcomes.R,
-#     R/steps/60_adherence.R, R/steps/22_baseline_characterization.R,
-#     R/steps/70_treatment_patterns.R) iterate this instead of their own literal
-#     list -- disabled strata are never computed there at all, not just
-#     hidden after the fact.
-#   strataColumnNames -- every per-subject strata column subject_strata.sql
-#     emits that can be reported (index_year is separate: outcomes add it
-#     themselves). Each stratum_type is named after its column.
-strataColumnNames <- c("age_group", "sex", "age_sex", "age_band",
-                       "index_period", "index_period_2021")
-
-activeStrataTypes <- function()
-  c("overall", intersect(strataColumnNames, settings$strataColumns))
-
-activeStrataSpecs <- function() {
-  specs <- c(list(overall = NULL), stats::setNames(as.list(strataColumnNames), strataColumnNames))
-  specs[activeStrataTypes()]
-}
-
-# --- write a result data frame to results/eligibility/<category> -----------
-# Every writeResultCsv() call names one of these; keep in sync with
-# README.md's <!-- category:... --> markers (writeCategoryReadmes() below).
-resultCategories <- c("characterization", "labs", "artemis", "outcomes",
-                      "guideline", "treatment_patterns")
-
-writeResultCsv <- function(df, name, category) {
-  stopifnot(category %in% resultCategories)
-  d <- file.path(settings$outputFolder, "eligibility", category)
-  dir.create(d, recursive = TRUE, showWarnings = FALSE)
-  readr::write_csv(df, file.path(d, paste0(name, ".csv")), na = "")
-}
-
-# --- per-category README, excerpted verbatim from this repo's own README.md
-# So the folder doc and the real documentation can never drift apart: each
-# results/eligibility/<category>/README.md is exactly the text between
-# README.md's <!-- category:X --> ... <!-- /category:X --> markers, copied
-# as-is. Silently skips a category whose markers are missing/duplicated
-# (e.g. running from a checkout without README.md) rather than failing the
-# run over documentation.
-writeCategoryReadmes <- function() {
-  readmePath <- file.path(projectRoot, "README.md")
-  if (!file.exists(readmePath)) return(invisible(NULL))
-  lines <- readLines(readmePath, warn = FALSE)
-  for (category in resultCategories) {
-    startIdx <- which(lines == paste0("<!-- category:", category, " -->"))
-    endIdx   <- which(lines == paste0("<!-- /category:", category, " -->"))
-    if (length(startIdx) != 1L || length(endIdx) != 1L || endIdx <= startIdx) {
-      warning("README.md markers for category '", category, "' missing or ",
-              "duplicated -- skipping its README.md.", call. = FALSE)
-      next
-    }
-    d <- file.path(settings$outputFolder, "eligibility", category)
-    dir.create(d, recursive = TRUE, showWarnings = FALSE)
-    writeLines(lines[(startIdx + 1L):(endIdx - 1L)], file.path(d, "README.md"))
-  }
 }
 
 # --- id lookup for a generated cohort by manifest name ---------------------
