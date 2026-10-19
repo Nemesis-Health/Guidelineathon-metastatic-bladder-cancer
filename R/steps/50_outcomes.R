@@ -259,7 +259,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     # --- DTI: time from the T1 index to the first line --------------------------
     # firstLineStatus() places every T1 member: treated (base cohort, -30 to
     # 90 days), started_late (first classified regimen after day 90), or not
-    # started (prior_treatment / other_treatment / no_treatment). Summaries
+    # started (prior_treatment / no_treatment). Summaries
     # for two definitions, each with its own n: treated (-30 to 90 days) and
     # unbound (-30 days on: treated + started_late). Buckets cover every T1
     # member. Category = the first regimen's classification under each lens.
@@ -280,13 +280,11 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     stopifnot(nrow(defsCat) == length(lenses) * nrow(defs))   # one category per lens
     dti$bucket <- dplyr::case_when(
       dti$status == "prior_treatment" ~ "not started: prior treatment",
-      dti$status == "other_treatment"                 ~ "not started: other treatment only",
       dti$status == "no_treatment"                    ~ "not started: none recorded",
       TRUE ~ as.character(cut(dti$days, c(-30, 0, 31, 61, 91, 181, 361, Inf), right = FALSE,
                labels = c("-30 to -1", "0-30", "31-60", "61-90", "91-180", "181-360", ">360"))))
     dti$bucket <- factor(dti$bucket, levels = c("-30 to -1", "0-30", "31-60", "61-90", "91-180",
-      "181-360", ">360", "not started: prior treatment", "not started: other treatment only",
-      "not started: none recorded"))
+      "181-360", ">360", "not started: prior treatment", "not started: none recorded"))
     startedCat <- byLens(dplyr::filter(dti, !is.na(.data$days)))
     censorN <- function(x) ifelse(x > 0 & x < settings$minCellCount, -settings$minCellCount, x)
     bucketCounts <- function(d, keys, stratumCols, stratumName) {

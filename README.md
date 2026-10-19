@@ -607,8 +607,8 @@ before index).
 ### `outcome_dti_buckets.csv`
 Every T1 member in one `bucket`: started `-30 to -1`, `0-30`, `31-60`,
 `61-90` (these four are Base), `91-180`, `181-360`, `>360`, or
-`not started: prior treatment` (regimen in the year before index),
-`not started: other treatment only`, `not started: none recorded`.
+`not started: prior treatment` (regimen in the year before index), or
+`not started: none recorded`.
 Columns: …, `bucket`, `n`, `n_total`, `pct`.
 
 ### `outcome_dti_by_category_summary.csv`, `_buckets.csv`
@@ -626,8 +626,8 @@ file `n_total` is the patients in that lens × category.
 What the guideline recommended for each eligibility leaf (2a-2e) against the
 first-line treatment its patients started. First-line treatment is the
 regimen Base was indexed on; anyone not in Base is `untreated` (this includes
-treatment more than 90 days after index, regimens missing from the regimen
-reference, and every previously treated patient).
+treatment more than 90 days after index and every previously treated
+patient).
 
 ### `guideline_relevance.csv`
 Each cohort's size as a share of T1, overall and per stratum (a stratum's
@@ -715,6 +715,9 @@ one category by definition. The maintenance file is written only when
 - Base's regimen window is index −30 to +90 days, chosen by the authors. The
   washout covers `[index − 365, index − 30)`, so it ends where that window
   starts.
+- Base does not require the regimen to be running at the metastasis index (the
+  protocol's treated cohorts require metastasis before the regimen ends): a
+  course started from day −30 that ended before index is line 1.
 
 **Eligibility**
 - Lab, ECOG and condition windows are ±30 days around index, a PI decision
