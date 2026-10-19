@@ -36,10 +36,7 @@ message("Target cohorts for lab distribution: ", length(targetIds))
 # bucketing (shared with demographics.sql, R/steps/50_outcomes.R,
 # R/steps/70_treatment_patterns.R) -- resolve it once, reused as the
 # stratification join for every query in this step.
-strataFragment <- renderSqlFile("subject_strata.sql",
-  work_database_schema = settings$workDatabaseSchema,
-  cohort_table         = settings$cohortTable,
-  cdm_database_schema  = settings$cdmDatabaseSchema)
+strataFragment <- strataSql()
 
 # Always the closest result (whatever labValueSelection says): one value per
 # subject and lab, the one eligibility uses.

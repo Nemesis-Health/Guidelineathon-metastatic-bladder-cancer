@@ -106,10 +106,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
   targetData$cohort_start_date    <- as.Date(targetData$cohort_start_date)
   targetData$cohort_end_date      <- as.Date(targetData$cohort_end_date)
 
-  strataTbl <- querySqlFile(connection, "subject_strata.sql",
-    work_database_schema = settings$workDatabaseSchema,
-    cohort_table         = settings$cohortTable,
-    cdm_database_schema  = settings$cdmDatabaseSchema)
+  strataTbl <- queryStrata(connection)
   names(strataTbl) <- tolower(names(strataTbl))
   strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
   # subject_strata.sql is a widely-shared fragment (many SQL + R consumers),

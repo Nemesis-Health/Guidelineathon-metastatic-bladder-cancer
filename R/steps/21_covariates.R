@@ -90,15 +90,9 @@ targetIds <- setdiff(mainManifest$cohortId, reachedNodeCohortIds(mainManifest))
 # once, reused both to stratify the two overlap queries below and to build
 # the matching per-(cohort, stratum) denominators (a stratum's "n_cohort" is
 # that cohort's members in that stratum, not the cohort's whole N).
-strataFragment <- renderSqlFile("subject_strata.sql",
-  work_database_schema = settings$workDatabaseSchema,
-  cohort_table         = settings$cohortTable,
-  cdm_database_schema  = settings$cdmDatabaseSchema)
+strataFragment <- strataSql()
 
-strataTbl <- querySqlFile(connection, "subject_strata.sql",
-  work_database_schema = settings$workDatabaseSchema,
-  cohort_table         = settings$cohortTable,
-  cdm_database_schema  = settings$cdmDatabaseSchema)
+strataTbl <- queryStrata(connection)
 names(strataTbl) <- tolower(names(strataTbl))
 strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
 strataTbl <- strataTbl[strataTbl$cohort_definition_id %in% targetIds, ]

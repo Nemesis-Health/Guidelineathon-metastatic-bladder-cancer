@@ -102,7 +102,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
       ifelse(!is.na(x) & x > 0 & x < settings$minCellCount, -settings$minCellCount, x)
 
     # subject_strata.sql is the single source of truth for age_group/sex/
-    # age_sex bucketing, anchored to T1's own index (same as everywhere
+    # age_sex bucketing, taken at first metastasis (same as everywhere
     # else). Joined onto both t1Members (the untreated-% denominator) and a
     # separate tpT1Strata (everything else below) so each can be filtered
     # per stratum value -- kept off `treatedPatients` itself, since that
@@ -112,10 +112,7 @@ if (is.null(episodes) || nrow(episodes) == 0L) {
     # Fetched once here and reused there too (see that section). Which
     # views actually run is settings$strataColumns (R/study_settings.R, via
     # activeStrataSpecs()) -- one setting, not per-file logic.
-    strataTbl <- querySqlFile(connection, "subject_strata.sql",
-      work_database_schema = settings$workDatabaseSchema,
-      cohort_table         = settings$cohortTable,
-      cdm_database_schema  = settings$cdmDatabaseSchema)
+    strataTbl <- queryStrata(connection)
     names(strataTbl) <- tolower(names(strataTbl))
     strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
     # subject_strata.sql is a widely-shared fragment -- see R/steps/50_outcomes.R's

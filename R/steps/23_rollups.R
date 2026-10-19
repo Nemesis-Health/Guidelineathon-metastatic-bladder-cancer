@@ -31,10 +31,7 @@ mainManifest <- loadState("mainManifest", "R/steps/12_main_cohorts.R")
 cohortNames  <- loadState("cohortNames", "R/steps/12_main_cohorts.R")
 targetIds    <- setdiff(mainManifest$cohortId, reachedNodeCohortIds(mainManifest))
 
-strataFragment <- renderSqlFile("subject_strata.sql",
-  work_database_schema = settings$workDatabaseSchema,
-  cohort_table         = settings$cohortTable,
-  cdm_database_schema  = settings$cdmDatabaseSchema)
+strataFragment <- strataSql()
 
 drugEraRows <- DatabaseConnector::renderTranslateQuerySql(connection,
   "SELECT TOP 1 person_id FROM @cdm_database_schema.drug_era;",

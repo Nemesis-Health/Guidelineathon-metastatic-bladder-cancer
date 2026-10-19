@@ -38,6 +38,21 @@ activeStrataSpecs <- function() {
   specs[activeStrataTypes()]
 }
 
+# subject_strata.sql stratifies every cohort at the subject's first
+# metastasis, its T1all start date. strataSql() renders it as a fragment for
+# SQL-side consumers to inject; queryStrata() runs it for R-side ones.
+strataParams <- function() {
+  manifest <- loadState("mainManifest", "R/steps/12_main_cohorts.R")
+  names    <- loadState("cohortNames", "R/steps/12_main_cohorts.R")
+  list(work_database_schema = settings$workDatabaseSchema,
+       cohort_table         = settings$cohortTable,
+       cdm_database_schema  = settings$cdmDatabaseSchema,
+       metastasis_cohort_id = cohortIdByName(manifest, names[["T1all"]]))
+}
+strataSql <- function() do.call(renderSqlFile, c(list("subject_strata.sql"), strataParams()))
+queryStrata <- function(connection)
+  do.call(querySqlFile, c(list(connection, "subject_strata.sql"), strataParams()))
+
 # --- write a result data frame to results/eligibility/<category> -----------
 # Every writeResultCsv() call names one of these; keep in sync with
 # README.md's <!-- category:... --> markers (writeCategoryReadmes() below).

@@ -245,13 +245,14 @@ per stratum column, one column at a time (`stratum_type`, `stratum_value`):
 | `sex` | `Male`, `Female`, `Other-Unknown` |
 | `age_sex` | `age_group` × `sex`, e.g. `>65\|Female` |
 | `age_band` | `<=65`, `66-80`, `>80` |
-| `index_period` | `2015-2020`, `2021-2023`, `2024+` (`<2015` for cohorts that can index earlier) |
+| `index_period` | `2015-2020`, `2021-2023`, `2024+` (and `<2015` if any) |
 | `index_period_2021` | `2015-2020`, `2021+` |
 
-Age is index year minus birth year. Periods use the index year; a boundary
-year goes to the later band. Each cohort uses **its own index**: first
-metastasis for T1 and its leaves, treatment start for treatment-initiated
-cohorts, so a patient can fall in different bands in different cohorts.
+Age and period are taken at **first metastasis** in every cohort, including
+those indexed on treatment start, so a patient falls in the same band in
+every cohort. Age is that year minus birth year. Periods use that year; a
+boundary year goes to the later band. The date is the patient's start in T1
+(all, incl. other cancers), the superset the rest of the tree is drawn from.
 Overlapping strata can reveal a censored cell by subtraction (e.g. `>80` =
 `>65` − `66-80`); a site can narrow `strataColumns` to avoid that.
 <!-- /shared -->
@@ -614,7 +615,7 @@ patient).
 ### `guideline_relevance.csv`
 Each cohort's size as a share of T1, overall and per stratum (a stratum's
 share is of T1's members in the same stratum). Cohorts: T1, 2a-2e, 3a-3e,
-4-6a-f, Base. Strata use each cohort's own index. Columns:
+4-6a-f, Base. Columns:
 `cohort_definition_id`, `cohort_name`, `stratum_type`, `stratum_value`, `n`,
 `pct_of_base`.
 
@@ -662,7 +663,6 @@ arm's regimen counts as `no_treatment`. Columns: `stratum_type`,
 
 Lines of therapy among Base, as in the outcomes: maintenance folded into its
 line (`maintenanceMerge`), lines end at death, line 1 is Base's index regimen.
-Strata use the T1 index, except `treatment_pattern_by_year.csv`.
 
 | File | Columns |
 |---|---|
@@ -677,8 +677,7 @@ Categories are `ev_pembro`, `cisplatin`, `carboplatin`, `pdl1_mono`,
 `other_recommended` and `other`, per lens (`eau`, `hemonc_mbc`, `any`).
 
 `treatment_pattern_by_year.csv` is per treated cohort (Base, 3a-3e, 4-6a-f),
-by the calendar year each line started, with strata on the cohort's own
-(treatment-start) index. Only Base shows a regimen mix: each 4-6 cohort is
+by the calendar year each line started. Only Base shows a regimen mix: each 4-6 cohort is
 one category by definition. The maintenance file is written only when
 `maintenanceMerge` is on.
 <!-- /category:treatment_patterns -->
