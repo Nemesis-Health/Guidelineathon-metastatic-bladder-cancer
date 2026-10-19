@@ -15,7 +15,7 @@
 -- subject_id cast to VARCHAR here, not as.character() in R after the fact: a
 -- bigint subject_id arrives over JDBC as a double, and as.character() on
 -- that double can render it in scientific notation for some values (the
--- same class of bug as e8ea264/382b0e3 -- see R/eventBuilders.R).
+-- same class of bug as e8ea264/382b0e3 -- see R/treatment_lines.R).
 SELECT cohort_definition_id,
        CAST(subject_id AS VARCHAR) AS subject_id,
        cohort_start_date,

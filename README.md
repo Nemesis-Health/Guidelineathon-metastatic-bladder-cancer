@@ -71,13 +71,13 @@ field set there takes precedence.
 | `treatedLabWindowBeforeDays`, `treatedLabWindowAfterDays` | `30`, `0` | The same window for cohorts indexed on treatment start (the initiated bases, T3-T6) in eligibility-input coverage and lab value distributions: 30 days before up to and including the start date, so results taken after treatment began don't count. Condition flags use it too for these cohorts. |
 | `labValueSelection` | `"closest"` | How labs and ECOG decide eligibility in Target 2a-2d and T1-CE. `"closest"`: per lab, the one result closest to index within the lab window decides every test of that lab (ties: before index wins; on the same day the worst value counts). `"any"`: a test passes if any passing result falls in the window. |
 | `conditionFlagWindowBeforeDays`, `conditionFlagWindowAfterDays` | `30`, `30` | Window for the CONDITION flags in Target 2a-2d and eligibility-input coverage (step 31): liver metastasis, Gilbert's syndrome, neuropathy, skin disorders, hearing loss. A flag counts when its cohort era overlaps the window, and these cohorts stay live to the end of observation, so any earlier record counts; how long a condition lasts is set by its cohort's end strategy, not here. |
-| `maintenanceMerge`, `maintenanceMaxGapDays` | `TRUE`, `180` | Fold maintenance therapy into the line of therapy it maintains before lines are numbered (outcomes and treatment patterns), e.g. avelumab after platinum-based chemotherapy is part of line 1, not line 2. A maintenance episode must start within `maintenanceMaxGapDays` of the earlier regimen's end. The rules are `maintenanceRules` in `R/eventBuilders.R`. `FALSE` numbers every ARTEMIS episode as its own line. |
+| `maintenanceMerge`, `maintenanceMaxGapDays` | `TRUE`, `180` | Fold maintenance therapy into the line of therapy it maintains before lines are numbered (outcomes and treatment patterns), e.g. avelumab after platinum-based chemotherapy is part of line 1, not line 2. A maintenance episode must start within `maintenanceMaxGapDays` of the earlier regimen's end. The rules are `maintenanceRules` in `R/treatment_lines.R`. `FALSE` numbers every ARTEMIS episode as its own line. |
 | `bodyMeasurementsWindowDays` | `90` | Index window for baseline weight/height/BMI (step 22) — wider than the lab window, matching onco-study-modules' own convention for body measurements. |
 | `stripEndocrineTherapy` | `TRUE` | Excludes endocrine-therapy regimens (tamoxifen, abiraterone, GnRH agonists, ...) from the ARTEMIS reference, via `is_endocrine` in `cohorts/extras/regimen_reference.csv`. `FALSE` counts endocrine therapy as anticancer treatment. |
 | `validDrugsRegimenComponents` | `TRUE` | Controls which drugs ARTEMIS encodes into each patient's alignment string — non-regimen/supportive drugs are gap noise that lowers alignment scores and shrinks eras (DEVELOPMENT.md §10.4). `TRUE` keeps only drugs that appear in a kept regimen (keeps `validDrugs` and the regimen file consistent — every kept regimen's components stay encodable); `FALSE` keeps all. Composes with `validDrugsAtcClasses` below (both apply when both active); regimens whose components get filtered out can no longer align and are dropped from the reference (logged). |
 | `validDrugsAtcClasses` | `c("L01","L02","L03","L04")` | ATC 2nd-level classes to keep in the alignment string. `character(0)` (off) also keeps steroids/rescue agents — the classes further drop those for a cleaner string, but ALSO false-drop anticancer drugs whose special-formulation/fixed-dose-combo RxNorm concept isn't ATC-mapped in the vocab (nab-paclitaxel, liposomal doxorubicin, ADCs, ...) and their regimens — opt-in for that reason. |
 | `assessmentAtcClasses` | `NULL` | ATC 2nd-level classes kept in the ARTEMIS exposure assessment (`drug_exposures`/`uncaptured`/`coverage` in step 40) — a diagnostic escape hatch, separate from the alignment-string filter above. `NULL` mirrors the regimen anticancer filter (`L01`/`L03`/`L04`, plus `L02` when `stripEndocrineTherapy` is `FALSE`). Set an explicit vector to override, or `character(0)` to keep every recognized ingredient (useful for one-off debugging of confusing coverage numbers — shows the *unfiltered* exposure counts, supportive drugs included). |
-| `strataColumns` | `c("age_group","sex","age_sex","age_band","index_period","index_period_2021")` | Which `subject_strata.sql` breakdowns (see "Stratification") get reported, on top of `"overall"`, across every stratified output (`lab_value_distribution`, `lab_timing_to_index`, `eligibility_input_coverage`, `cohort_counts`, `demographics`, `outcomes`, `guideline_relevance`/`adherence`, `baseline_body_measurements`, `treatment_pattern_*`). Read by `activeStrataTypes()`/`activeStrataSpecs()` (`R/helpers.R`) — no per-step code needed to change it. A partner whose subgroups censor too heavily to be useful can narrow this (e.g. `c("sex")`), or set `character(0)` to turn stratification off everywhere and only get `"overall"` rows. |
+| `strataColumns` | `c("age_group","sex","age_sex","age_band","index_period","index_period_2021")` | Which `subject_strata.sql` breakdowns (see "Stratification") get reported, on top of `"overall"`, across every stratified output (`lab_value_distribution`, `lab_timing_to_index`, `eligibility_input_coverage`, `cohort_counts`, `demographics`, `outcomes`, `guideline_relevance`/`adherence`, `baseline_body_measurements`, `treatment_pattern_*`). Read by `activeStrataTypes()`/`activeStrataSpecs()` (`R/outputs.R`) — no per-step code needed to change it. A partner whose subgroups censor too heavily to be useful can narrow this (e.g. `c("sex")`), or set `character(0)` to turn stratification off everywhere and only get `"overall"` rows. |
 
 ### Requirements
 
@@ -106,7 +106,7 @@ field set there takes precedence.
 Everything except ARTEMIS comes from CRAN.
 
 `survival` and `broom` are used by the outcomes step's Kaplan-Meier engine
-(`R/steps/50_outcomes.R`, via `R/timeToEvent.R`). The run stops if either is
+(`R/steps/50_outcomes.R`, via `R/time_to_event.R`). The run stops if either is
 missing rather than producing outcomes without the KM, median-survival and
 milestone files.
 
@@ -315,7 +315,7 @@ membership is *inserted* into the same table under reserved test-id slots. So
 `sql/eligibility_2*.sql` reads a single table uniformly. Every slot is declared
 once, in `cohorts/extras/eligibility_test_ids.csv` (id, key, kind, source
 cohort, label); the SQL refers to a slot by its key as `@t_<key>`
-(e.g. `@t_gfr_ge30`), filled in by `testIdParams()` (`R/helpers.R`).
+(e.g. `@t_gfr_ge30`), filled in by `testIdParams()` (`R/cohorts.R`).
 
 ---
 
@@ -388,18 +388,19 @@ At the end of a run, results are packaged into two archives:
 | File | Role |
 |---|---|
 | `setup.R` | **Do not edit.** Loads the packages and function files, validates the `run.R` CONFIG block, merges in `study_settings.R`, and builds the derived paths + `executionSettings` object the steps read. |
-| `pipeline.R` | `pipelineStages` (which steps each stage runs, in order), `runStage()` and `zipResults()`. |
+| `pipeline.R` | `pipelineStages` (which steps each stage runs, in order), `runStage()`, `saveState()`/`loadState()` and `zipResults()`. |
 | `study_settings.R` | **Do not edit.** The fixed study settings (work table names, time windows, ARTEMIS filters, maintenance merging, strata), with a comment on each. |
 | `packages.R` | `requiredPackages` and `loadRequiredPackages()`. |
-| `helpers.R` | Cohort-generation + SQL helpers (thin wrappers over CirceR/CohortGenerator/SqlRender). |
+| `db_compat.R` | `.getDbms()` + `%||%` (used by the ARTEMIS code), `checkConnection()` (stops at startup on a connection or bulk-load setup the pipeline can't run on), and the patches `runCohortDiagnostics()` applies for upstream package bugs. |
+| `sql.R` | `runSqlFile()` / `querySqlFile()` / `renderSqlFile()`: render, check and translate the files in `sql/`. |
+| `cohorts.R` | Cohort generation (thin wrappers over CirceR/CohortGenerator), `runCohortDiagnostics()`, cohort id lookups (`idsByCodes()`, `treatedCohortIds()`, `reachedNodeCohortIds()`), eligibility test ids (`testIds()`, `testIdParams()`) and `labRowsSql()`. |
+| `outputs.R` | Which strata are reported (`activeStrataTypes()` / `activeStrataSpecs()`), `writeResultCsv()`, and the per-folder README.md files. |
 | `artemis.R` | The ARTEMIS pipeline wrapper: `runArtemis()`, `buildEpisodeTable()`, `writeArtemisEpisodes()`. (Coverage/uncaptured analytics are computed in `40_artemis_assessment.R`.) |
 | `artemis_uncaptured.R` | `uncapturedExposures()`/`plotUncapturedAlignment()` — per-ingredient, patient-level drill-down into `artemis_uncaptured_drugs.csv` (step 40) plus the ARTEMIS per-patient alignment viewer; interactive helpers, not run automatically. |
-| `timeToEvent.R` | Generic time-to-event engine (ported from `onco-study-modules`): `computeTimeToEvent()` (KM via `survival`/`broom`) + `computeTimeDiffStats()` (non-censored descriptive stats). Used by step 50. |
-| `survivalMilestones.R` | `extractSurvivalMilestones()` — reads KM survival probabilities at fixed day milestones (365/730/1095). Used by step 50. |
-| `eventBuilders.R` | Per-outcome event tibbles for steps 50 and 70: `fetchDeathEvents()` (OS), `treatedLines()` (lines of therapy of the base treated cohort, numbered once for steps 50 and 70), `firstLineStatus()` (DTI), `buildLineOfTherapyEvents()` (TTNT/TTD/TTD-LoT2 events from those lines), `anchorEpisodes()` (restricts episode ranking to on/after each subject's own index — see Known gaps), `combineEarliestEvent()` (death-aware TTNT/TTD/TFI). |
-| `guidelineAdherence.R` | `computeGuidelineRelevance()` / `computeAdherenceCrosstab()` / `computeAdherenceRollup()` — pure set-math for step 60. |
-| `charlsonScore.R` | `computeCharlsonScore()` / `charlsonComponents()`, ported from `onco-study-modules` (pure math, no DB dependency). Used by step 22. |
-| `vendor_utils.R` | `.getDbms()` + `%||%` (helpers used by the ARTEMIS code), and `checkConnection()`. |
+| `time_to_event.R` | Generic time-to-event engine (ported from `onco-study-modules`): `computeTimeToEvent()` (KM via `survival`/`broom`), `computeTimeDiffStats()` (non-censored descriptive stats) and `extractSurvivalMilestones()` (KM survival at 365/730/1095 days). Used by step 50. |
+| `treatment_lines.R` | Per-outcome event tibbles for steps 50 and 70: `fetchDeathEvents()` (OS), `treatedLines()` (lines of therapy of the base treated cohort, numbered once for steps 50 and 70), `firstLineStatus()` (DTI), `buildLineOfTherapyEvents()` (TTNT/TTD/TTD-LoT2 events from those lines), `anchorEpisodes()` (restricts episode ranking to on/after each subject's own index — see Known gaps), `combineEarliestEvent()` (death-aware TTNT/TTD/TFI). |
+| `guideline_adherence.R` | `computeGuidelineRelevance()` / `computeAdherenceCrosstab()` / `computeAdherenceRollup()` — pure set-math for step 60. |
+| `charlson.R` | `computeCharlsonScore()` / `charlsonComponents()`, ported from `onco-study-modules` (pure math, no DB dependency). Used by step 22. |
 
 ### `sql/` — SqlRender templates
 | File | Role |
@@ -462,7 +463,7 @@ gaps, generalizability).
 ### `results/` — outputs (`diagnostics/`, `eligibility/`, git-ignored)
 
 ### `.cache/` — resumable-state checkpoints, git-ignored, NOT an output
-`saveState()`/`loadState()` (`R/helpers.R`) checkpoint expensive in-memory
+`saveState()`/`loadState()` (`R/pipeline.R`) checkpoint expensive in-memory
 objects (`mainManifest`, `episodes`, `artemis_result.rds`, ...) to
 `.cache/<outputFolder name>/` so a crashed/restarted session can resume a
 later step without recomputing earlier ones. Unlike everything under
@@ -496,7 +497,7 @@ comparing counts across files (e.g. a whole-population lab count is not
 comparable to a Target 1A coverage count).
 
 Each category subfolder gets its own small `README.md`, written once per run by
-`writeCategoryReadmes()` (`R/helpers.R`) — not hand-duplicated text, but a
+`writeCategoryReadmes()` (`R/outputs.R`) — not hand-duplicated text, but a
 **verbatim excerpt** of that category's own section below, taken between a pair
 of `<!-- category:... -->` markers. The two can't drift out of sync with each
 other: the folder copy *is* this file's content at run time, so editing a
@@ -1231,9 +1232,9 @@ grouping column itself when `stratum_type` isn't `overall` (e.g. an
 
 Episode ranking for every line-of-therapy-based event (DTI, TTNT, TTD,
 TTD-LoT2, TFI) is anchored to the relevant index date before ranking
-(`anchorEpisodes()`, `R/eventBuilders.R`) — see Known gaps for why. DTI and
+(`anchorEpisodes()`, `R/treatment_lines.R`) — see Known gaps for why. DTI and
 the treatment-pattern outputs use the base treated cohort's own rules
-(`treatedLines()`, `R/eventBuilders.R`; `sql/Target_1A_initiated_template.sql`):
+(`treatedLines()`, `R/treatment_lines.R`; `sql/Target_1A_initiated_template.sql`):
 treated means a member of "mBC initiated base", whose first line is a
 classified regimen starting from 30 days before to 90 days after the Target 1A
 index, with no regimen in the year before; that regimen is line 1. DTI (time from
@@ -1412,7 +1413,7 @@ Reported overall and per `subject_strata.sql` stratum (see "Stratification").
 
 ### `guideline_adherence.csv`
 Per eligibility leaf (a–e), five disjoint categories (`computeAdherenceRollup()`,
-`R/guidelineAdherence.R`). Each leaf is compared only with the treatment
+`R/guideline_adherence.R`). Each leaf is compared only with the treatment
 cohorts of its own arm (leaf a with T3a/T4a/T5a/T6a; leaf e with
 T3e/T4f/T5f/T6f), so `alt_guideline` is always 0 and a patient whose first
 regimen belongs to a different arm is counted as `no_treatment`. Use

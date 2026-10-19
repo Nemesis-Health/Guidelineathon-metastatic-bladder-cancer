@@ -19,17 +19,18 @@ loadRequiredPackages(if (runStudy) requiredPackages else diagnosticsPackages)
 # only succeeds when package:ARTEMIS is already on the search path.
 if (runStudy) suppressMessages(library(ARTEMIS))
 
-source("R/vendor_utils.R")   # .getDbms, %||%, connection checks
-source("R/helpers.R")        # cohort generation + SQL utilities
-source("R/pipeline.R")       # pipelineStages, runStage(), zipResults()
+source("R/db_compat.R")    # .getDbms(), %||%, checkConnection()
+source("R/sql.R")          # runSqlFile(), querySqlFile(), renderSqlFile()
+source("R/pipeline.R")     # pipelineStages, runStage(), saveState()/loadState(), zipResults()
 if (runStudy) {
-  source("R/artemis.R")            # vendored: runArtemis(), writeArtemisEpisodes(), ...
-  source("R/artemis_uncaptured.R") # uncapturedExposures(), plotUncapturedAlignment()
-  source("R/timeToEvent.R")        # computeTimeToEvent(), computeTimeDiffStats()
-  source("R/survivalMilestones.R") # extractSurvivalMilestones()
-  source("R/eventBuilders.R")      # fetchDeathEvents(), treatedLines(), buildLineOfTherapyEvents(), ...
-  source("R/guidelineAdherence.R") # computeGuidelineRelevance(), computeAdherenceCrosstab(), computeAdherenceRollup()
-  source("R/charlsonScore.R")      # computeCharlsonScore(), charlsonComponents()
+  source("R/cohorts.R")             # cohort generation, cohort ids, eligibility test ids
+  source("R/outputs.R")             # strata, writeResultCsv(), folder READMEs
+  source("R/artemis.R")             # vendored: runArtemis(), writeArtemisEpisodes(), ...
+  source("R/artemis_uncaptured.R")  # uncapturedExposures(), plotUncapturedAlignment()
+  source("R/time_to_event.R")       # computeTimeToEvent(), computeTimeDiffStats(), extractSurvivalMilestones()
+  source("R/treatment_lines.R")     # fetchDeathEvents(), treatedLines(), buildLineOfTherapyEvents(), ...
+  source("R/guideline_adherence.R") # computeGuidelineRelevance(), computeAdherenceCrosstab(), computeAdherenceRollup()
+  source("R/charlson.R")            # computeCharlsonScore(), charlsonComponents()
 }
 
 # --- CONFIG checks ------------------------------------------------------------
@@ -57,7 +58,7 @@ if (runStudy) {
   cohortsDir <- file.path(projectRoot, "cohorts")
   extrasDir  <- file.path(cohortsDir, "extras")
 
-  # Resumable-state checkpoints (saveState()/loadState(), R/helpers.R) hold
+  # Resumable-state checkpoints (saveState()/loadState(), R/pipeline.R) hold
   # patient-level intermediates (ARTEMIS episodes/alignments, drug exposures) --
   # unlike outputFolder's CSVs/zips, which are aggregate and privacy-censored,
   # these are never meant to be shared, so they live in a separate .cache/
@@ -69,7 +70,7 @@ if (runStudy) {
   dir.create(settings$stateFolder, recursive = TRUE, showWarnings = FALSE)
 
   # One README.md per results/eligibility/<category>/ subfolder, excerpted
-  # verbatim from this repo's own README.md (writeCategoryReadmes(), R/helpers.R)
+  # verbatim from this repo's own README.md (writeCategoryReadmes(), R/outputs.R)
   # -- written once up front so the folders are self-documenting even before
   # any step writes a CSV into them.
   writeCategoryReadmes()

@@ -1,5 +1,12 @@
-# Small internal helpers the vendored artemis.R depends on (copied from
-# OncoStudyModules R/cohortGeneration.R + a base-R null-coalesce fallback).
+# ===========================================================================
+# db_compat.R  —  connection checks + patches for upstream package bugs
+# ===========================================================================
+# .getDbms() and the %||% fallback (copied from OncoStudyModules
+# R/cohortGeneration.R; the vendored artemis.R depends on them),
+# checkConnection() (fails at startup on a connection or bulk-load setup the
+# pipeline can't run on), and the temporary patches runCohortDiagnostics()
+# applies to DatabaseConnector/CohortGenerator.
+# ===========================================================================
 
 .getDbms <- function(connection) {
   dbms <- tryCatch(connection@dbms, error = function(e) NULL)

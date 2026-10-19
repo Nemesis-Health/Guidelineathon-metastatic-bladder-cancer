@@ -86,7 +86,7 @@ studySettings <- list(
   # Fold maintenance therapy into the line it maintains before lines are
   # numbered (outcomes and treatment patterns), e.g. avelumab after
   # platinum-based chemotherapy is part of line 1, not line 2. The rules are
-  # maintenanceRules in R/eventBuilders.R. A maintenance episode must start
+  # maintenanceRules in R/treatment_lines.R. A maintenance episode must start
   # within maintenanceMaxGapDays of the earlier regimen's end. FALSE numbers
   # every ARTEMIS episode as its own line.
   maintenanceMerge      = TRUE,
@@ -95,7 +95,7 @@ studySettings <- list(
   # --- Stratification ---------------------------------------------------------
   # subject_strata.sql breakdowns reported, on top of "overall", on every
   # stratified output (read by activeStrataTypes()/activeStrataSpecs() in
-  # R/helpers.R). See README.md "Stratification" for the definitions.
+  # R/outputs.R). See README.md "Stratification" for the definitions.
   # character(0) turns stratification off everywhere.
   strataColumns = c("age_group", "sex", "age_sex",
                     "age_band", "index_period", "index_period_2021")
