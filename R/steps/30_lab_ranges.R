@@ -1,27 +1,26 @@
 # ===========================================================================
 # 30_lab_ranges.R  —  lab test ranges on the main cohorts
 # ===========================================================================
-# lab_value_distribution_portable.sql : per cohort x lab (cat) x stratum
+# lab_value_distribution.sql: per cohort x lab (cat) x stratum
 #   summary (mean/SD/median/IQR/min/max) of the closest result per subject --
 #   the one eligibility uses (labRowsSql()) -- censored at minCellCount, over
 #   the main cohort tree. lab_window: -30..30 around metastasis, -30..0
 #   before treatment start (defaults).
-# lab_results_summary_portable.sql    : per (cat, concept, unit) QC summary of
+# lab_results_summary.sql: per (cat, concept, unit) QC summary of
 #   the raw normalised table (unit-resolution sanity check).
-# lab_unit_resolution.sql             : per unit-resolution group (concept x
+# lab_unit_resolution.sql: per unit-resolution group (concept x
 #   unit x recorded reference range), the range, the recorded values' spread,
 #   and the factor chosen with its scores.
-# lab_results_rollup_portable.sql     : per-category headline of the same table,
+# lab_results_rollup.sql: per-category headline of the same table,
 #   one row per (cat, is_ambiguous) in the standard unit, with unit-resolution
 #   health folded into QC columns instead of extra rows.
-# lab_timing_to_index_portable.sql    : per lab (cat) x direction
+# lab_timing_to_index.sql: per lab (cat) x direction
 #   (before/after/any), the distribution of days from the Target 1A /
 #   Target 1A PC allowed index to the closest measurement in that direction
 #   -- a subject's ENTIRE history, not the +/- 30-day eligibility window
-#   lab_value_distribution_portable.sql restricts to.
-# The _portable versions compute quantiles via ROW_NUMBER/COUNT/FLOOR (same
-# result as PERCENTILE_CONT, which SqlRender cannot translate); the originals
-# are kept alongside for comparison.
+#   lab_value_distribution.sql restricts to.
+# Quantiles are computed via ROW_NUMBER/COUNT/FLOOR (same result as
+# PERCENTILE_CONT, which SqlRender cannot translate).
 # ===========================================================================
 
 message("\n== lab test ranges on main cohorts ==")
@@ -44,7 +43,7 @@ strataFragment <- renderSqlFile("subject_strata.sql",
 
 # Always the closest result (whatever labValueSelection says): one value per
 # subject and lab, the one eligibility uses.
-labDist <- querySqlFile(connection, "lab_value_distribution_portable.sql",
+labDist <- querySqlFile(connection, "lab_value_distribution.sql",
   min_cell_count     = settings$minCellCount,
   lab_rows_sql       = labRowsSql(targetIds, passingOnly = FALSE,
                                   treatedIds = treatedCohortIds(), closest = TRUE),
@@ -66,7 +65,7 @@ message("  lab_value_distribution: ", nrow(labDist), " rows")
 metsCohortIds <- c(cohortIdByName(mainManifest, cohortNames[["T1"]]),
                    cohortIdByName(mainManifest, cohortNames[["T1pc"]]))
 
-labTiming <- querySqlFile(connection, "lab_timing_to_index_portable.sql",
+labTiming <- querySqlFile(connection, "lab_timing_to_index.sql",
   target_database_schema = settings$workDatabaseSchema,
   target_cohort_table    = settings$cohortTable,
   raw_lab_results_table  = settings$rawLabResultsTable,
@@ -78,7 +77,7 @@ labTiming <- labTiming[labTiming$stratum_type %in% activeStrataTypes(), ]
 writeResultCsv(labTiming, "lab_timing_to_index", "labs")
 message("  lab_timing_to_index: ", nrow(labTiming), " rows")
 
-labSummary <- querySqlFile(connection, "lab_results_summary_portable.sql",
+labSummary <- querySqlFile(connection, "lab_results_summary.sql",
   work_database_schema       = settings$workDatabaseSchema,
   raw_lab_results_table      = settings$rawLabResultsTable,
   vocabulary_database_schema = settings$vocabDatabaseSchema,
@@ -96,7 +95,7 @@ names(labResolution) <- tolower(names(labResolution))
 writeResultCsv(labResolution, "lab_unit_resolution", "labs")
 message("  lab_unit_resolution: ", nrow(labResolution), " rows")
 
-labRollup <- querySqlFile(connection, "lab_results_rollup_portable.sql",
+labRollup <- querySqlFile(connection, "lab_results_rollup.sql",
   work_database_schema       = settings$workDatabaseSchema,
   raw_lab_results_table      = settings$rawLabResultsTable,
   normals_table              = "bc_lab_normals",

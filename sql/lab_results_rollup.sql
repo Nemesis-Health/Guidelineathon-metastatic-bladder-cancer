@@ -1,5 +1,5 @@
 -- =============================================================================
--- lab_results_rollup_portable.sql
+-- lab_results_rollup.sql
 -- Quartiles/median are computed with ROW_NUMBER()/COUNT(*)/FLOOR instead of
 -- PERCENTILE_CONT ... WITHIN GROUP ... OVER, which SqlRender leaves untranslated
 -- (breaks PostgreSQL / BigQuery / SQLite / Spark / Hive / Impala).
@@ -10,7 +10,7 @@
 -- so ranked rows rn = k+1 and rn = k+2 contribute weights (1-frac) and frac.
 --
 -- Per-CATEGORY rollup of @raw_lab_results_table, the headline companion to the
--- per-stream lab_results_summary_portable.sql. Because std_value is already
+-- per-stream lab_results_summary.sql. Because std_value is already
 -- normalised to each category's standard unit, the distribution is pooled across
 -- every source concept/unit into ONE row per (cat, is_ambiguous):
 --   * is_ambiguous = 0  -> the trustworthy distribution (single scale won).

@@ -12,7 +12,7 @@
 -- side, counts how many members have >=1 measurement of each lab (cat)
 -- within the eligibility lab window (@lab_window_before_days before /
 -- @lab_window_after_days after index) -- same window
--- lab_value_distribution_portable.sql uses, collapsed to presence/absence
+-- lab_value_distribution.sql uses, collapsed to presence/absence
 -- rather than a value distribution.
 --
 -- Every lab (cat) present anywhere in @raw_lab_results_table is reported for
@@ -57,7 +57,7 @@ flags AS (
      ON ch.subject_id = tc.subject_id AND ch.covariate_id = cc.covariate_id
 ),
 -- Collapse the per-criterion (test_id) fan-out, same as
--- lab_value_distribution_portable.sql's lab_measurements CTE: one row per
+-- lab_value_distribution.sql's lab_measurements CTE: one row per
 -- actual measurement, so a lab used by several thresholds isn't counted more
 -- than once.
 lab_measurements AS (

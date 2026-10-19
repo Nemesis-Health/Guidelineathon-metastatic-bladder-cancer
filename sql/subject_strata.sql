@@ -23,7 +23,7 @@
 -- builds on this file's exact text instead of re-deriving the CASE
 -- expressions, so the buckets can't drift apart. Consumers, SQL-side (UNION
 -- ALL blocks, this file's text injected as a fragment): demographics.sql,
--- lab_value_distribution_portable.sql, lab_timing_to_index_portable.sql,
+-- lab_value_distribution.sql, lab_timing_to_index.sql,
 -- eligibility_input_coverage.sql, cohort_counts_stratified.sql. Consumers,
 -- R-side (queried directly, joined/filtered in R then looped over stratum
 -- columns): R/steps/50_outcomes.R, R/steps/70_treatment_patterns.R,

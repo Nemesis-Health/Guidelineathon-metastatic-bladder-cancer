@@ -73,7 +73,7 @@ if (nrow(demo) == 0L) {
 
 # --- continuous age summary, per cohort x stratum ---------------------------
 # Computed entirely in SQL (percentiles via the same ROW_NUMBER/CASE
-# interpolation as lab_value_distribution_portable.sql, stratified the same
+# interpolation as lab_value_distribution.sql, stratified the same
 # UNION-ALL way) rather than pulling one row per cohort member into R and
 # aggregating there -- `strataFragment` (subject_strata.sql, rendered above
 # for demographics.sql) is reused as-is.

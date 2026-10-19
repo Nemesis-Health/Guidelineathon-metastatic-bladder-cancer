@@ -12,7 +12,7 @@
 # subject_strata.sql:
 #   activeStrataTypes() -- "overall" + whichever of settings$strataColumns
 #     are enabled, e.g. c("overall", "age_group", "sex"). SQL-side outputs
-#     (lab_value_distribution_portable.sql, lab_timing_to_index_portable.sql,
+#     (lab_value_distribution.sql, lab_timing_to_index.sql,
 #     eligibility_input_coverage.sql, cohort_counts_stratified.sql) always
 #     compute every view (cheap -- a single extra GROUP BY column each);
 #     the caller filters its result to `stratum_type %in% activeStrataTypes()`

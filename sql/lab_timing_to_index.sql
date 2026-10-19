@@ -2,7 +2,7 @@
 -- and lab (cat), how far from the cohort index (cohort_start_date, the
 -- metastasis-marker date) is the closest recorded measurement -- looking at
 -- a subject's ENTIRE measurement history, not the +/- 30-day eligibility
--- window lab_value_distribution_portable.sql restricts to. Reports, in three
+-- window lab_value_distribution.sql restricts to. Reports, in three
 -- directions:
 --   before -- closest measurement on/before index (days = index - date, >= 0)
 --   after  -- closest measurement on/after index  (days = date - index, >= 0)

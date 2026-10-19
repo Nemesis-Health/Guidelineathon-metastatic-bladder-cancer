@@ -3,7 +3,7 @@
 -- =============================================================================
 -- A SELECT fragment (no trailing semicolon), rendered by labRowsSql()
 -- (R/cohorts.R). One source for the T2 eligibility files, the attrition
--- steps, eligibility_input_coverage.sql and lab_value_distribution_portable.sql,
+-- steps, eligibility_input_coverage.sql and lab_value_distribution.sql,
 -- so all of them read the same result per patient and lab.
 --
 -- Rows are per anchor cohort member (@anchor_cohort_ids), within that member's

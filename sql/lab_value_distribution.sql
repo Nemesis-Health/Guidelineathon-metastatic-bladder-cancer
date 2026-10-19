@@ -1,4 +1,4 @@
--- lab_value_distribution_portable.sql
+-- lab_value_distribution.sql
 -- Median/quartiles use ROW_NUMBER()/COUNT(*)/FLOOR instead of
 -- PERCENTILE_CONT ... WITHIN GROUP ... OVER, which SqlRender leaves
 -- untranslated (breaks PostgreSQL / BigQuery / SQLite / Spark / Hive / Impala).
@@ -16,7 +16,7 @@
 -- Also stratified: every (cohort, cat) row is computed four times --
 -- overall, and split by age_group / sex / age_sex (subject_strata.sql --
 -- see that file's header for the standard consumption pattern this
--- follows, and lab_timing_to_index_portable.sql for the same UNION-ALL
+-- follows, and lab_timing_to_index.sql for the same UNION-ALL
 -- ranking / shared-percentile-formula shape). stratum_type/stratum_value
 -- identify which view a row belongs to.
 --
