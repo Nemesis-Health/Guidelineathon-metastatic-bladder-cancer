@@ -1,5 +1,5 @@
 -- =============================================================================
--- lab_results_summary_portable.sql
+-- lab_results_summary.sql
 -- Quartiles are computed with ROW_NUMBER()/COUNT(*)/FLOOR instead of
 -- PERCENTILE_CONT ... WITHIN GROUP ... OVER, which SqlRender leaves
 -- untranslated (breaks PostgreSQL / BigQuery / SQLite / Spark / Hive / Impala).

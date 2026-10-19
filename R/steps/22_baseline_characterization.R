@@ -64,7 +64,7 @@ nameMap <- dplyr::select(mainManifest, cohort_definition_id = "cohortId",
 
 # --- weight / height / BMI, per cohort x variable x stratum -----------------
 # Computed entirely in SQL (percentiles via the same ROW_NUMBER/CASE
-# interpolation as lab_value_distribution_portable.sql/
+# interpolation as lab_value_distribution.sql/
 # demographics_continuous.sql, stratified the same UNION-ALL way) rather than
 # pulling one row per cohort member with a body measurement into R and
 # aggregating there.

@@ -10,7 +10,7 @@
 -- split by age_group / sex / age_sex (subject_strata.sql -- see that file's
 -- own header for the standard consumption pattern this follows). Same
 -- UNION-ALL-of-shared-percentile-formula shape as
--- lab_value_distribution_portable.sql -- see that file's header for the
+-- lab_value_distribution.sql -- see that file's header for the
 -- interpolation formula (reproduces PERCENTILE_CONT exactly, R quantile
 -- type 7). Percentages/censoring are computed in R (R/steps/20_demographics.R),
 -- matching demographics.sql's own convention.

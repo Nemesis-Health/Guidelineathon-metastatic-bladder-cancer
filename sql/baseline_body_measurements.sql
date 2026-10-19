@@ -18,7 +18,7 @@
    Also stratified: every (cohort, variable) row is computed overall and once
    per subject_strata.sql stratum column (see that file's own header for
    the standard consumption pattern this follows). Same UNION-ALL-of-shared-percentile-formula shape as
-   lab_value_distribution_portable.sql -- see that file's header for the
+   lab_value_distribution.sql -- see that file's header for the
    interpolation formula (reproduces PERCENTILE_CONT exactly, R quantile
    type 7); median/quartiles use ROW_NUMBER()/COUNT()/FLOOR rather than
    PERCENTILE_CONT, which SqlRender leaves untranslated. All computed here in
@@ -27,7 +27,7 @@
    The value column is named measurement_value, not the bare "value" --
    avoids any ambiguity with dialects (Snowflake's FLATTEN()/LATERAL,
    BigQuery) that treat VALUE specially in some contexts, same reasoning
-   lab_value_distribution_portable.sql's std_value follows.
+   lab_value_distribution.sql's std_value follows.
 
    Output columns:
      stratum_type, stratum_value, cohort_definition_id, variable,
