@@ -1,5 +1,5 @@
 -- Whole-population counts of the unified eligibility table (labs + ECOG +
--- conditions; slots in cohorts/extras/eligibility_test_ids.csv), per test-id
+-- conditions, slots in cohorts/extras/eligibility_test_ids.csv), per test-id
 -- slot. NOT crossed with any target cohort — this is the raw content of
 -- @lab_cohort_table.
 --

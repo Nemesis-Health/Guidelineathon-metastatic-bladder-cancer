@@ -56,7 +56,7 @@ FROM (
     -- Restructured as tag-then-aggregate-once -- see the NB above
     -- 00_setup.sql's #event_code_counts INSERT for why (a SqlRender
     -- BigQuery-translation bug that silently corrupts SELECT-list values
-    -- across UNION ALL branches that each have their own GROUP BY; a single
+    -- across UNION ALL branches that each have their own GROUP BY, a single
     -- outer GROUP BY has nothing for it to bleed across).
     SELECT anchor_event, gap_bucket,
         CASE WHEN COUNT(*) > 0 AND COUNT(*) <= @min_cell_count THEN -@min_cell_count ELSE COUNT(*) END AS n_patients,

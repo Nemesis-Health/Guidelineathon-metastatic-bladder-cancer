@@ -3,7 +3,7 @@
 --     For patients who carry BOTH an anchor Metastasis (MET) code and a Drug
 --     Therapy procedure (DTP), the gap in days from the first MET to the first DTP
 --     is placed in exactly one directional bucket. Before and after the MET are
---     kept separate; day 0 is its own explicit category, never folded into after:
+--     kept separate, day 0 is its own explicit category, never folded into after:
 --
 --       DTP_GT90D_BEFORE_MET     first DTP more than 90 days before the first MET
 --       DTP_1_90D_BEFORE_MET     first DTP 1 to 90 days before the first MET
@@ -21,10 +21,10 @@
 --       within the DX-anchored cohort.
 --
 --     Population and observation-period notes: same as chunk 29 (DX-anchored MET
---     population from #met_events; Drug Therapy procedures from procedure_occurrence +
---     #dtp_concepts, restricted to the same cohort by the inner join to met_all; no
+--     population from #met_events, Drug Therapy procedures from procedure_occurrence +
+--     #dtp_concepts, restricted to the same cohort by the inner join to met_all, no
 --     observation-period gate). The DTP here is any Drug Therapy procedure regardless
---     of concept root; the per-concept view is in chunks 30 and 32.
+--     of concept root, the per-concept view is in chunks 30 and 32.
 --
 --     Small-cell suppression: n_patients in (0, @min_cell_count] set to
 --     -@min_cell_count. n_patients_both_total is an aggregate denominator, not
@@ -50,7 +50,7 @@ dtp_all AS (
     GROUP BY po.person_id
 ),
 gap AS (
-    -- Patients with BOTH events; signed gap from first MET to first DTP.
+    -- Patients with BOTH events, signed gap from first MET to first DTP.
     SELECT
         ma.person_id,
         DATEDIFF(DAY, ma.first_met_date, da.first_dtp_date) AS gap_days

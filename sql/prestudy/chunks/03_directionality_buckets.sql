@@ -15,7 +15,7 @@
 --      NO_EVENT     : FROM event present but TO event absent
 --
 --    Stratified by OVERALL and by anchor year:
---      DX_MET / DX_L01 use YEAR(index_date); MET_L01 uses YEAR(first_met_date).
+--      DX_MET / DX_L01 use YEAR(index_date), MET_L01 uses YEAR(first_met_date).
 --    Small-cell suppression: n suppressed to -@min_cell_count when <= @min_cell_count.
 
 WITH dx_met_base AS (
@@ -75,7 +75,7 @@ FROM (
     -- aggregating inside each UNION ALL branch -- see the NB above
     -- 00_setup.sql's #event_code_counts INSERT for why (a SqlRender
     -- BigQuery-translation bug that silently corrupts SELECT-list values
-    -- across UNION ALL branches that each have their own GROUP BY; a single
+    -- across UNION ALL branches that each have their own GROUP BY, a single
     -- outer GROUP BY has nothing for it to bleed across).
     SELECT pair, index_year, direction, COUNT(*) AS n_patients
     FROM (

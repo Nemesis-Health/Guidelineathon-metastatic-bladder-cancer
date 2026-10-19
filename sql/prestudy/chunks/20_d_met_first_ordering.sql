@@ -13,7 +13,7 @@
 --       DX_FIRST            first specific DX date < first MET date
 --       SAME_DAY            first specific DX date = first MET date
 --       MET_FIRST_THEN_DX   first MET date < first specific DX date
---                           (the MET code predates the existing DX code; the DX code
+--                           (the MET code predates the existing DX code, the DX code
 --                            always exists, it simply arrives later)
 --
 --     There is NO "Metastasis-only, never Diagnosis" category. A patient with a
@@ -41,12 +41,12 @@
 --     JUDGMENT CALL / FLAG (observation period). The population is anchored on
 --     "has an anchor DX code" (#anchor_person), NOT on "has an anchor DX code inside
 --     an observation period" (#cohort). Observation-period coverage is a separate,
---     still-open decision, characterized on its own in Analysis E (chunks 16-17); it
+--     still-open decision, characterized on its own in Analysis E (chunks 16-17), it
 --     is deliberately not imposed here. See the accompanying report for the reasoned
 --     recommendation.
 --
 --     JUDGMENT CALL / FLAG (same-day). SAME_DAY = the first specific DX and the
---     first MET fall on the identical calendar date; neither precedes the other.
+--     first MET fall on the identical calendar date, neither precedes the other.
 --
 --     Small-cell suppression: n_patients in (0, @min_cell_count] set to
 --     -@min_cell_count. n_patients_met_total is an aggregate denominator, not

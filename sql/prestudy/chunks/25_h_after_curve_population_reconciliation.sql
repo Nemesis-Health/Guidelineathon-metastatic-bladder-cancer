@@ -23,7 +23,7 @@
 --                                   the first MET (the histogram's after bars, and
 --                                   the old closest-after after-curve population)
 --       n_after_any                 treated patients with ANY strictly-after L01
---                                   record (the Part 2 after-curve denominator);
+--                                   record (the Part 2 after-curve denominator),
 --                                   a SUPERSET of n_closest_after
 --       n_after_any_added           n_after_any - n_closest_after: patients added to
 --                                   the after-curve by re-basing it on any-after
@@ -34,7 +34,7 @@
 --                                   (has_before = 1 AND has_after = 1)
 --       n_bilateral_closest_before  bilateral patients whose CLOSEST record is
 --                                   before the MET (collapsed to the before side by
---                                   the closest-only view; these are the core of
+--                                   the closest-only view, these are the core of
 --                                   n_after_any_added)
 --       n_bilateral_closest_after   bilateral patients whose CLOSEST record is after
 --                                   the MET (already inside n_closest_after)
@@ -44,7 +44,7 @@
 --     explicit category and belongs to NEITHER curve, per the locked design
 --     principle and the approved mock. The task prose phrased this as "on or after,"
 --     but the mock (source of truth) and the day-0-explicit rule make it strictly
---     after; day-0 treatment is not counted toward the after-curve. Flagged rather
+--     after, day-0 treatment is not counted toward the after-curve. Flagged rather
 --     than silently decided.
 --
 --     JUDGMENT CALL / FLAG (superset arithmetic). n_after_any_added collects
@@ -52,14 +52,14 @@
 --     after: closest-before-with-after (= n_bilateral_closest_before) plus the
 --     residual closest-on-day-0-with-after. The mock modelled the added group as
 --     40 closest-before patients only and assumed no day-0-closest patient also has
---     a later after-MET record; in real data that day-0 residual may be non-zero,
+--     a later after-MET record, in real data that day-0 residual may be non-zero,
 --     so n_after_any is computed directly as "any strictly-after record" and will
 --     be >= the mock's 392 + 40 decomposition. n_after_any_added minus
 --     n_bilateral_closest_before is that day-0 residual.
 --
 --     Population, observation-period and L01-source notes: same as chunk 24
---     (DX-anchored MET population from #met_events; L01 from #l01_events, gated to the
---     same #anchor_person cohort; no observation-period gate). No change to 00_setup.sql.
+--     (DX-anchored MET population from #met_events, L01 from #l01_events, gated to the
+--     same #anchor_person cohort, no observation-period gate). No change to 00_setup.sql.
 --
 --     Small-cell suppression: each count in (0, @min_cell_count] set to
 --     -@min_cell_count.

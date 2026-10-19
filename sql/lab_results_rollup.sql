@@ -25,7 +25,7 @@
 -- Privacy: cells with fewer than @min_cell_count DISTINCT patients are censored
 -- — n_patients -> -@min_cell_count and all counts/stats -> NULL.
 --
--- NOTE: @raw_lab_results_table holds one row per (measurement x test_id); the
+-- NOTE: @raw_lab_results_table holds one row per (measurement x test_id), the
 -- `meas` CTE collapses that to one row per physical measurement before counting
 -- so a lab with N test_ids (e.g. GFR) is not counted N times, and n_patients is
 -- a true patient count pooled across the category's streams (not a sum of the
@@ -34,8 +34,8 @@
 -- SqlRender parameters:
 --   @work_database_schema
 --   @raw_lab_results_table
---   @normals_table                (std unit per cat; LEFT JOIN)
---   @vocabulary_database_schema   (for the std unit name; LEFT JOIN, optional)
+--   @normals_table                (std unit per cat, LEFT JOIN)
+--   @vocabulary_database_schema   (for the std unit name, LEFT JOIN, optional)
 --   @min_cell_count               integer (e.g. 5)
 -- =============================================================================
 

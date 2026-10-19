@@ -3,7 +3,7 @@
 --     percentile grid (21 points: p01, then every 5th percentile p05-p95, then p99) so
 --     the report can fit a smooth monotone-spline density curve over well-supported
 --     support points, per decision 5. Chunk 04 (13 percentiles p05-p95) is left intact
---     for backward compatibility; this chunk is additive.
+--     for backward compatibility, this chunk is additive.
 --
 --     No raw per-patient rows leave the site: only percentile values are emitted,
 --     exactly as chunk 04 does. Reads the per-patient pair tables built in

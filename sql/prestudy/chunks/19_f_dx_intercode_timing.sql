@@ -12,7 +12,7 @@
 --     instead would make almost every first-to-second gap 0 days (same-day
 --     administrative duplicates) and hide the coding timescale. Consequently
 --     every gap is >= 1 day and the "within 30 days" bucket is 1-30 days.
---     Part 1 (chunk 18) counts records; this part measures timing between days.
+--     Part 1 (chunk 18) counts records, this part measures timing between days.
 --
 --     Denominators (n_transitions_total, per transition = patients, since each
 --     patient contributes at most one gap per transition):

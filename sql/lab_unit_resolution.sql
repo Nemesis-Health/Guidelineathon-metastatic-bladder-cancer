@@ -9,19 +9,19 @@
 --
 -- range_low / range_high are the recorded bounds when > 0, else NULL (as
 -- lab_cohorts.sql groups them). p03..p97 are value_as_number, unconverted.
--- Scores are in decades from the category's normal range; NULL where a scale
+-- Scores are in decades from the category's normal range, NULL where a scale
 -- could not be scored (concept_unit_score is NULL for concepts that state no
 -- unit).
 --
 -- Privacy: groups with fewer than @min_cell_count DISTINCT patients are
--- censored — n_patients -> -@min_cell_count; n_records, the percentiles and
+-- censored — n_patients -> -@min_cell_count, n_records, the percentiles and
 -- the scores -> NULL. The range, factor and status are kept: they describe the
 -- lab's reference range and the resolver's choice, not patient values.
 --
 -- SqlRender parameters:
 --   @work_database_schema
 --   @resolved_table
---   @vocabulary_database_schema   (for concept names; LEFT JOIN, optional)
+--   @vocabulary_database_schema   (for concept names, LEFT JOIN, optional)
 --   @min_cell_count               integer (e.g. 5)
 -- =============================================================================
 

@@ -15,16 +15,16 @@
 -- closest to index decides every test of the group, with the pass rule of
 -- lab_cohorts.sql section 5. ECOG 0-3+ is treated as one group: the closest
 -- record by start date. Ties, in order:
---   1. equal distance: the result before index wins;
+--   1. equal distance: the result before index wins,
 --   2. same day: the worst value counts (lowest Hb/ANC/Platelets/GFR/CrCl,
---      highest of the rest, ULN-based labs as value / ULN; highest ECOG);
+--      highest of the rest, ULN-based labs as value / ULN, highest ECOG),
 --   3. then lowest value, then lowest ULN.
 -- closest = FALSE: every scorable result in the window.
--- passing_only = TRUE keeps the rows that pass (what eligibility reads);
+-- passing_only = TRUE keeps the rows that pass (what eligibility reads),
 -- FALSE also keeps the failing ones (passes = 0), for "tested" counts and
 -- lab values.
 --
--- Condition, anticoagulant and symptom rows pass through unwindowed; the
+-- Condition, anticoagulant and symptom rows pass through unwindowed, the
 -- reader applies its own window (cond_lo/cond_hi here for conditions).
 --
 -- Columns: anchor_cohort_id, index_date, win_lo, win_hi, cond_lo, cond_hi,
@@ -84,7 +84,7 @@ SELECT anchor_cohort_id, index_date, win_lo, win_hi, cond_lo, cond_hi,
               FROM @target_database_schema.@raw_lab_results_table r
              WHERE r.basis = 'ABS' OR r.uln_std IS NOT NULL
             UNION ALL
-            -- ECOG records; worst = the ECOG grade
+            -- ECOG records, worst = the ECOG grade
             SELECT e.subject_id, 'ECOG', e.cohort_definition_id,
                    e.cohort_start_date, e.cohort_end_date,
                    CAST(CASE e.cohort_definition_id @ecog_grade_cases END AS FLOAT), NULL, NULL, 1, 0

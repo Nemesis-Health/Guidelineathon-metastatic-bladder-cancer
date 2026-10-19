@@ -1,6 +1,6 @@
 -- 6b) Directional ODX / GDX prevalence expressed CUMULATIVELY (CDF-style), so an
 --     exclusion look-back (before) or follow-up (after) cutoff can be read off
---     directly. Cumulative companion to the disjoint bands in chunk 06; same
+--     directly. Cumulative companion to the disjoint bands in chunk 06, same
 --     population, same closest-event-per-side construction, same two anchors.
 --
 --     For each anchor / event family / concept, the number of DISTINCT PATIENTS
@@ -13,28 +13,28 @@
 --     Anchors (both surfaced): INDEX (DX index_date, full DX cohort) and
 --     FIRST_MET (first_met_date, MET subgroup only).
 --     Families: ODX (other specific cancer dx), GDX (general / non-specific).
---     days = DATEDIFF(DAY, anchor_date, event_date); before = days <= -1,
+--     days = DATEDIFF(DAY, anchor_date, event_date), before = days <= -1,
 --     after = days >= 1, day 0 its own category (never folded into a side).
 --
 --     Columns:
 --       n_ever            : distinct patients with any event of the concept, any time.
 --       n_before_ever     : distinct patients with any event before the anchor
---                           (the denominator for the before CDF; the tail beyond
+--                           (the denominator for the before CDF, the tail beyond
 --                           2 yr is n_before_ever - n_within_730d_before).
 --       n_within_30d_before ... n_within_730d_before : cumulative before counts
 --                           (patients with a before event within 30/90/180/365/730 days).
 --       median_days_before: median of days-before over patients with any before
 --                           event, days-before = distance of the closest-before
---                           event; framework ordered-set median convention
+--                           event, framework ordered-set median convention
 --                           (lower-middle for even n, as in chunks 16-17, 23, 27-28).
 --       n_day0            : distinct patients with an event on the anchor day.
 --       n_after_ever, n_within_30d_after ... n_within_730d_after, median_days_after:
 --                           mirror of the before columns on the after side.
 --
---     Covers ODX and GDX. All concepts reported; report builder limits to top N.
+--     Covers ODX and GDX. All concepts reported, report builder limits to top N.
 --
 --     Small-cell suppression: each count in (0, @min_cell_count] set to
---     -@min_cell_count; a side median set to NULL when that side's denominator
+--     -@min_cell_count, a side median set to NULL when that side's denominator
 --     (n_before_ever / n_after_ever) is <= @min_cell_count.
 
 WITH events AS (

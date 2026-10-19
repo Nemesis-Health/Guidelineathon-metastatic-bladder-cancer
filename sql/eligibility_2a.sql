@@ -25,14 +25,14 @@
 -- (settings$conditionFlagWindowBeforeDays/AfterDays, default 30/30).
 --
 -- Test ids are declared in cohorts/extras/eligibility_test_ids.csv and
--- referenced here as @t_<key> (e.g. key gfr_ge30); the [N] comments below are
+-- referenced here as @t_<key> (e.g. key gfr_ge30), the [N] comments below are
 -- their slot numbers.
 --
 -- NOTE on query shape — Redshift restriction: a correlated subquery cannot
 -- appear inside an OR predicate ("This type of correlated subquery pattern is
 -- not supported due to internal error", error 500310). This template used to
 -- express every lab/condition check as EXISTS(...)/NOT EXISTS(...), several of
--- them OR-combined (e.g. Cr OR CrCl; the TBil/AST/ALT/coag alternatives) —
+-- them OR-combined (e.g. Cr OR CrCl, the TBil/AST/ALT/coag alternatives) —
 -- Redshift rejects that shape outright. Instead we join the base cohort to
 -- @lab_cohort_table ONCE (keyed on subject only), collapse each test_id into a
 -- 0/1 flag per subject via conditional aggregation (no correlation), and then
@@ -120,7 +120,7 @@ flags AS (
 -- Each symptom record stays live 7 days, so this catches records from 14 days
 -- before to 7 days after the HbA1c. 1 if ANY such
 -- HbA1c is symptom-free (an HbA1c with a nearby symptom joins to >= 1 row with
--- sym.subject_id set; one with none joins to a single NULL row).
+-- sym.subject_id set, one with none joins to a single NULL row).
 a1c AS (
   SELECT l.subject_id,
          MAX(CASE WHEN sym.subject_id IS NULL THEN 1 ELSE 0 END) AS f_hba1c_7_8_nosym
@@ -166,7 +166,7 @@ SELECT f.subject_id, f.cohort_start_date, f.cohort_end_date
    AND (f_alt_le25 = 1 OR (f_alt_le5 = 1 AND f_livermet = 1))
 
    -- Coag: protocol (INR <= 1.5 ULN OR PT <= 1.5 ULN), aPTT <= 1.5 ULN
-   -- separately; anticoagulant therapy (test 31) waives either limb.
+   -- separately, anticoagulant therapy (test 31) waives either limb.
    AND (f_inr = 1 OR f_pt = 1 OR f_anticoag = 1)
    AND (f_aptt = 1 OR f_anticoag = 1)
 
@@ -175,14 +175,14 @@ SELECT f.subject_id, f.cohort_start_date, f.cohort_end_date
    -- HbA1c: [49] < 7%  OR  [16] 7% <= HbA1c < 8% with no polyuria [35] or
    -- polydipsia [36] live within 7 days of that HbA1c (see a1c CTE).
    -- Draft pending study-lead sign-off, following EV-302's exclusion
-   -- ("HbA1c >= 8%, or 7 to < 8% with polyuria or polydipsia"); the Cohort
+   -- ("HbA1c >= 8%, or 7 to < 8% with polyuria or polydipsia"), the Cohort
    -- logics spec has "< 6%" and "NO Polyuria OR NO Polydipsia".
    AND (
          f_hba1c_lt7 = 1
          OR a1c.f_hba1c_7_8_nosym = 1
        )
 
-   -- Enfortumab: no significant peripheral neuropathy (test 33); pre-existing
+   -- Enfortumab: no significant peripheral neuropathy (test 33), pre-existing
    -- = a record live within [index - conditionFlagWindowBeforeDays, index +
    -- conditionFlagWindowAfterDays].
    AND f_neuropathy = 0

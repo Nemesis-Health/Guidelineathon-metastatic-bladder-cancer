@@ -7,7 +7,7 @@
 -- bound) in each category. A category is the descendants of its SNOMED parent
 -- concepts (rollup_categories below). A condition concept under several
 -- parents goes to the category with the lowest precedence, so categories are
--- exclusive per concept, much like ICD-10 chapters; a subject is counted once
+-- exclusive per concept, much like ICD-10 chapters, a subject is counted once
 -- in every category any of their conditions falls in.
 --
 -- Changes from the roll-up this is based on:
@@ -15,31 +15,31 @@
 --     'Neoplasm' counts other neoplasms. R/steps/23_rollups.R doesn't report
 --     'Neoplasm': metastases recorded as conditions map to the primary-site
 --     malignancy, so it mixes other primaries with metastases. It stays here
---     so neoplasm codes don't fall into the organ categories;
+--     so neoplasm codes don't fall into the organ categories,
 --   * 'Drug-related disorder' (444363) dropped: non-standard, so it has no
---     descendants in concept_ancestor;
+--     descendants in concept_ancestor,
 --   * 'Inflammatory disorder' and 'Edema' dropped from 'Soft tissue or bone':
---     they pulled in inflammation and oedema anywhere (e.g. cystitis);
+--     they pulled in inflammation and oedema anywhere (e.g. cystitis),
 --   * 'ENT disease' ('Disorder of head') replaced by 'Ear disease' ('Disorder
---     of ear'); nose, sinus, pharynx and larynx fall under Respiratory, as in
+--     of ear'), nose, sinus, pharynx and larynx fall under Respiratory, as in
 --     ICD-10.
 -- Concepts under no category parent (outside 'Clinical finding') are
--- 'Other condition'; unmapped records (concept 0) are not counted.
+-- 'Other condition', unmapped records (concept 0) are not counted.
 --
 -- Output: cohort_definition_id, stratum_type, stratum_value, category_order,
---         category, n_subjects, n_subjects_2plus, n_records; plus one
+--         category, n_subjects, n_subjects_2plus, n_records, plus one
 --         category_order = -1 row per cohort x stratum carrying the
 --         denominator in n_subjects.
 --
 -- cancer = TRUE (other cancers): only codes in cancer_codeset_sql
 -- (the cohorts' "Excluded primaries" concept set, pre-rendered) within
 -- [index - 180d, index + 30d], the cohort rule's window, rolled up to cancer
--- sites that follow the ICD-10 C-blocks; the rest is 'Other cancer'. Adds
+-- sites that follow the ICD-10 C-blocks, the rest is 'Other cancer'. Adds
 -- n_records and n_subjects_2plus (subjects with >= 2 records).
 --
 -- SqlRender parameters: @work_database_schema @cohort_table
 --   @cdm_database_schema @vocabulary_database_schema @cohort_definition_ids
---   @cancer; subject_strata_sql (pre-rendered subject_strata.sql),
+--   @cancer, subject_strata_sql (pre-rendered subject_strata.sql),
 --   cancer_codeset_sql
 -- =============================================================================
 

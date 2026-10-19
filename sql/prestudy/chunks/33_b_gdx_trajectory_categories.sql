@@ -41,11 +41,11 @@
 --     JUDGMENT CALL / FLAG (anchor). This trajectory is anchored to the first
 --     specific Diagnosis (INDEX) only, matching Analysis B's spec ("relative to the
 --     first specific DX") and the approved V3 mock. A first-Metastasis-anchored
---     variant is not part of B; general-code prevalence around the first Metastasis
+--     variant is not part of B, general-code prevalence around the first Metastasis
 --     is covered generically by chunk 06.
 --
 --     Population note. #gen_cancer_events is restricted to anchor-cohort persons in
---     00_setup.sql; #cohort is the observation-period-gated DX cohort and is a
+--     00_setup.sql, #cohort is the observation-period-gated DX cohort and is a
 --     subset of those persons, so the join is complete. General-code dates are not
 --     themselves restricted to an observation period, matching the mock ("anywhere
 --     in the record" relative to the first specific Diagnosis).
@@ -70,7 +70,7 @@ WITH gdx_flags AS (
 ),
 classified AS (
     -- Every cohort patient placed in exactly one category. at_or_after folds the
-    -- day-0 mass onto the after side to reconcile with the mock's validated counts;
+    -- day-0 mass onto the after side to reconcile with the mock's validated counts,
     -- has_day0 is retained separately for the explicit day-0 column.
     SELECT
         c.person_id,

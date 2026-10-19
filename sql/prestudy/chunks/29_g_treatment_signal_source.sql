@@ -10,7 +10,7 @@
 --                                        whether or not a procedure is also present)
 --       DTP_ONLY_ON_OR_AFTER_MET       no such drug_exposure, but >= 1 Drug Therapy
 --                                        procedure on or after the first MET
---                                        (procedure-only; missed by the current
+--                                        (procedure-only, missed by the current
 --                                        L01 analysis)
 --       NEITHER_ON_OR_AFTER_MET        no treatment signal of either kind on or
 --                                        after the first MET (includes patients
@@ -40,7 +40,7 @@
 --
 --     POPULATION. The MET population is built from #met_events (00_setup.sql, section
 --     F): @cdm_database_schema.measurement JOIN #met_concepts JOIN #anchor_person, so
---     every patient carries an anchor DX code. The cohort is DX-anchored; a MET code
+--     every patient carries an anchor DX code. The cohort is DX-anchored, a MET code
 --     is observed WITHIN it, never as a separate entry point. A generic MET code
 --     without an anchor DX gives no evidence of the cancer of interest, so no
 --     "MET-only, no DX" patient exists. Identical DX-anchored population to Analyses
@@ -50,7 +50,7 @@
 --     (drug_exposure JOIN #l01_concepts JOIN #anchor_person, 00_setup.sql section F),
 --     gated to the same DX anchor cohort as the MET population. Drug Therapy
 --     procedures come from @cdm_database_schema.procedure_occurrence JOIN
---     #dtp_concepts; there is no procedure event table in setup, so the join to the
+--     #dtp_concepts, there is no procedure event table in setup, so the join to the
 --     DX-anchored met_all restricts them to the same cohort. Both signals are
 --     therefore evaluated over exactly the DX-anchored MET patients.
 --
@@ -84,7 +84,7 @@ drugexp_flag AS (
 ),
 dtp_flag AS (
     -- MET patients with >= 1 Drug Therapy procedure on or after the first MET.
-    -- No procedure event table exists in setup; the join to the DX-anchored met_all
+    -- No procedure event table exists in setup, the join to the DX-anchored met_all
     -- restricts procedure_occurrence to the same cohort.
     SELECT DISTINCT ma.person_id
     FROM met_all ma

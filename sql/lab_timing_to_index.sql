@@ -28,12 +28,12 @@
 -- PERCENTILE_CONT ... WITHIN GROUP ... OVER, which SqlRender leaves
 -- untranslated (breaks PostgreSQL / BigQuery / SQLite / Spark / Hive /
 -- Impala). Interpolation reproduces PERCENTILE_CONT exactly (R quantile
--- type 7): pos = p * (n - 1) (zero-based), k = FLOOR(pos), frac = pos - k;
+-- type 7): pos = p * (n - 1) (zero-based), k = FLOOR(pos), frac = pos - k,
 -- percentile = v[k] * (1 - frac) + v[k+1] * frac, so ranked rows rn = k+1
 -- and rn = k+2 contribute weights (1-frac) and frac.
 --
 -- The ranking (ROW_NUMBER/COUNT window functions, partitioned differently
--- per stratum view) is computed once per view via UNION ALL in `ranked`;
+-- per stratum view) is computed once per view via UNION ALL in `ranked`,
 -- the percentile formulas themselves are written once, in `lab_stats`,
 -- shared across every view via one shared GROUP BY -- adding a future
 -- stratum view means one more `ranked` branch, not a duplicated formula.
@@ -258,7 +258,7 @@ SELECT stratum_type,
        cat,
        direction,
        -- Privacy: censor each bucket independently (0 < count < @min_cell_count
-       -- -> -@min_cell_count sentinel; a true 0 stays 0), matching
+       -- -> -@min_cell_count sentinel, a true 0 stays 0), matching
        -- censorCounts() so standalone runs are censored like the pipeline.
        -- Percentiles are blanked whenever the n_ever population itself is
        -- censored (they're computed over that same population).

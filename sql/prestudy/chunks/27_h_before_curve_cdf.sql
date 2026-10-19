@@ -9,7 +9,7 @@
 --       n_within_30d_before, _60d, _90d, _180d, _365d
 --
 --     days_before = ABS(days_diff) of the closest record (all values >= 1 by
---     construction; day 0 is a separate central category, not on this curve). The
+--     construction, day 0 is a separate central category, not on this curve). The
 --     curve is CLOSEST-based, so it agrees with the histogram's before bars
 --     (chunk 26, bin_order 1-6). Patients whose closest-before treatment is more
 --     than 365 days before the MET are the earlier-than-one-year tail, derivable as
@@ -23,15 +23,15 @@
 --       closest-before patients (= chunk 24 CLOSEST_L01_BEFORE_MET n_patients).
 --
 --     NOTE (direction). This is the BEFORE curve. It reads leftward (backward in
---     time) from the first MET and uses its own directional denominator; it is
+--     time) from the first MET and uses its own directional denominator, it is
 --     never combined with the after-curve into a symmetric window.
 --
 --     Population, observation-period and L01-source notes: same as chunk 24
---     (DX-anchored MET population from #met_events; L01 from #l01_events, gated to the
---     same #anchor_person cohort; no observation-period gate). No change to 00_setup.sql.
+--     (DX-anchored MET population from #met_events, L01 from #l01_events, gated to the
+--     same #anchor_person cohort, no observation-period gate). No change to 00_setup.sql.
 --
 --     Small-cell suppression: each cumulative count in (0, @min_cell_count] set to
---     -@min_cell_count; median set to NULL when its denominator is suppressed.
+--     -@min_cell_count, median set to NULL when its denominator is suppressed.
 --     n_before_total is an aggregate denominator, not suppressed.
 
 WITH met_all AS (

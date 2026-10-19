@@ -29,7 +29,7 @@
 --     MIN(CASE WHEN 100.0*rn >= P*cnt ...)), identical to 00_setup.sql / chunk 11.
 --
 --     Small-cell suppression: n_patients_with_gap in (0, @min_cell_count] set to
---     -@min_cell_count; percentile / min / max / mean values set to NULL when
+--     -@min_cell_count, percentile / min / max / mean values set to NULL when
 --     n_patients_with_gap <= @min_cell_count. n_met_subset is an aggregate
 --     denominator, not suppressed.
 --     Source: #met_events, #met_summary (00_setup.sql).

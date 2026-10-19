@@ -4,7 +4,7 @@
 --     This is the first-MET-anchored twin of chunk 35, which produces the identical
 --     per-concept before/after split but anchored on the first specific Diagnosis
 --     (INDEX) and for GDX only. Sections 5-6 need the metastasis-subset view anchored
---     on the first Metastasis; the aggregate MET-anchored timing already exists, but
+--     on the first Metastasis, the aggregate MET-anchored timing already exists, but
 --     the per-concept before/after MET split did not.
 --
 --     One row per (event_family, concept_id). For each concept, the count of distinct
@@ -13,28 +13,28 @@
 --
 --       days = code_date - first_met_date
 --
---     Columns (distinct patients holding >= 1 code of the concept in the region; the
+--     Columns (distinct patients holding >= 1 code of the concept in the region, the
 --     three regions overlap, so before + at day 0 + after can exceed n_patients
 --     because one patient may hold codes on more than one side), identical layout to
 --     chunk 35:
 --       n_patients        any time (the concept's overall subset patient count)
 --       before side (strictly before, days < 0), cumulative outward from day 0:
---         n_before_30d   -30 <= days <= -1 ; n_before_90d, n_before_180d, n_before_365d
+--         n_before_30d   -30 <= days <= -1 , n_before_90d, n_before_180d, n_before_365d
 --         n_ever_before  days < 0 (no upper look-back bound)
 --       n_at_day0         days = 0 (explicit central category)
 --       after side (strictly after, days > 0), cumulative outward from day 0:
---         n_after_30d     1 <= days <= 30 ; n_after_90d, n_after_180d, n_after_365d
+--         n_after_30d     1 <= days <= 30 , n_after_90d, n_after_180d, n_after_365d
 --         n_ever_after   days > 0 (no upper follow-up bound)
 --
 --     Population (metastasis subset): #met_summary (cohort patients with a MET, the
---     DX-cohort-gated subset; NOT the ungated all-metastasis
+--     DX-cohort-gated subset, NOT the ungated all-metastasis
 --     population). GDX/ODX events come from #gen_cancer_events / #other_dx_events
 --     (restricted to anchor-cohort persons in 00_setup.sql) joined to #met_summary, so
 --     only subset patients' codes are counted and the anchor is their first MET.
 --     Code dates are not restricted to an observation period, matching chunk 35.
 --
 --     n_met_subset_total (repeated on each row) is the subset denominator for the
---     report's percent-of-subset figures; it is an aggregate denominator, not
+--     report's percent-of-subset figures, it is an aggregate denominator, not
 --     suppressed.
 --
 --     Small-cell suppression: every per-concept count in (0, @min_cell_count] set to

@@ -8,7 +8,7 @@
 --
 --     Stratified by anchor (INDEX / FIRST_MET).
 --     Small-cell suppression: n_death_before_obs and n_death_after_obs use -@min_cell_count
---     when suppressed; percentile columns are set to NULL when n_death_after_obs is suppressed.
+--     when suppressed, percentile columns are set to NULL when n_death_after_obs is suppressed.
 
 WITH patient_obs AS (
     SELECT

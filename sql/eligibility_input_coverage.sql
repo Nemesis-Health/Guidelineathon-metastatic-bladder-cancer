@@ -7,7 +7,7 @@
 -- cohorts by labRowsSql()), so with the closest rule a lab passes on the
 -- result eligibility would use. Windows are around each cohort's own index:
 -- the lab window, or the treated window for cohorts indexed on treatment
--- start; condition flags (@condition_window_ids) use the condition window
+-- start, condition flags (@condition_window_ids) use the condition window
 -- for the rest. A row passes when its [cohort_start_date, cohort_end_date]
 -- overlaps the window. ECOG/condition slots have no n_tested (not lab
 -- measurements). Test ids are declared in cohorts/extras/eligibility_test_ids.csv.

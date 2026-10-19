@@ -4,7 +4,7 @@
 --     Over the treated MET patients (>= 1 L01 record), each patient is reduced to
 --     the single signed days_diff of their CLOSEST L01 record (same value and
 --     convention as chunk 24) and placed in one signed-day bin. Before and after
---     are separate; day 0 is its own central bin. bin_order runs left to right
+--     are separate, day 0 is its own central bin. bin_order runs left to right
 --     along the signed axis (farthest before -> day 0 -> farthest after) so the
 --     report renders the bars directly.
 --
@@ -35,11 +35,11 @@
 --
 --     Denominator (n_treated_total, repeated on each row):
 --       treated MET patients = before + day0 + after (= chunk 24 sum of the three
---       treated categories; = chunk 25 n_treated).
+--       treated categories, = chunk 25 n_treated).
 --
 --     Population, observation-period and L01-source notes: same as chunk 24
---     (DX-anchored MET population from #met_events; L01 from #l01_events, gated to the
---     same #anchor_person cohort; no observation-period gate). No change to 00_setup.sql.
+--     (DX-anchored MET population from #met_events, L01 from #l01_events, gated to the
+--     same #anchor_person cohort, no observation-period gate). No change to 00_setup.sql.
 --
 --     Small-cell suppression: n_patients in (0, @min_cell_count] set to
 --     -@min_cell_count. n_treated_total is an aggregate denominator, not

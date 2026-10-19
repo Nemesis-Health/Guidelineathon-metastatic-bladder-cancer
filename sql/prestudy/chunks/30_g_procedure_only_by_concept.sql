@@ -21,10 +21,10 @@
 --       logic so the two chunks stay consistent.
 --
 --     Population, observation-period and source notes: same as chunk 29 (DX-anchored
---     MET population from #met_events; L01 from #l01_events, gated to #anchor_person;
+--     MET population from #met_events, L01 from #l01_events, gated to #anchor_person,
 --     Drug Therapy procedures from procedure_occurrence + #dtp_concepts restricted to
---     the same cohort by the join to met_all; no observation-period gate). Per-root
---     n_patients in (0, @min_cell_count] set to -@min_cell_count; n_procedure_only_total
+--     the same cohort by the join to met_all, no observation-period gate). Per-root
+--     n_patients in (0, @min_cell_count] set to -@min_cell_count, n_procedure_only_total
 --     is an aggregate denominator, not suppressed. A root carried by zero
 --     procedure-only patients is absent.
 

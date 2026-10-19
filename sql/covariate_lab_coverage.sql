@@ -6,7 +6,7 @@
 -- three comorbidity covariates -- Heme Disorders, Liver Disease, Renal
 -- Disease -- using the SAME unbounded on/before-index lookback as
 -- covariate_overlap.sql ("ever before index": a qualifying record any time
--- on or before the subject's own Target 1A index date, no start bound; NOT
+-- on or before the subject's own Target 1A index date, no start bound, NOT
 -- the windowed conditionFlagWindow used for the main cohort's pre-existing
 -- condition eligibility flags in eligibility_2a.sql). For each subgroup
 -- side, counts how many members have >=1 measurement of each lab (cat)

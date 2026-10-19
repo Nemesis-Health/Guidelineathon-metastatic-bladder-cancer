@@ -18,7 +18,7 @@ FROM (
     -- Restructured as tag-then-aggregate-once -- see the NB above
     -- 00_setup.sql's #event_code_counts INSERT for why (a SqlRender
     -- BigQuery-translation bug that silently corrupts SELECT-list values
-    -- across UNION ALL branches that each have their own GROUP BY; a single
+    -- across UNION ALL branches that each have their own GROUP BY, a single
     -- outer GROUP BY has nothing for it to bleed across).
     -- The window functions (rn/cnt) still have to be computed separately
     -- per source table BEFORE the union -- each PARTITION BY only spans
@@ -26,7 +26,7 @@ FROM (
     -- raw pre-window-function rows first would let first_to_first and
     -- first_to_closest_after rows share the same partition and corrupt both
     -- rn and cnt. Only the final COUNT(*)/percentile aggregation collapses
-    -- to one GROUP BY; the per-source window-function computation is
+    -- to one GROUP BY, the per-source window-function computation is
     -- unchanged from the original.
     SELECT
         timing_type,

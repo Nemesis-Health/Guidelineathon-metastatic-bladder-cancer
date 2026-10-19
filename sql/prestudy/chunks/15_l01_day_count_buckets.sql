@@ -30,7 +30,7 @@ FROM (
 -- x.subgroup (qualified) rather than bare `subgroup`: BigQuery-only fix --
 -- SqlRender's ordinal-GROUP-BY rewrite for this dialect only special-cases
 -- an already-qualified `alias.column` reference (copied through
--- untouched); a bare column name mixed into the same GROUP BY list as a
+-- untouched), a bare column name mixed into the same GROUP BY list as a
 -- CASE expression that also needs converting gets mis-numbered instead of
 -- being copied through or numbered correctly.
 GROUP BY

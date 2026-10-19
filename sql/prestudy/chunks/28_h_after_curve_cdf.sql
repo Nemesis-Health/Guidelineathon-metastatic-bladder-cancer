@@ -33,7 +33,7 @@
 --     (chunk 26), this after-curve is over the ANY-strictly-after population and is
 --     timed by each patient's FIRST after-MET record, not their closest record.
 --       - Day 0 is excluded (strictly after, days_diff > 0), consistent with the
---         locked day-0-explicit principle; day-0 treatment is on neither curve. The
+--         locked day-0-explicit principle, day-0 treatment is on neither curve. The
 --         task prose said "on or after," reconciled here to strictly after per the
 --         mock (source of truth) and the day-0 rule.
 --       - A patient with treatment ONLY before the MET and none strictly after
@@ -41,14 +41,14 @@
 --         the WHERE days_diff > 0 set).
 --       - A closest-before patient who ALSO has an after-MET record is INCLUDED
 --         here (via their after record) while remaining on the before side of the
---         histogram and before-curve; this is the intended superset behaviour.
+--         histogram and before-curve, this is the intended superset behaviour.
 --
 --     Population, observation-period and L01-source notes: same as chunk 24
---     (DX-anchored MET population from #met_events; L01 from #l01_events, gated to the
---     same #anchor_person cohort; no observation-period gate). No change to 00_setup.sql.
+--     (DX-anchored MET population from #met_events, L01 from #l01_events, gated to the
+--     same #anchor_person cohort, no observation-period gate). No change to 00_setup.sql.
 --
 --     Small-cell suppression: each cumulative count in (0, @min_cell_count] set to
---     -@min_cell_count; median set to NULL when its denominator is suppressed.
+--     -@min_cell_count, median set to NULL when its denominator is suppressed.
 --     n_after_any_total is an aggregate denominator, not suppressed.
 
 WITH met_all AS (

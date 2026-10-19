@@ -40,7 +40,7 @@ Cross-dialect / SqlRender
 -- PARAMETERS (SqlRender style)
 ------------------------------------------------------------
 -- Example:
--- DECLARE @cdm_database_schema VARCHAR(100) = 'cdm';
+-- DECLARE @cdm_database_schema VARCHAR(100) = 'cdm',
 
 ------------------------------------------------------------
 -- PRIVACY CONTROLS
@@ -110,7 +110,7 @@ WHERE EXISTS (
 -- B) OTHER GENERALIZED CANCER DX CONCEPTS (GDX)
 -- Default: distinct ancestors of DX anchor concepts, excluding anchor DX concepts themselves,
 -- but constrained to descendants of 443392 (Malignant neoplastic disease) to avoid overly-broad ancestors.
--- (concept_ancestor includes self-links; we only want broader/generalized codes).
+-- (concept_ancestor includes self-links, we only want broader/generalized codes).
 ------------------------------------------------------------
 DROP TABLE IF EXISTS #gen_cancer_concepts;
 CREATE TABLE #gen_cancer_concepts (
@@ -191,7 +191,7 @@ CREATE TABLE #met_concepts (
     concept_id BIGINT
 );
 
--- Target 1A's set also uses metastasis conditions (e.g. Malignant ascites);
+-- Target 1A's set also uses metastasis conditions (e.g. Malignant ascites),
 -- these diagnostics only look at measurements, so condition concepts in the
 -- set are unused here.
 INSERT INTO #met_concepts (concept_id)
@@ -246,7 +246,7 @@ JOIN #l01_ancestor_concepts a
 --     Added for Analysis G. Antineoplastic treatment recorded as a procedure
 --     rather than a drug_exposure. Four Drug Therapy procedure roots and their
 --     descendants. Same ancestor-then-descendants build as the L01 concept set
---     in section E: #dtp_ancestor_concepts holds the roots; #dtp_concepts expands
+--     in section E: #dtp_ancestor_concepts holds the roots, #dtp_concepts expands
 --     to descendants via concept_ancestor (which includes each root itself at
 --     level 0, so the roots are in #dtp_concepts too). This is the only concept
 --     set that reads procedure_occurrence.
@@ -254,7 +254,7 @@ JOIN #l01_ancestor_concepts a
 --     #dtp_concepts additionally carries the root each descendant maps to
 --     (root_concept_id), so Analysis G can report per category (Chemotherapy /
 --     Immunological therapy / Targeted chemotherapy for cancer / Hormone therapy).
---     This is a small extension of the plain concept-id list used for L01; it is
+--     This is a small extension of the plain concept-id list used for L01, it is
 --     needed because G's Part 1b and Part 3 are per-concept. A descendant that
 --     falls under more than one root appears once per root, so a patient can be
 --     counted under more than one category and the per-category counts overlap
@@ -316,7 +316,7 @@ JOIN #dx_anchor_concepts d
   ON co.condition_concept_id = d.concept_id
 ;
 
--- Distinct anchor cohort persons; limits later F) pulls to rows that downstream joins to #cohort use anyway.
+-- Distinct anchor cohort persons, limits later F) pulls to rows that downstream joins to #cohort use anyway.
 DROP TABLE IF EXISTS #anchor_person;
 CREATE TABLE #anchor_person (
     person_id BIGINT
@@ -574,7 +574,7 @@ CREATE TABLE #event_code_counts (
 );
 
 -- NB: restructured as tag-then-aggregate-once (one UNION ALL of raw,
--- untagged rows; a single outer GROUP BY does all the counting) rather than
+-- untagged rows, a single outer GROUP BY does all the counting) rather than
 -- aggregating inside each UNION ALL branch. This isn't a style choice --
 -- SqlRender's BigQuery translator has a confirmed bug where its
 -- GROUP-BY-to-ordinal rewrite can, in a multi-branch UNION ALL where more
@@ -1954,7 +1954,7 @@ FROM gaps g
 JOIN #met_summary ms ON g.person_id = ms.person_id AND ms.first_met_date IS NOT NULL
 ;
 
--- Max gap per patient (one row per patient; used for MAX-gap subgroups in chunks 11–12)
+-- Max gap per patient (one row per patient, used for MAX-gap subgroups in chunks 11–12)
 INSERT INTO #l01_consecutive_gaps (person_id, subgroup, gap_days)
 SELECT person_id, 'ALL_L01_MAX', MAX(gap_days)
 FROM #l01_consecutive_gaps

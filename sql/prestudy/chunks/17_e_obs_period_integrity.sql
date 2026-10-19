@@ -8,7 +8,7 @@
 --           n_numerator   = distinct cohort patients with a period of this type
 --           n_denominator = distinct cohort patients with any period
 --           (states the definition/source: claims-enrollment vs EHR-estimated
---            period types resolve to different concept ids; label upstream).
+--            period types resolve to different concept ids, label upstream).
 --
 --       PATIENTS_WITH_MULTIPLE_OBS_PERIODS   (per anchor)
 --           n_numerator   = patients with more than one observation period (a gap)
@@ -33,7 +33,7 @@
 --     Sources: #cohort, #met_summary, #death_obs_status, #death_stratum_counts
 --     (00_setup.sql) and @cdm_database_schema.observation_period.
 --     Small-cell suppression: n_numerator and n_denominator each in
---     (0, @min_cell_count] set to -@min_cell_count, independently; median
+--     (0, @min_cell_count] set to -@min_cell_count, independently, median
 --     set to NULL when its decedent denominator is suppressed.
 
 WITH patient_obs AS (
@@ -58,7 +58,7 @@ period_type_total AS (
     FROM @cdm_database_schema.observation_period
     WHERE person_id IN (SELECT person_id FROM #cohort)
 ),
--- Anchor cohorts: INDEX = full DX cohort; FIRST_MET = cohort with a metastasis.
+-- Anchor cohorts: INDEX = full DX cohort, FIRST_MET = cohort with a metastasis.
 anchor_cohort AS (
     SELECT 'INDEX' AS anchor_event, c.person_id, po.n_periods
     FROM #cohort c
@@ -116,10 +116,10 @@ metrics AS (
     -- bleeds FORWARD from a branch with its own GROUP BY into any LATER
     -- branch in the same UNION ALL -- this reaches even branch (3) below,
     -- which has no GROUP BY of its own, because branch (2) ahead of it
-    -- does; only branch (1), being first, is never reached). Every column
+    -- does, only branch (1), being first, is never reached). Every column
     -- in every wrapped branch is also explicitly aliased -- SQL Server's
     -- derived-table rule requires every column to have an inferable name,
-    -- which a bare literal/aggregate doesn't have; wrapping without
+    -- which a bare literal/aggregate doesn't have, wrapping without
     -- aliasing fixes BigQuery but breaks SQL Server.
     -- (1) period definition: period_type distribution (site-level) -- never
     -- reached by the bug (first branch), left unwrapped.
