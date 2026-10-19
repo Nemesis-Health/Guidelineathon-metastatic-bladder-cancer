@@ -6,8 +6,9 @@ outcomes, guideline adherence and treatment patterns, on an OMOP CDM.
 
 A run has two parts:
 
-1. **Diagnostics** → `results/diagnostics/` and `diagnostics.zip`. Pre-study
-   characterization queries, mirrored into `sql/prestudy/` from
+1. **Diagnostics** (off by default) → `results/diagnostics/` and
+   `diagnostics.zip`. Pre-study characterization queries, mirrored into
+   `sql/prestudy/` from
    [onco-pre-study at `fb30995`](https://github.com/Nemesis-Health/onco-pre-study/tree/fb30995fa0c776e4681e92a9e640812a9e4e88df),
    so no separate checkout is needed.
 2. **Study** → `results/eligibility/` and `study_results.zip`. ARTEMIS regimen
@@ -26,10 +27,9 @@ Both zips hold aggregate counts only, censored at write time.
    changing only if they clash with tables already in the work schema.
 3. `source("run.R")`.
 
-`runParts` in the CONFIG block picks what runs. The default runs both;
-`c("diagnostics")` needs no ARTEMIS, CohortGenerator or CirceR, so it works
-while the ARTEMIS/Python setup is still being sorted; `c("study")` skips
-diagnostics you have already run.
+`runParts` in the CONFIG block picks what runs. The default runs the study
+only. Add `"diagnostics"` if the study team asks for the pre-study queries;
+`c("diagnostics")` alone needs no ARTEMIS, CohortGenerator or CirceR.
 
 **Optional:** `run_cohort_diagnostics.R` runs OHDSI CohortDiagnostics on the
 `cohorts/01_Target/` cohorts (own CONFIG block, own cohort table). It needs
