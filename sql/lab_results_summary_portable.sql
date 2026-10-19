@@ -1,7 +1,6 @@
 -- =============================================================================
 -- lab_results_summary_portable.sql
--- Dialect-portable version of lab_results_summary.sql: identical output, but
--- the quartiles are computed with ROW_NUMBER()/COUNT(*)/FLOOR instead of
+-- Quartiles are computed with ROW_NUMBER()/COUNT(*)/FLOOR instead of
 -- PERCENTILE_CONT ... WITHIN GROUP ... OVER, which SqlRender leaves
 -- untranslated (breaks PostgreSQL / BigQuery / SQLite / Spark / Hive / Impala).
 --
