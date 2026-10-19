@@ -1,44 +1,5 @@
    # FALCON-Bladder Study
 
-## Quick start
-
-1. Open `bladder-eligibility.Rproj` (or set the repo as the working directory).
-2. Edit the **CONFIG block at the top of `run.R`**: `connectionDetails`, the
-   bulk-load switch, `databaseId`, the schemas, `minCellCount` and
-   `outputFolder`. The work table names there (`bc_cohort`, ...) need
-   changing only if they clash with tables already in the work schema.
-3. `source("run.R")`.
-
-`runParts` in the CONFIG block picks what runs. The default runs the study
-only. Add `"diagnostics"` if the study team asks for the pre-study queries;
-`c("diagnostics")` alone needs no ARTEMIS, CohortGenerator or CirceR.
-
-**Optional:** `run_cohort_diagnostics.R` runs OHDSI CohortDiagnostics on the
-`cohorts/01_Target/` cohorts (own CONFIG block, own cohort table). It needs
-`CohortDiagnostics` installed, which is not in `renv.lock`.
-
-### Study settings
-
-Fixed study settings live in `R/study_settings.R` and are the same at every
-site. Don't change them unless the study team asks; if it does, add the field
-to the `settings` list in `run.R` (a field set there wins).
-
-| Setting | Default | What it does |
-|---|---|---|
-| `labWindowBeforeDays`, `labWindowAfterDays` | `30`, `30` | Window around the metastasis index for labs and ECOG in eligibility (2a-2d, T1-CE), coverage, lab distributions, the PS overlap and the lab-coverage cross. |
-| `treatedLabWindowBeforeDays`, `treatedLabWindowAfterDays` | `30`, `0` | The same for cohorts indexed on treatment start, so results after treatment began don't count. |
-| `labValueSelection` | `"closest"` | `"closest"`: per lab, the one result closest to index decides every test of that lab (ties: before index wins; same day, the worst value). `"any"`: a test passes if any result in the window passes. |
-| `conditionFlagWindowBeforeDays`, `conditionFlagWindowAfterDays` | `30`, `30` | Window for the condition flags (liver metastasis, Gilbert's, neuropathy, skin disorders, hearing loss). A flag counts when its cohort era overlaps the window; these cohorts last to the end of observation, so any earlier record counts. |
-| `maintenanceMerge`, `maintenanceMaxGapDays` | `TRUE`, `180` | Fold maintenance (e.g. avelumab after platinum) into the line it maintains before lines are numbered. Rules: `maintenanceRules` in `R/treatment_lines.R`. |
-| `bodyMeasurementsWindowDays` | `90` | ± days around index for weight/height/BMI. |
-| `stripEndocrineTherapy` | `TRUE` | Drop endocrine regimens (`is_endocrine` in `regimen_reference.csv`) from the ARTEMIS reference. |
-| `validDrugsRegimenComponents` | `TRUE` | Encode only drugs that appear in a kept regimen in the ARTEMIS alignment string; supportive drugs otherwise add gaps and lower alignment scores. |
-| `validDrugsAtcClasses` | `c("L01","L02","L03","L04")` | ATC classes kept in the alignment string. Also drops anticancer drugs whose formulation isn't ATC-mapped (nab-paclitaxel, ADCs, ...); `character(0)` turns it off. |
-| `assessmentAtcClasses` | `NULL` | ATC classes counted in the ARTEMIS assessment. `NULL`: L01/L03/L04, plus L02 when `stripEndocrineTherapy` is `FALSE`; `character(0)`: every ingredient (for debugging). |
-| `strataColumns` | all six | Which strata are reported on top of `overall` (see [Censoring and strata](#censoring-and-strata)). `character(0)` reports `overall` only. |
-
----
-
 ## Requirements
 
 R ≥ 4.4.0 (tested on 4.5.1) and these packages (`requiredPackages` in `R/packages.R`; the run
@@ -119,6 +80,45 @@ it is off). It needs, set before running:
 
 Other backends ignore it. If it is on but its prerequisite is missing, the run
 stops at startup. Without the prerequisites, leave it `FALSE`.
+
+---
+
+## Quick start
+
+1. Open `bladder-eligibility.Rproj` (or set the repo as the working directory).
+2. Edit the **CONFIG block at the top of `run.R`**: `connectionDetails`, the
+   bulk-load switch, `databaseId`, the schemas, `minCellCount` and
+   `outputFolder`. The work table names there (`bc_cohort`, ...) need
+   changing only if they clash with tables already in the work schema.
+3. `source("run.R")`.
+
+`runParts` in the CONFIG block picks what runs. The default runs the study
+only. Add `"diagnostics"` if the study team asks for the pre-study queries;
+`c("diagnostics")` alone needs no ARTEMIS, CohortGenerator or CirceR.
+
+**Optional:** `run_cohort_diagnostics.R` runs OHDSI CohortDiagnostics on the
+`cohorts/01_Target/` cohorts (own CONFIG block, own cohort table). It needs
+`CohortDiagnostics` installed, which is not in `renv.lock`.
+
+### Study settings
+
+Fixed study settings live in `R/study_settings.R` and are the same at every
+site. Don't change them unless the study team asks; if it does, add the field
+to the `settings` list in `run.R` (a field set there wins).
+
+| Setting | Default | What it does |
+|---|---|---|
+| `labWindowBeforeDays`, `labWindowAfterDays` | `30`, `30` | Window around the metastasis index for labs and ECOG in eligibility (2a-2d, T1-CE), coverage, lab distributions, the PS overlap and the lab-coverage cross. |
+| `treatedLabWindowBeforeDays`, `treatedLabWindowAfterDays` | `30`, `0` | The same for cohorts indexed on treatment start, so results after treatment began don't count. |
+| `labValueSelection` | `"closest"` | `"closest"`: per lab, the one result closest to index decides every test of that lab (ties: before index wins; same day, the worst value). `"any"`: a test passes if any result in the window passes. |
+| `conditionFlagWindowBeforeDays`, `conditionFlagWindowAfterDays` | `30`, `30` | Window for the condition flags (liver metastasis, Gilbert's, neuropathy, skin disorders, hearing loss). A flag counts when its cohort era overlaps the window; these cohorts last to the end of observation, so any earlier record counts. |
+| `maintenanceMerge`, `maintenanceMaxGapDays` | `TRUE`, `180` | Fold maintenance (e.g. avelumab after platinum) into the line it maintains before lines are numbered. Rules: `maintenanceRules` in `R/treatment_lines.R`. |
+| `bodyMeasurementsWindowDays` | `90` | ± days around index for weight/height/BMI. |
+| `stripEndocrineTherapy` | `TRUE` | Drop endocrine regimens (`is_endocrine` in `regimen_reference.csv`) from the ARTEMIS reference. |
+| `validDrugsRegimenComponents` | `TRUE` | Encode only drugs that appear in a kept regimen in the ARTEMIS alignment string; supportive drugs otherwise add gaps and lower alignment scores. |
+| `validDrugsAtcClasses` | `c("L01","L02","L03","L04")` | ATC classes kept in the alignment string. Also drops anticancer drugs whose formulation isn't ATC-mapped (nab-paclitaxel, ADCs, ...); `character(0)` turns it off. |
+| `assessmentAtcClasses` | `NULL` | ATC classes counted in the ARTEMIS assessment. `NULL`: L01/L03/L04, plus L02 when `stripEndocrineTherapy` is `FALSE`; `character(0)`: every ingredient (for debugging). |
+| `strataColumns` | all six | Which strata are reported on top of `overall` (see [Censoring and strata](#censoring-and-strata)). `character(0)` reports `overall` only. |
 
 ---
 
