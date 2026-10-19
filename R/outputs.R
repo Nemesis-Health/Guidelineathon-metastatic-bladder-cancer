@@ -14,7 +14,7 @@
 #     are enabled, e.g. c("overall", "age_group", "sex"). SQL-side outputs
 #     (lab_value_distribution_portable.sql, lab_timing_to_index_portable.sql,
 #     eligibility_input_coverage.sql, cohort_counts_stratified.sql) always
-#     compute all four views (cheap -- a single extra GROUP BY column each);
+#     compute every view (cheap -- a single extra GROUP BY column each);
 #     the caller filters its result to `stratum_type %in% activeStrataTypes()`
 #     before writing, so disabled views never reach the CSV.
 #   activeStrataSpecs() -- named list, stratum_type -> column name to group
@@ -52,26 +52,33 @@ writeResultCsv <- function(df, name, category) {
 }
 
 # --- per-category README, excerpted verbatim from this repo's own README.md
-# So the folder doc and the real documentation can never drift apart: each
-# results/eligibility/<category>/README.md is exactly the text between
-# README.md's <!-- category:X --> ... <!-- /category:X --> markers, copied
-# as-is. Silently skips a category whose markers are missing/duplicated
-# (e.g. running from a checkout without README.md) rather than failing the
-# run over documentation.
+# Each results/eligibility/<category>/README.md is the text between README.md's
+# <!-- shared --> markers (censoring and strata, which apply to every folder)
+# followed by the text between that category's <!-- category:X --> markers.
+# A missing or duplicated marker pair skips that part with a warning rather
+# than failing the run over documentation.
+readmeBlock <- function(lines, open, close) {
+  startIdx <- which(lines == open)
+  endIdx   <- which(lines == close)
+  if (length(startIdx) != 1L || length(endIdx) != 1L || endIdx <= startIdx) {
+    warning("README.md markers ", open, " missing or duplicated -- skipping.",
+            call. = FALSE)
+    return(NULL)
+  }
+  lines[(startIdx + 1L):(endIdx - 1L)]
+}
+
 writeCategoryReadmes <- function() {
   readmePath <- file.path(projectRoot, "README.md")
   if (!file.exists(readmePath)) return(invisible(NULL))
-  lines <- readLines(readmePath, warn = FALSE)
+  lines  <- readLines(readmePath, warn = FALSE)
+  shared <- readmeBlock(lines, "<!-- shared -->", "<!-- /shared -->")
   for (category in resultCategories) {
-    startIdx <- which(lines == paste0("<!-- category:", category, " -->"))
-    endIdx   <- which(lines == paste0("<!-- /category:", category, " -->"))
-    if (length(startIdx) != 1L || length(endIdx) != 1L || endIdx <= startIdx) {
-      warning("README.md markers for category '", category, "' missing or ",
-              "duplicated -- skipping its README.md.", call. = FALSE)
-      next
-    }
+    body <- readmeBlock(lines, paste0("<!-- category:", category, " -->"),
+                        paste0("<!-- /category:", category, " -->"))
+    if (is.null(body)) next
     d <- file.path(settings$outputFolder, "eligibility", category)
     dir.create(d, recursive = TRUE, showWarnings = FALSE)
-    writeLines(lines[(startIdx + 1L):(endIdx - 1L)], file.path(d, "README.md"))
+    writeLines(c(body, if (!is.null(shared)) c("", shared)), file.path(d, "README.md"))
   }
 }
