@@ -33,7 +33,7 @@
 # age x sex crossed view (subject_strata.sql's age_sex column).
 #
 # Lines of therapy are numbered once, by treatedLines() (R/treatment_lines.R),
-# the same numbering R/12 and the DTI use. Episodes are ANCHORED on the
+# the same numbering step 70 and the DTI use. Episodes are ANCHORED on the
 # treatment start first: the protocol allows a patient into a treated cohort
 # with prior systemic therapy as long as it was >12 months before the mBC
 # index, so ARTEMIS may have an earlier, unrelated episode on record that

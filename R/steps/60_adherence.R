@@ -62,7 +62,7 @@ membership$cohort_definition_id <- as.integer(membership$cohort_definition_id)
 membership$subject_id           <- as.character(membership$subject_id)
 
 # subject_strata.sql is the single source of truth for age_group/sex/age_sex
-# bucketing (shared with demographics.sql, R/04/05/09/12). Both
+# bucketing (shared with demographics.sql, steps 30, 31, 50 and 70). Both
 # computeGuidelineRelevance()/computeAdherenceRollup() work purely off
 # subject-id sets filtered from `membership`, so stratifying just means
 # pre-filtering membership to a stratum's subjects before calling them --

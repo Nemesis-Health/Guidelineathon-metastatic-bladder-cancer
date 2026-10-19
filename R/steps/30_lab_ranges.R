@@ -53,8 +53,8 @@ names(labDist) <- tolower(names(labDist))
 labDist$lab_window <- labWindowLabel(as.integer(labDist$cohort_definition_id))
 labDist <- dplyr::relocate(labDist, lab_window, .after = cohort_definition_id)
 # settings$strataColumns (R/study_settings.R, via activeStrataTypes()) controls
-# which stratum views actually reach the CSV -- the SQL always computes all
-# four (cheap), a site that wants fewer/none just filters here.
+# which stratum views actually reach the CSV -- the SQL always computes every
+# view (cheap), a site that wants fewer/none just filters here.
 labDist <- labDist[labDist$stratum_type %in% activeStrataTypes(), ]
 writeResultCsv(labDist, "lab_value_distribution", "labs")
 message("  lab_value_distribution: ", nrow(labDist), " rows")
