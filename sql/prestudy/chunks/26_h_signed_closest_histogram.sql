@@ -133,7 +133,7 @@ SELECT
     b.day_range_label,
     CASE WHEN COUNT(*) > 0 AND COUNT(*) <= @min_cell_count THEN -@min_cell_count
          ELSE COUNT(*) END AS n_patients,
-    t.n_treated_total
+    CASE WHEN t.n_treated_total > 0 AND t.n_treated_total <= @min_cell_count THEN -@min_cell_count ELSE t.n_treated_total END AS n_treated_total
 FROM labelled b
 CROSS JOIN totals t
 GROUP BY b.bin_order, b.side, b.day_range_label, t.n_treated_total

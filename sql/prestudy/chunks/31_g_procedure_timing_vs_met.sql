@@ -86,7 +86,7 @@ SELECT
     b.timing_bucket,
     CASE WHEN COUNT(*) > 0 AND COUNT(*) <= @min_cell_count THEN -@min_cell_count
          ELSE COUNT(*) END AS n_patients,
-    t.n_patients_both_total
+    CASE WHEN t.n_patients_both_total > 0 AND t.n_patients_both_total <= @min_cell_count THEN -@min_cell_count ELSE t.n_patients_both_total END AS n_patients_both_total
 FROM bucketed b
 CROSS JOIN totals t
 GROUP BY b.timing_bucket, t.n_patients_both_total

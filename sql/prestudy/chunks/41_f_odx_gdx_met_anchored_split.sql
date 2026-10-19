@@ -109,7 +109,7 @@ SELECT
     CASE WHEN a.n_after_180d  > 0 AND a.n_after_180d  <= @min_cell_count THEN -@min_cell_count ELSE a.n_after_180d  END AS n_after_180d,
     CASE WHEN a.n_after_365d  > 0 AND a.n_after_365d  <= @min_cell_count THEN -@min_cell_count ELSE a.n_after_365d  END AS n_after_365d,
     CASE WHEN a.n_ever_after  > 0 AND a.n_ever_after  <= @min_cell_count THEN -@min_cell_count ELSE a.n_ever_after  END AS n_ever_after,
-    t.n_met_subset_total
+    CASE WHEN t.n_met_subset_total > 0 AND t.n_met_subset_total <= @min_cell_count THEN -@min_cell_count ELSE t.n_met_subset_total END AS n_met_subset_total
 FROM agg a
 CROSS JOIN total t
 ORDER BY

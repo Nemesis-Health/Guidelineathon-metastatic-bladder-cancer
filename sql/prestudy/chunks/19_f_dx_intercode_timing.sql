@@ -20,7 +20,7 @@
 --       DX_2_TO_3 = patients with >= 3 distinct Diagnosis days
 --     Source: #dx_events restricted to #cohort (00_setup.sql).
 --     Small-cell suppression: n_transitions in (0, @min_cell_count] set to
---     -@min_cell_count. n_transitions_total is an aggregate denominator, not suppressed.
+--     -@min_cell_count. n_transitions_total is censored the same way.
 
 WITH dx_days AS (
     SELECT DISTINCT e.person_id, e.event_date AS event_day
@@ -69,7 +69,7 @@ SELECT
     b.transition,
     b.gap_bucket,
     CASE WHEN COUNT(*) > 0 AND COUNT(*) <= @min_cell_count THEN -@min_cell_count ELSE COUNT(*) END AS n_transitions,
-    t.n_transitions_total
+    CASE WHEN t.n_transitions_total > 0 AND t.n_transitions_total <= @min_cell_count THEN -@min_cell_count ELSE t.n_transitions_total END AS n_transitions_total
 FROM bucketed b
 JOIN totals t ON t.transition = b.transition
 GROUP BY b.transition, b.gap_bucket, t.n_transitions_total

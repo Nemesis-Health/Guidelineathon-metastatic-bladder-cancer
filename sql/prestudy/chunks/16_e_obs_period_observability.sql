@@ -20,8 +20,7 @@
 --     @cdm_database_schema.observation_period.
 --     Small-cell suppression: threshold counts in (0, @min_cell_count] are set to
 --     -@min_cell_count, median set to NULL when the group denominator is suppressed.
---     n_patients is an aggregate cohort denominator and is not suppressed, matching
---     the existing death/prevalence chunks.
+--     n_patients is censored the same way.
 
 WITH obs_around_anchor AS (
     -- INDEX anchor: index_date is guaranteed to fall inside an observation period.
@@ -82,7 +81,7 @@ agg AS (
 SELECT
     anchor_event,
     observation_side,
-    n_patients,
+    CASE WHEN n_patients > 0 AND n_patients <= @min_cell_count THEN -@min_cell_count ELSE n_patients END AS n_patients,
     CASE WHEN n_lt_30d  > 0 AND n_lt_30d  <= @min_cell_count THEN -@min_cell_count ELSE n_lt_30d  END AS n_lt_30d,
     CASE WHEN n_lt_90d  > 0 AND n_lt_90d  <= @min_cell_count THEN -@min_cell_count ELSE n_lt_90d  END AS n_lt_90d,
     CASE WHEN n_lt_180d > 0 AND n_lt_180d <= @min_cell_count THEN -@min_cell_count ELSE n_lt_180d END AS n_lt_180d,
