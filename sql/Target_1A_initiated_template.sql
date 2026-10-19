@@ -7,9 +7,11 @@
 --
 --   * it maps to a regimen in the classification table (so it is classifiable
 --     into the 4/5/6 a-f arms downstream), and
---   * episode_start_date is within [Cohort 1 index - 30, Cohort 1 index + 90], and
---   * episode_end_date is after the Cohort 1 index (regimen still active at or
---     after the metastatic-disease index).
+--   * episode_start_date is within [Cohort 1 index - 30, Cohort 1 index + 90].
+--
+-- The regimen need not still be running at the Cohort 1 index: a course
+-- started from day -30 counts even if it ended before index, so a patient who
+-- passes the washout is never left both treatment-naive and untreated by it.
 --
 -- cohort_start_date = the first qualifying episode's start (treatment start).
 -- cohort_end_date   = Cohort 1's end date (inherits Cohort 1 follow-up, incl.
@@ -59,7 +61,6 @@ FROM (
   WHERE tc.cohort_definition_id = @cohort1_id
     AND re.episode_start_date >= DATEADD(day, -30, tc.cohort_start_date)
     AND re.episode_start_date <= DATEADD(day,  90, tc.cohort_start_date)
-    AND re.episode_end_date   >  tc.cohort_start_date
 
     /* ----- Washout: no systemic regimen in [index - 365, index - 30) ----- */
     AND NOT EXISTS (

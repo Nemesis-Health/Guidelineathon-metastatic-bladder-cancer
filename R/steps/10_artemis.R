@@ -146,6 +146,13 @@ if (nrow(episodes) > 0L) {
 # --- Regimen classification table (lens columns -> work schema for step 12) -
 regimenClass <- as.data.frame(regRef[, c("regName", "regCode",
   "class_eau", "class_hemonc_mbc", "class_any")])
+# Every aligned regimen must be classified: the treated cohort only takes
+# classified regimens, so an unclassified one would leave its patient
+# untreated with no reason given.
+unclassified <- setdiff(unique(episodes$episode_source_value), regimenClass$regName)
+if (length(unclassified) > 0L)
+  stop("ARTEMIS episodes with a regimen missing from regimen_reference.csv: ",
+       paste(unclassified, collapse = ", "), call. = FALSE)
 saveState("regimenClass", regimenClass)
 # On some backends, DatabaseConnector's default path for a fresh table like
 # this one is considerably slower than its optional bulk-load path (a real
