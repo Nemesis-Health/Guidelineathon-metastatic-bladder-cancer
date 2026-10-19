@@ -23,10 +23,7 @@ mainManifest <- loadState("mainManifest", "R/steps/12_main_cohorts.R")
 # subject_strata.sql is the single source of truth for age_group/sex
 # bucketing (see that file's own header for the full list of consumers) --
 # resolve it fully first, then inject as demographics.sql's `coh` CTE body.
-strataFragment <- renderSqlFile("subject_strata.sql",
-  work_database_schema = settings$workDatabaseSchema,
-  cohort_table         = settings$cohortTable,
-  cdm_database_schema  = settings$cdmDatabaseSchema)
+strataFragment <- strataSql()
 
 demo <- querySqlFile(connection, "demographics.sql",
   subject_strata_sql = strataFragment)

@@ -67,10 +67,7 @@ membership$subject_id           <- as.character(membership$subject_id)
 # subject-id sets filtered from `membership`, so stratifying just means
 # pre-filtering membership to a stratum's subjects before calling them --
 # no change needed in guideline_adherence.R itself.
-strataTbl <- querySqlFile(connection, "subject_strata.sql",
-  work_database_schema = settings$workDatabaseSchema,
-  cohort_table         = settings$cohortTable,
-  cdm_database_schema  = settings$cdmDatabaseSchema)
+strataTbl <- queryStrata(connection)
 names(strataTbl) <- tolower(names(strataTbl))
 strataTbl$cohort_definition_id <- as.integer(strataTbl$cohort_definition_id)
 # subject_strata.sql is a widely-shared fragment -- see R/steps/50_outcomes.R's

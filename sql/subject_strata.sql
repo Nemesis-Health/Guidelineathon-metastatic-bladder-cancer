@@ -3,7 +3,12 @@
 --                       index period / index year)
 -- ===========================================================================
 -- One row per (cohort_definition_id, subject_id) in @cohort_table, carrying
--- the protocol stratification columns:
+-- the protocol stratification columns. Every cohort is stratified at the
+-- subject's first metastasis: the start date in @metastasis_cohort_id (T1all,
+-- the superset the rest of the tree is drawn from), or the cohort's own start
+-- date for a subject not in it. So a patient sits in the same stratum in every
+-- cohort, including those indexed on treatment start. "Index" below means
+-- that date.
 --   age_group   >65 / <=65   (age = year(index) - year_of_birth, protocol:
 --               "age groups (<=65 and >65 years old)")
 --   sex         Male / Female / Other-Unknown
@@ -17,7 +22,7 @@
 --   index_period_2021  2015-2020 / 2021+ -- a separate column because 2021+
 --                      overlaps 2021-2023 and 2024+, and each column holds
 --                      one value per subject
---   index_year  year of cohort_start_date
+--   index_year  year of index
 --
 -- SINGLE SOURCE OF TRUTH for this bucketing logic -- every other consumer
 -- builds on this file's exact text instead of re-deriving the CASE
@@ -36,32 +41,40 @@
 -- stratum into a name string.
 --
 -- SqlRender parameters: @work_database_schema @cohort_table @cdm_database_schema
+--   @metastasis_cohort_id (render through strataSql()/queryStrata() in R/outputs.R)
 -- ===========================================================================
 
 SELECT c.cohort_definition_id                                  AS cohort_definition_id,
        c.subject_id                                            AS subject_id,
-       CASE WHEN YEAR(c.cohort_start_date) - p.year_of_birth > 65
+       CASE WHEN YEAR(c.strata_date) - p.year_of_birth > 65
             THEN '>65' ELSE '<=65' END                         AS age_group,
        CASE p.gender_concept_id WHEN 8507 THEN 'Male'
                                 WHEN 8532 THEN 'Female'
                                 ELSE 'Other-Unknown' END        AS sex,
        CONCAT(CONCAT(
-         CASE WHEN YEAR(c.cohort_start_date) - p.year_of_birth > 65
+         CASE WHEN YEAR(c.strata_date) - p.year_of_birth > 65
               THEN '>65' ELSE '<=65' END, '|'),
          CASE p.gender_concept_id WHEN 8507 THEN 'Male'
                                   WHEN 8532 THEN 'Female'
                                   ELSE 'Other-Unknown' END)     AS age_sex,
-       CASE WHEN YEAR(c.cohort_start_date) - p.year_of_birth > 80 THEN '>80'
-            WHEN YEAR(c.cohort_start_date) - p.year_of_birth > 65 THEN '66-80'
+       CASE WHEN YEAR(c.strata_date) - p.year_of_birth > 80 THEN '>80'
+            WHEN YEAR(c.strata_date) - p.year_of_birth > 65 THEN '66-80'
             ELSE '<=65' END                                     AS age_band,
-       CASE WHEN YEAR(c.cohort_start_date) >= 2024 THEN '2024+'
-            WHEN YEAR(c.cohort_start_date) >= 2021 THEN '2021-2023'
-            WHEN YEAR(c.cohort_start_date) >= 2015 THEN '2015-2020'
+       CASE WHEN YEAR(c.strata_date) >= 2024 THEN '2024+'
+            WHEN YEAR(c.strata_date) >= 2021 THEN '2021-2023'
+            WHEN YEAR(c.strata_date) >= 2015 THEN '2015-2020'
             ELSE '<2015' END                                    AS index_period,
-       CASE WHEN YEAR(c.cohort_start_date) >= 2021 THEN '2021+'
-            WHEN YEAR(c.cohort_start_date) >= 2015 THEN '2015-2020'
+       CASE WHEN YEAR(c.strata_date) >= 2021 THEN '2021+'
+            WHEN YEAR(c.strata_date) >= 2015 THEN '2015-2020'
             ELSE '<2015' END                                    AS index_period_2021,
-       YEAR(c.cohort_start_date)                                AS index_year
-  FROM @work_database_schema.@cohort_table c
+       YEAR(c.strata_date)                                AS index_year
+  FROM (SELECT tc.cohort_definition_id, tc.subject_id,
+               COALESCE(m.met_date, tc.cohort_start_date) AS strata_date
+          FROM @work_database_schema.@cohort_table tc
+          LEFT JOIN (SELECT subject_id, MIN(cohort_start_date) AS met_date
+                       FROM @work_database_schema.@cohort_table
+                      WHERE cohort_definition_id = @metastasis_cohort_id
+                      GROUP BY subject_id) m
+            ON m.subject_id = tc.subject_id) c
   JOIN @cdm_database_schema.person p
     ON p.person_id = c.subject_id

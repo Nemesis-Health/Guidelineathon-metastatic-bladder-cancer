@@ -314,10 +314,7 @@ if (nestOk) {
 # R/steps/70_treatment_patterns.R). The "overall" view is CohortGenerator's own
 # getCohortCounts() result (above), reshaped into the same long format
 # rather than re-derived, so it can't drift from the trusted library count.
-strataFragment <- renderSqlFile("subject_strata.sql",
-  work_database_schema = settings$workDatabaseSchema,
-  cohort_table         = settings$cohortTable,
-  cdm_database_schema  = settings$cdmDatabaseSchema)
+strataFragment <- strataSql()
 strataCounts <- querySqlFile(connection, "cohort_counts_stratified.sql",
   work_database_schema = settings$workDatabaseSchema,
   cohort_table         = settings$cohortTable,

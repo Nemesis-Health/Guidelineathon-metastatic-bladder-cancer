@@ -68,10 +68,7 @@ nameMap <- dplyr::select(mainManifest, cohort_definition_id = "cohortId",
 # demographics_continuous.sql, stratified the same UNION-ALL way) rather than
 # pulling one row per cohort member with a body measurement into R and
 # aggregating there.
-strataFragment <- renderSqlFile("subject_strata.sql",
-  work_database_schema = settings$workDatabaseSchema,
-  cohort_table         = settings$cohortTable,
-  cdm_database_schema  = settings$cdmDatabaseSchema)
+strataFragment <- strataSql()
 
 bodyMeasurementsOut <- querySqlFile(connection, "baseline_body_measurements.sql",
   cdm_database_schema           = settings$cdmDatabaseSchema,
@@ -176,10 +173,7 @@ if (is.null(covSet) || nrow(covSet) == 0L) {
       "MAX(CASE WHEN cov.cohort_definition_id = %d THEN 1 ELSE 0 END) AS %s",
       flagIds$covariate_id, flagIds$component), collapse = ",\n       ")
 
-    strataFragment <- renderSqlFile("subject_strata.sql",
-      work_database_schema = settings$workDatabaseSchema,
-      cohort_table         = settings$cohortTable,
-      cdm_database_schema  = settings$cdmDatabaseSchema)
+    strataFragment <- strataSql()
 
     components <- querySqlFile(connection, "charlson_components.sql",
       work_database_schema   = settings$workDatabaseSchema,
