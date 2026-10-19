@@ -1,19 +1,5 @@
    # FALCON-Bladder Study
 
-A run has two parts:
-
-1. **Diagnostics** (off by default) → `results/diagnostics/` and
-   `diagnostics.zip`. Pre-study characterization queries, mirrored into
-   `sql/prestudy/` from
-   [onco-pre-study at `fb30995`](https://github.com/Nemesis-Health/onco-pre-study/tree/fb30995fa0c776e4681e92a9e640812a9e4e88df),
-   so no separate checkout is needed.
-2. **Study** → `results/eligibility/` and `study_results.zip`. ARTEMIS regimen
-   alignment, the cohort tree, and study outputs.
-
-Both zips hold aggregate counts only, censored at write time.
-
----
-
 ## Quick start
 
 1. Open `bladder-eligibility.Rproj` (or set the repo as the working directory).
