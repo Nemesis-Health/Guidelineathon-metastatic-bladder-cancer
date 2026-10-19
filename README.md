@@ -22,7 +22,8 @@ Both zips hold aggregate counts only, censored at write time.
 1. Open `bladder-eligibility.Rproj` (or set the repo as the working directory).
 2. Edit the **CONFIG block at the top of `run.R`**: `connectionDetails`, the
    bulk-load switch, `databaseId`, the schemas, `minCellCount` and
-   `outputFolder`.
+   `outputFolder`. The work table names there (`bc_cohort`, ...) need
+   changing only if they clash with tables already in the work schema.
 3. `source("run.R")`.
 
 `runParts` in the CONFIG block picks what runs. The default runs both;

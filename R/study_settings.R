@@ -1,10 +1,10 @@
 # ===========================================================================
 # study_settings.R  —  fixed study settings (do not edit)
 # ===========================================================================
-# Settings that are the same at every site: work table names, the study's
-# time windows, ARTEMIS reference filters, maintenance merging and the
-# reported strata. They are part of the study design, so results stay
-# comparable across sites only if nobody changes them.
+# Settings that are the same at every site: the study's time windows,
+# ARTEMIS reference filters, maintenance merging and the reported strata.
+# They are part of the study design, so results stay comparable across sites
+# only if nobody changes them.
 #
 # R/setup.R merges these under the site's `settings` list from run.R. If the
 # study team asks a site to change one, add that field to the site's own
@@ -14,17 +14,6 @@
 # ===========================================================================
 
 studySettings <- list(
-
-  # --- Work tables ------------------------------------------------------------
-  # Written to settings$workDatabaseSchema and dropped/recreated on each run.
-  # Rename only if these names clash with tables already in that schema.
-  cohortTable          = "bc_cohort",                  # main cohort tree (JSON + SQL-built cohorts)
-  labCohortTable       = "bc_lab_cohort",              # unified eligibility table (labs + ECOG + conditions)
-  rawLabResultsTable   = "bc_raw_lab_results",         # every normalised lab result, pass or fail
-  covariateCohortTable = "bc_covariate_cohort",        # descriptive covariates (comorbidities); NOT part of the main tree
-  artemisCohortName    = "ARTEMIS bladder cohort",     # cohort name ARTEMIS aligns against
-  episodeTable         = "bc_artemis_episodes",        # ARTEMIS treatment episodes
-  regimenClassTable    = "bc_regimen_classifications", # regimen -> treatment category lookup
 
   # --- Eligibility windows ----------------------------------------------------
   # Near-index eligibility inputs (labs, ECOG/PS) for Target 2a-2d, the
