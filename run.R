@@ -1,8 +1,8 @@
 # ===========================================================================
 # run.R  —  FALCON-Bladder study (standalone; no OncoStudyModules dep)
 # ===========================================================================
-# Runs two parts, chosen with `runParts` in the CONFIG block:
-#   diagnostics  pre-study characterization queries on the CDM
+# Runs one or both parts, chosen with `runParts` in the CONFIG block:
+#   diagnostics  pre-study characterization queries on the CDM (off by default)
 #                -> results/diagnostics/, diagnostics.zip
 #                Needs no ARTEMIS, CohortGenerator or CirceR.
 #   study        the study pipeline: cohorts, then characterization, labs,
@@ -54,9 +54,9 @@ settings <- list(
 )
 
 # --- What to run --------------------------------------------------------------
-# Both by default. c("diagnostics") alone if ARTEMIS isn't set up yet;
-# c("study") alone to skip diagnostics you have already run.
-runParts <- c("diagnostics", "study")
+# The study only by default. Add "diagnostics" if the study team asks for
+# the pre-study queries; c("diagnostics") alone needs no ARTEMIS set up.
+runParts <- c("study")
 
 # ===========================================================================
 # Run  —  do not edit below
