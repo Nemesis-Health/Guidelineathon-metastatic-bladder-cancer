@@ -1,10 +1,7 @@
--- Dialect-portable version of lab_value_distribution.sql (the original, kept
--- for comparison; it still picks its own closest value, not the shared
--- rows below). Median/quartiles use ROW_NUMBER()/COUNT(*)/FLOOR instead of
+-- lab_value_distribution_portable.sql
+-- Median/quartiles use ROW_NUMBER()/COUNT(*)/FLOOR instead of
 -- PERCENTILE_CONT ... WITHIN GROUP ... OVER, which SqlRender leaves
 -- untranslated (breaks PostgreSQL / BigQuery / SQLite / Spark / Hive / Impala).
--- The GROUP BY also replaces the window+SELECT DISTINCT workaround the
--- original needed because SQL Server only allows PERCENTILE_CONT as a window.
 --
 -- Interpolation reproduces PERCENTILE_CONT exactly (R quantile type 7):
 --   pos = p * (n - 1)  (zero-based), k = FLOOR(pos), frac = pos - k
