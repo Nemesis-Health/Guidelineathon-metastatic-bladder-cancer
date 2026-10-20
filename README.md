@@ -41,7 +41,7 @@ to the `settings` list in `run.R` (a field set there wins).
 
 ## Requirements
 
-**R 4.5.1** and these packages (`requiredPackages` in `R/packages.R`; the run
+**R ≥ 4.4.0 (tested on 4.5.1) and these packages (`requiredPackages` in `R/packages.R`; the run
 stops at startup listing any that are missing or fail to load). Any version at
 or above these works, except ARTEMIS:
 
