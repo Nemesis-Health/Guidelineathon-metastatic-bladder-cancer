@@ -58,6 +58,9 @@
 
 message("\n== ARTEMIS assessment ==")
 
+mainManifest <- loadState("mainManifest", "R/steps/12_main_cohorts.R")
+cohortNames  <- loadState("cohortNames", "R/steps/12_main_cohorts.R")
+
 # artemisResult is normally still in scope from step 10 in the same session,
 # but step 10 persists it to disk too (see R/steps/10_artemis.R), so a session that
 # skips step 10 can reload it here instead of re-running the alignment.
@@ -131,11 +134,16 @@ if (!exists("artemisResult")) {
     if (is.data.frame(df) && col %in% names(df)) dplyr::n_distinct(df[[col]]) else NA_integer_
   pct  <- function(n, d) if (is.na(n) || is.na(d) || d <= 0) NA_real_ else round(100 * n / d, 1)
 
-  # ARTEMIS scan-cohort subjects (from step 10, if still in scope)
+  # ARTEMIS scan-cohort subjects (from step 10, if still in scope, else its
+  # checkpoint; NA when step 10 last ran without saving one)
   nScan <- NA_integer_
-  if (exists("artemisCounts") && exists("artemisCohortId"))
+  scanCountPath <- file.path(settings$stateFolder, "artemisScanCount.rds")
+  if (exists("artemisCounts") && exists("artemisCohortId")) {
     nScan <- suppressWarnings(as.integer(
       artemisCounts$cohortSubjects[artemisCounts$cohortId == artemisCohortId][1]))
+  } else if (file.exists(scanCountPath)) {
+    nScan <- suppressWarnings(as.integer(readRDS(scanCountPath)))
+  }
 
   # raw-alignment person-id column (name varies across ARTEMIS versions)
   raPcol <- if (is.data.frame(rawAlign))

@@ -19,6 +19,10 @@ artemisCohortId <- artemisSet$cohortId[
   artemisSet$cohortName == settings$artemisCohortName][1]
 message("ARTEMIS scan cohort (id ", artemisCohortId, "): ",
         artemisCounts$cohortSubjects[artemisCounts$cohortId == artemisCohortId], " subject(s)")
+# Step 40 reports this count; the scan cohort itself is gone from the cohort
+# table once step 12 regenerates it, so keep the count for a resumed run.
+saveState("artemisScanCount",
+          artemisCounts$cohortSubjects[artemisCounts$cohortId == artemisCohortId][1])
 
 # --- Valid-drug list --------------------------------------------------------
 # loadDrugs() + Methotrexate concept-id patch. The list is restricted to

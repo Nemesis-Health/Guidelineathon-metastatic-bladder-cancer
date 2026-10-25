@@ -25,6 +25,10 @@
 
 message("\n== lab test ranges on main cohorts ==")
 
+mainManifest <- loadState("mainManifest", "R/steps/12_main_cohorts.R")
+cohortNames  <- loadState("cohortNames", "R/steps/12_main_cohorts.R")
+cohortIndex  <- loadState("cohortIndex", "R/steps/12_main_cohorts.R")
+
 # The manifest holds only the main cohort tree (T1-T6 + the Target 1A JSON
 # leaves), so take every cohort in it but the reached-node denominators.
 # (Was a "^Target 1A" name-prefix match, which the T1-T6 rename would

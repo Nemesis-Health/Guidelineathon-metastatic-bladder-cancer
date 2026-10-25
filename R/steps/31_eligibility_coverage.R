@@ -21,6 +21,10 @@
 
 message("\n== eligibility input counts + T1 (mBC) coverage ==")
 
+mainManifest <- loadState("mainManifest", "R/steps/12_main_cohorts.R")
+cohortNames  <- loadState("cohortNames", "R/steps/12_main_cohorts.R")
+cohortIndex  <- loadState("cohortIndex", "R/steps/12_main_cohorts.R")
+
 # test-id -> human label, from cohorts/extras/eligibility_test_ids.csv.
 inputLabels <- with(testIds(), stats::setNames(label, test_id))
 
