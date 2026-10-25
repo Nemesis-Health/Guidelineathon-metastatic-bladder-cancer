@@ -130,6 +130,10 @@ agreement <- function(x, y) {
   tibble::tibble(n = n, a = a, b = b, c = c, d = d, pct_agree = round(100 * (a + d) / n, 2),
                  kappa = if (pe < 1) round(((a + d) / n - pe) / (1 - pe), 4) else NA_real_)
 }
+# agreement()'s columns with no rows: keeps the outputs' shape at a site
+# with no pairs to compare (e.g. ECOG but no labs).
+noAgreement <- tibble::tibble(n = integer(), a = integer(), b = integer(), c = integer(),
+                              d = integer(), pct_agree = double(), kappa = double())
 
 # every unordered pair of v (none when fewer than two; combn() on a single
 # number would enumerate 1..n instead)
@@ -138,7 +142,8 @@ pairsOf <- function(v) if (length(v) < 2L) matrix(v[0], nrow = 2L) else utils::c
 testPairs <- pairsOf(sort(unique(t1Rows$test_id)))
 kappaFor <- function(rows) {
   byTest <- split(rows[c("subject_id", "passes")], rows$test_id)
-  dplyr::bind_rows(lapply(seq_len(ncol(testPairs)), function(k) {
+  dplyr::bind_rows(dplyr::mutate(noAgreement, test_id_1 = integer(), test_id_2 = integer(), .before = 1),
+                   lapply(seq_len(ncol(testPairs)), function(k) {
     t1 <- byTest[[as.character(testPairs[1, k])]]; t2 <- byTest[[as.character(testPairs[2, k])]]
     if (is.null(t1) || is.null(t2)) return(NULL)
     both <- merge(t1, t2, by = "subject_id")
@@ -151,8 +156,9 @@ kappaFor <- function(rows) {
 # every lab tested in T1, plus ECOG even where no grade is recorded
 labPairs <- pairsOf(sort(union(unique(t1Rows$cat), "ECOG")))
 coverageKappaFor <- function(members, tested) {
-  if (length(members) == 0L) return(tibble::tibble())
-  dplyr::bind_rows(lapply(seq_len(ncol(labPairs)), function(k) {
+  empty <- dplyr::mutate(noAgreement, lab_1 = character(), lab_2 = character(), .before = 1)
+  if (length(members) == 0L) return(empty)
+  dplyr::bind_rows(empty, lapply(seq_len(ncol(labPairs)), function(k) {
     x <- as.integer(members %in% tested$subject_id[tested$cat == labPairs[1, k]])
     y <- as.integer(members %in% tested$subject_id[tested$cat == labPairs[2, k]])
     dplyr::mutate(agreement(x, y), lab_1 = labPairs[1, k], lab_2 = labPairs[2, k], .before = 1)
