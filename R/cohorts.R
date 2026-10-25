@@ -185,6 +185,7 @@ reachedNodeCohortIds <- function(manifest = mainManifest) {
 
 # Lab window of each cohort as days around its index, e.g. "-30..0".
 labWindowLabel <- function(cohortIds, treatedIds = treatedCohortIds()) {
+  if (!length(cohortIds)) return(character(0))
   treated <- cohortIds %in% treatedIds
   paste0(-ifelse(treated, settings$treatedLabWindowBeforeDays, settings$labWindowBeforeDays), "..",
          ifelse(treated, settings$treatedLabWindowAfterDays, settings$labWindowAfterDays))
