@@ -1128,6 +1128,58 @@
               "VOCABULARY_ID": "SNOMED"
             },
             "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "372087000",
+              "CONCEPT_ID": 439392,
+              "CONCEPT_NAME": "Primary malignant neoplasm",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "128462008",
+              "CONCEPT_ID": 432851,
+              "CONCEPT_NAME": "Metastatic malignant neoplasm",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "403906006",
+              "CONCEPT_ID": 4301510,
+              "CONCEPT_NAME": "Metastatic squamous cell carcinoma",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "N",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Disorder",
+              "CONCEPT_CODE": "310504009",
+              "CONCEPT_ID": 4149322,
+              "CONCEPT_NAME": "Primary malignant neoplasm of unknown site",
+              "DOMAIN_ID": "Condition",
+              "INVALID_REASON": "V",
+              "STANDARD_CONCEPT": "S",
+              "VOCABULARY_ID": "SNOMED"
+            },
+            "isExcluded": true
           }
         ]
       }
