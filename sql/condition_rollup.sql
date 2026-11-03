@@ -77,7 +77,7 @@ rollup_categories AS (
   UNION ALL SELECT 21, 'Lymphoma', 432571
   UNION ALL SELECT 22, 'Myeloma', 437233
   UNION ALL SELECT 23, 'Leukaemia', 317510
-  UNION ALL SELECT 24, 'Unknown primary site', 4114221
+  UNION ALL SELECT 24, 'Unknown primary site', 4149322
   UNION ALL SELECT 25, 'Other respiratory', 40493428
   UNION ALL SELECT 26, 'Other digestive', 4116238
   UNION ALL SELECT 27, 'Other male genital', 4181487
